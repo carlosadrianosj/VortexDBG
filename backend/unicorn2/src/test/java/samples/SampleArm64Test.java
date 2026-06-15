@@ -25,9 +25,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 /* Sample code to demonstrate how to emulate ARM64 code */
 package samples;
 
-import com.github.unidbg.arm.backend.unicorn.BlockHook;
-import com.github.unidbg.arm.backend.unicorn.CodeHook;
-import com.github.unidbg.arm.backend.unicorn.Unicorn;
+import com.vortexdbg.arm.backend.unicorn.BlockHook;
+import com.vortexdbg.arm.backend.unicorn.CodeHook;
+import com.vortexdbg.arm.backend.unicorn.Unicorn;
 import junit.framework.TestCase;
 import unicorn.Arm64Const;
 import unicorn.UnicornConst;

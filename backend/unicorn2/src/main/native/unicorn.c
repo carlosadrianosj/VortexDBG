@@ -112,11 +112,11 @@ static inline bool shouldBreak(t_unicorn unicorn, uint64_t address) {
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    nativeInitialize
  * Signature: (II)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_nativeInitialize
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_nativeInitialize
   (JNIEnv *env, jclass cls, jint arch, jint mode) {
   uc_engine *eng = NULL;
   uc_err err = uc_open((uc_arch)arch, (uc_mode)mode, &eng);
@@ -146,11 +146,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_nativ
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    mem_map
  * Signature: (JJJI)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_mem_1map
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_mem_1map
   (JNIEnv *env, jclass cls, jlong handle, jlong address, jlong size, jint perms) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -161,11 +161,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_mem_1m
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    reg_read
  * Signature: (JI)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_reg_1read__JI
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_reg_1read__JI
   (JNIEnv *env, jclass cls, jlong handle, jint regid) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -178,11 +178,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_reg_1
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    reg_write
  * Signature: (JIJ)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_reg_1write__JIJ
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_reg_1write__JIJ
   (JNIEnv *env, jclass cls, jlong handle, jint regid, jlong value) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -245,11 +245,11 @@ static void cb_hookmem_new(uc_engine *eng, uc_mem_type type,
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    removeCache
  * Signature: (JJJ)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_removeCache
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_removeCache
   (JNIEnv *env, jclass cls, jlong handle, jlong arg1, jlong arg2) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -262,11 +262,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_remove
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    registerHook
- * Signature: (JIJJLcom/github/unidbg/arm/backend/unicorn/Unicorn/NewHook;)J
+ * Signature: (JIJJLcom/vortexdbg/arm/backend/unicorn/Unicorn/NewHook;)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_registerHook__JIJJLcom_github_unidbg_arm_backend_unicorn_Unicorn_NewHook_2
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_registerHook__JIJJLcom_vortexdbg_arm_backend_unicorn_Unicorn_NewHook_2
   (JNIEnv *env, jclass cls, jlong handle, jint type, jlong arg1, jlong arg2, jobject hook) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -326,11 +326,11 @@ static void hook_count_cb(uc_engine *eng, uint64_t address, uint32_t size, void 
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    register_emu_count_hook
- * Signature: (JJLcom/github/unidbg/arm/backend/unicorn/Unicorn/NewHook;)J
+ * Signature: (JJLcom/vortexdbg/arm/backend/unicorn/Unicorn/NewHook;)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_register_1emu_1count_1hook
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_register_1emu_1count_1hook
   (JNIEnv *env, jclass cls, jlong handle, jlong emu_count, jobject hook) {
   t_unicorn unicorn = (t_unicorn) handle;
   unicorn->emu_count = emu_count;
@@ -356,11 +356,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_regis
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    registerHook
- * Signature: (JILcom/github/unidbg/arm/backend/unicorn/Unicorn/NewHook;)J
+ * Signature: (JILcom/vortexdbg/arm/backend/unicorn/Unicorn/NewHook;)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_registerHook__JILcom_github_unidbg_arm_backend_unicorn_Unicorn_NewHook_2
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_registerHook__JILcom_vortexdbg_arm_backend_unicorn_Unicorn_NewHook_2
   (JNIEnv *env, jclass cls, jlong handle, jint type, jobject hook) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -403,11 +403,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_regis
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    mem_write
  * Signature: (JJ[B)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_mem_1write
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_mem_1write
   (JNIEnv *env, jclass cls, jlong handle, jlong address, jbyteArray bytes) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -421,11 +421,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_mem_1w
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    mem_read
  * Signature: (JJJ)[B
  */
-JNIEXPORT jbyteArray JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_mem_1read
+JNIEXPORT jbyteArray JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_mem_1read
   (JNIEnv *env, jclass cls, jlong handle, jlong address, jlong size) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -440,11 +440,11 @@ JNIEXPORT jbyteArray JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    emu_start
  * Signature: (JJJJJ)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_emu_1start
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_emu_1start
   (JNIEnv *env, jclass cls, jlong handle, jlong begin, jlong until, jlong timeout, jlong count) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -456,11 +456,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_emu_1s
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    emu_stop
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_emu_1stop
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_emu_1stop
   (JNIEnv *env, jclass cls, jlong handle) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -471,11 +471,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_emu_1s
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    mem_unmap
  * Signature: (JJJ)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_mem_1unmap
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_mem_1unmap
   (JNIEnv *env, jclass cls, jlong handle, jlong address, jlong size) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -486,11 +486,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_mem_1u
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    mem_protect
  * Signature: (JJJI)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_mem_1protect
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_mem_1protect
   (JNIEnv *env, jclass cls, jlong handle, jlong address, jlong size, jint perms) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -501,11 +501,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_mem_1p
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    nativeDestroy
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_nativeDestroy
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_nativeDestroy
   (JNIEnv *env, jclass cls, jlong handle) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -528,11 +528,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_native
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    hook_del
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_hook_1del
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_hook_1del
   (JNIEnv *env, jclass cls, jlong hh) {
   struct new_hook *nh = (struct new_hook *) hh;
   t_unicorn unicorn = nh->unicorn;
@@ -547,11 +547,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_hook_1
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    context_alloc
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_context_1alloc
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_context_1alloc
   (JNIEnv *env, jclass cls, jlong handle) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -564,11 +564,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_conte
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    free
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_free
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_free
   (JNIEnv *env, jclass cls, jlong ctx) {
   uc_err err = uc_free((void *)ctx);
   if (err != UC_ERR_OK) {
@@ -577,11 +577,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_free
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    context_save
  * Signature: (JJ)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_context_1save
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_context_1save
   (JNIEnv *env, jclass cls, jlong handle, jlong ctx) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -592,11 +592,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_contex
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    context_restore
  * Signature: (JJ)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_context_1restore
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_context_1restore
   (JNIEnv *env, jclass cls, jlong handle, jlong ctx) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -607,11 +607,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_contex
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    reg_read
  * Signature: (JII)[B
  */
-JNIEXPORT jbyteArray JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_reg_1read__JII
+JNIEXPORT jbyteArray JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_reg_1read__JII
   (JNIEnv *env, jclass cls, jlong handle, jint regid, jint regsz) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -626,11 +626,11 @@ JNIEXPORT jbyteArray JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    reg_write
  * Signature: (JI[B)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_reg_1write__JI_3B
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_reg_1write__JI_3B
   (JNIEnv *env, jclass cls, jlong handle, jint regid, jbyteArray value) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -663,11 +663,11 @@ static void cb_debugger(uc_engine *eng, uint64_t address, uint32_t size, void *u
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    registerDebugger
- * Signature: (JJJLcom/github/unidbg/arm/backend/unicorn/Unicorn/NewHook;)J
+ * Signature: (JJJLcom/vortexdbg/arm/backend/unicorn/Unicorn/NewHook;)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_registerDebugger
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_registerDebugger
   (JNIEnv *env, jclass cls, jlong handle, jlong arg1, jlong arg2, jobject hook) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -694,33 +694,33 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_regis
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    setFastDebug
  * Signature: (JZ)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_setFastDebug
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_setFastDebug
   (JNIEnv *env, jclass cls, jlong handle, jboolean fastDebug) {
   t_unicorn unicorn = (t_unicorn) handle;
   unicorn->fastDebug = fastDebug;
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    setSingleStep
  * Signature: (JI)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_setSingleStep
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_setSingleStep
   (JNIEnv *env, jclass cls, jlong handle, jint singleStep) {
   t_unicorn unicorn = (t_unicorn) handle;
   unicorn->singleStep = singleStep;
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    addBreakPoint
  * Signature: (JJ)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_addBreakPoint
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_addBreakPoint
   (JNIEnv *env, jclass cls, jlong handle, jlong address) {
   t_unicorn unicorn = (t_unicorn) handle;
   int ret;
@@ -730,11 +730,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_addBre
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    removeBreakPoint
  * Signature: (JJ)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_removeBreakPoint
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_removeBreakPoint
   (JNIEnv *env, jclass cls, jlong handle, jlong address) {
   t_unicorn unicorn = (t_unicorn) handle;
   khiter_t k = kh_get(64, unicorn->bps_map, address);
@@ -745,11 +745,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_remove
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    mem_allocated_size
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_mem_1allocated_1size
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_mem_1allocated_1size
   (JNIEnv *env, jclass cls, jlong handle) {
   t_unicorn unicorn = (t_unicorn) handle;
   uc_engine *eng = unicorn->uc;
@@ -770,18 +770,18 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_mem_1
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    mem_resident_size
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_mem_1resident_1size
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_mem_1resident_1size
   (JNIEnv *env, jclass cls, jlong handle) {
-  return Java_com_github_unidbg_arm_backend_unicorn_Unicorn_mem_1allocated_1size(env, cls, handle);
+  return Java_com_vortexdbg_arm_backend_unicorn_Unicorn_mem_1allocated_1size(env, cls, handle);
 }
 
 static JNINativeMethod s_methods[] = {
-  {"registerHook", "(JIJJLcom/github/unidbg/arm/backend/unicorn/Unicorn$NewHook;)J", (void *) Java_com_github_unidbg_arm_backend_unicorn_Unicorn_registerHook__JIJJLcom_github_unidbg_arm_backend_unicorn_Unicorn_NewHook_2 },
-  {"registerHook", "(JILcom/github/unidbg/arm/backend/unicorn/Unicorn$NewHook;)J",   (void *) Java_com_github_unidbg_arm_backend_unicorn_Unicorn_registerHook__JILcom_github_unidbg_arm_backend_unicorn_Unicorn_NewHook_2 }
+  {"registerHook", "(JIJJLcom/vortexdbg/arm/backend/unicorn/Unicorn$NewHook;)J", (void *) Java_com_vortexdbg_arm_backend_unicorn_Unicorn_registerHook__JIJJLcom_vortexdbg_arm_backend_unicorn_Unicorn_NewHook_2 },
+  {"registerHook", "(JILcom/vortexdbg/arm/backend/unicorn/Unicorn$NewHook;)J",   (void *) Java_com_vortexdbg_arm_backend_unicorn_Unicorn_registerHook__JILcom_vortexdbg_arm_backend_unicorn_Unicorn_NewHook_2 }
 };
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved) {
@@ -789,11 +789,11 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved) {
   if (JNI_OK != (*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6)) {
     return JNI_ERR;
   }
-  jclass clz = (*env)->FindClass(env, "com/github/unidbg/arm/backend/unicorn/Unicorn");
+  jclass clz = (*env)->FindClass(env, "com/vortexdbg/arm/backend/unicorn/Unicorn");
   if ((*env)->ExceptionCheck(env)) {
     return JNI_ERR;
   }
-  jclass newHookClass = (*env)->FindClass(env, "com/github/unidbg/arm/backend/unicorn/Unicorn$NewHook");
+  jclass newHookClass = (*env)->FindClass(env, "com/vortexdbg/arm/backend/unicorn/Unicorn$NewHook");
   if ((*env)->ExceptionCheck(env)) {
     return JNI_ERR;
   }

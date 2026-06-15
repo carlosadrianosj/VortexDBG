@@ -4,9 +4,9 @@
 /* Sample code to demonstrate how to emulate ARM code */
 package samples;
 
-import com.github.unidbg.arm.backend.unicorn.BlockHook;
-import com.github.unidbg.arm.backend.unicorn.CodeHook;
-import com.github.unidbg.arm.backend.unicorn.Unicorn;
+import com.vortexdbg.arm.backend.unicorn.BlockHook;
+import com.vortexdbg.arm.backend.unicorn.CodeHook;
+import com.vortexdbg.arm.backend.unicorn.Unicorn;
 import junit.framework.TestCase;
 import unicorn.ArmConst;
 import unicorn.UnicornConst;

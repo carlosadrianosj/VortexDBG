@@ -49,7 +49,7 @@ RUN mkdir build && cd build && \
 WORKDIR /build/jni
 COPY dynarmic.cpp arm_dynarmic_cp15.cpp \
      dynarmic.h arm_dynarmic_cp15.h khash.h \
-     com_github_unidbg_arm_backend_dynarmic_Dynarmic.h \
+     com_vortexdbg_arm_backend_dynarmic_Dynarmic.h \
      CMakeLists.txt ./
 
 RUN mkdir build && cd build && \

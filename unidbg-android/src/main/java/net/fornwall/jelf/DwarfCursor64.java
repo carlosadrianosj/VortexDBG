@@ -1,7 +1,7 @@
 package net.fornwall.jelf;
 
-import com.github.unidbg.Emulator;
-import com.github.unidbg.pointer.UnidbgPointer;
+import com.vortexdbg.Emulator;
+import com.vortexdbg.pointer.UnidbgPointer;
 import unicorn.Arm64Const;
 
 public class DwarfCursor64 extends DwarfCursor {

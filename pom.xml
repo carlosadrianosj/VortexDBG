@@ -1,8 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.github.zhkl0228</groupId>
-    <artifactId>unidbg</artifactId>
+    <groupId>com.vortexdbg</groupId>
+    <artifactId>vortexdbg</artifactId>
     <packaging>pom</packaging>
     <version>0.9.10-SNAPSHOT</version>
     <modules>
@@ -18,9 +18,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.test.skip>true</maven.test.skip>
     </properties>
-    <name>unidbg</name>
+    <name>Vortex-DBG</name>
     <description>Allows you to emulate an Android ARM32 and/or ARM64 native library</description>
-    <url>https://github.com/zhkl0228/unidbg</url>
+    <url>https://github.com/vortexdbg/vortex-dbg</url>
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -34,9 +34,9 @@
         </developer>
     </developers>
     <scm>
-        <connection>scm:git:git@github.com:zhkl0228/unidbg.git</connection>
-        <developerConnection>scm:git:git@github.com:zhkl0228/unidbg.git</developerConnection>
-        <url>git@github.com:zhkl0228/unidbg.git</url>
+        <connection>scm:git:git@github.com:vortexdbg/vortex-dbg.git</connection>
+        <developerConnection>scm:git:git@github.com:vortexdbg/vortex-dbg.git</developerConnection>
+        <url>git@github.com:vortexdbg/vortex-dbg.git</url>
     </scm>
     <build>
         <resources>

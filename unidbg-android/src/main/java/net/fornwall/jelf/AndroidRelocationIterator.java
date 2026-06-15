@@ -1,7 +1,7 @@
 package net.fornwall.jelf;
 
-import com.github.unidbg.Utils;
-import com.github.unidbg.utils.Inspector;
+import com.vortexdbg.Utils;
+import com.vortexdbg.utils.Inspector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

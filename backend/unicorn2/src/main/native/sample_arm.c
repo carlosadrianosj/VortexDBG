@@ -5,7 +5,7 @@
 
 #include <unicorn/unicorn.h>
 #include <string.h>
-#include "com_github_unidbg_arm_backend_unicorn_Unicorn.h"
+#include "com_vortexdbg_arm_backend_unicorn_Unicorn.h"
 
 // code to be emulated
 // #define ARM_CODE "\x37\x00\xa0\xe3" // mov r0, #0x37
@@ -225,11 +225,11 @@ static void test_thumb_ite()
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    testSampleArm
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_testSampleArm
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_testSampleArm
   (JNIEnv *env, jclass cls) {
     test_arm();
 

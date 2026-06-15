@@ -130,22 +130,22 @@ hv_return_t hv_vcpu_set_simd_fp_reg(hv_vcpu_t vcpu, hv_simd_fp_reg_t reg, hv_sim
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    getMaxSlots
  * Signature: (J)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_getMaxSlots
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_getMaxSlots
   (JNIEnv *env, jclass clazz, jlong handle) {
   t_kvm kvm = (t_kvm) handle;
   return kvm->gMaxSlots;
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    getPageSize
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_getPageSize
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_getPageSize
   (JNIEnv *env, jclass clazz) {
   long sz = sysconf(_SC_PAGESIZE);
   return (jint) sz;
@@ -243,11 +243,11 @@ static t_kvm_cpu create_kvm_cpu(t_kvm kvm) {
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    setKvmCallback
- * Signature: (JLcom/github/unidbg/arm/backend/kvm/KvmCallback;)I
+ * Signature: (JLcom/vortexdbg/arm/backend/kvm/KvmCallback;)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_setKvmCallback
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_setKvmCallback
   (JNIEnv *env, jclass clazz, jlong handle, jobject callback) {
   t_kvm kvm = (t_kvm) handle;
   if(kvm->callback) {
@@ -258,11 +258,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_setKvmCallback
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    nativeInitialize
  * Signature: (Z)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_nativeInitialize
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_nativeInitialize
   (JNIEnv *env, jclass clazz, jboolean is64Bit) {
   t_kvm kvm = (t_kvm) calloc(1, sizeof(struct kvm));
   if(kvm == NULL) {
@@ -352,11 +352,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_nativeInitial
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    nativeDestroy
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_nativeDestroy
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_nativeDestroy
   (JNIEnv *env, jclass clazz, jlong handle) {
   t_kvm kvm = (t_kvm) handle;
   munmap(kvm->cpu->run, kvm->gRunSize);
@@ -391,11 +391,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_nativeDestroy
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    remove_user_memory_region
  * Signature: (JIJJJ)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_remove_1user_1memory_1region
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_remove_1user_1memory_1region
   (JNIEnv *env, jclass clazz, jlong handle, jint slot, jlong guest_phys_addr, jlong memory_size, jlong userspace_addr, jlong vaddr_off) {
 
   t_kvm kvm = (t_kvm) handle;
@@ -449,11 +449,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_remove_1user_1
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    set_user_memory_region
  * Signature: (JIJJ)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_set_1user_1memory_1region
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_set_1user_1memory_1region
   (JNIEnv *env, jclass clazz, jlong handle, jint slot, jlong guest_phys_addr, jlong memory_size, jlong userspace_addr) {
   t_kvm kvm = (t_kvm) handle;
   khash_t(memory) *memory = kvm->memory;
@@ -543,11 +543,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_set_1user_1me
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    reg_read_cpacr_el1
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1read_1cpacr_1el1
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_reg_1read_1cpacr_1el1
   (JNIEnv *env, jclass clazz, jlong handle) {
   t_kvm kvm = (t_kvm) handle;
   t_kvm_cpu cpu = kvm->cpu;
@@ -557,11 +557,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1read_1cp
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    reg_set_cpacr_el1
  * Signature: (JJ)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1set_1cpacr_1el1
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_reg_1set_1cpacr_1el1
   (JNIEnv *env, jclass clazz, jlong handle, jlong value) {
   t_kvm kvm = (t_kvm) handle;
   t_kvm_cpu cpu = kvm->cpu;
@@ -570,11 +570,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1set_1cpac
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    reg_set_fpexc
  * Signature: (JJ)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1set_1fpexc
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_reg_1set_1fpexc
   (JNIEnv *env, jclass clazz, jlong handle, jlong value) {
   t_kvm kvm = (t_kvm) handle;
   t_kvm_cpu cpu = kvm->cpu;
@@ -583,11 +583,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1set_1fpex
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    reg_set_sp64
  * Signature: (JJ)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1set_1sp64
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_reg_1set_1sp64
   (JNIEnv *env, jclass clazz, jlong handle, jlong value) {
   t_kvm kvm = (t_kvm) handle;
   t_kvm_cpu cpu = kvm->cpu;
@@ -596,11 +596,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1set_1sp64
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    reg_read_sp64
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1read_1sp64
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_reg_1read_1sp64
   (JNIEnv *env, jclass clazz, jlong handle) {
   t_kvm kvm = (t_kvm) handle;
   t_kvm_cpu cpu = kvm->cpu;
@@ -610,11 +610,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1read_1sp
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    reg_read_pc64
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1read_1pc64
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_reg_1read_1pc64
   (JNIEnv *env, jclass clazz, jlong handle) {
   t_kvm kvm = (t_kvm) handle;
   t_kvm_cpu cpu = kvm->cpu;
@@ -624,11 +624,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1read_1pc
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    reg_read_nzcv
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1read_1nzcv
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_reg_1read_1nzcv
   (JNIEnv *env, jclass clazz, jlong handle) {
   t_kvm kvm = (t_kvm) handle;
   t_kvm_cpu cpu = kvm->cpu;
@@ -638,11 +638,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1read_1nz
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    reg_set_tpidr_el0
  * Signature: (JJ)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1set_1tpidr_1el0
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_reg_1set_1tpidr_1el0
   (JNIEnv *env, jclass clazz, jlong handle, jlong value) {
   t_kvm kvm = (t_kvm) handle;
   t_kvm_cpu cpu = kvm->cpu;
@@ -651,11 +651,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1set_1tpid
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    reg_set_nzcv
  * Signature: (JJ)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1set_1nzcv
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_reg_1set_1nzcv
   (JNIEnv *env, jclass clazz, jlong handle, jlong value) {
   t_kvm kvm = (t_kvm) handle;
   t_kvm_cpu cpu = kvm->cpu;
@@ -664,11 +664,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1set_1nzcv
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    reg_set_elr_el1
  * Signature: (JJ)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1set_1elr_1el1
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_reg_1set_1elr_1el1
   (JNIEnv *env, jclass clazz, jlong handle, jlong value) {
   t_kvm kvm = (t_kvm) handle;
   t_kvm_cpu cpu = kvm->cpu;
@@ -677,11 +677,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1set_1elr_
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    reg_set_tpidrro_el0
  * Signature: (JJ)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1set_1tpidrro_1el0
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_reg_1set_1tpidrro_1el0
   (JNIEnv *env, jclass clazz, jlong handle, jlong value) {
   t_kvm kvm = (t_kvm) handle;
   t_kvm_cpu cpu = kvm->cpu;
@@ -690,11 +690,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1set_1tpid
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    mem_write
  * Signature: (JJ[B)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_mem_1write
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_mem_1write
   (JNIEnv *env, jclass clazz, jlong handle, jlong address, jbyteArray bytes) {
   jsize size = (*env)->GetArrayLength(env, bytes);
   jbyte *data = (*env)->GetByteArrayElements(env, bytes, NULL);
@@ -725,11 +725,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_mem_1write
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    mem_read
  * Signature: (JJI)[B
  */
-JNIEXPORT jbyteArray JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_mem_1read
+JNIEXPORT jbyteArray JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_mem_1read
   (JNIEnv *env, jclass clazz, jlong handle, jlong address, jint size) {
   t_kvm kvm = (t_kvm) handle;
   khash_t(memory) *memory = kvm->memory;
@@ -825,11 +825,11 @@ static hv_simd_fp_reg_t fgprs[] = {
 };
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    reg_write
  * Signature: (JIJ)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1write
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_reg_1write
   (JNIEnv *env, jclass clazz, jlong handle, jint index, jlong value) {
   if(index < 0 || index > 30) {
     char msg[128];
@@ -845,11 +845,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1write
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    reg_read
  * Signature: (JI)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_reg_1read
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_reg_1read
   (JNIEnv *env, jclass clazz, jlong handle, jint index) {
   if(index < 0 || index > 30) {
     char msg[128];
@@ -929,11 +929,11 @@ static int cpu_loop(JNIEnv *env, t_kvm kvm, t_kvm_cpu cpu) {
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    emu_start
  * Signature: (JJ)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_emu_1start
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_emu_1start
   (JNIEnv *env, jclass clazz, jlong handle, jlong pc) {
   t_kvm kvm = (t_kvm) handle;
   t_kvm_cpu cpu = kvm->cpu;
@@ -956,11 +956,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_emu_1start
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    emu_stop
  * Signature: (J)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_emu_1stop
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_emu_1stop
   (JNIEnv *env, jclass clazz, jlong handle) {
   t_kvm kvm = (t_kvm) handle;
   kvm->stop_request = true;
@@ -969,21 +969,21 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_emu_1stop
 
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    free
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_free(JNIEnv *env, jclass clazz, jlong context) {
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_free(JNIEnv *env, jclass clazz, jlong context) {
   void *ctx = (void *) context;
   free(ctx);
  }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    context_alloc
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_context_1alloc(JNIEnv *env, jclass clazz, jlong handle){
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_context_1alloc(JNIEnv *env, jclass clazz, jlong handle){
   t_kvm kvm = (t_kvm) handle;
   if(kvm->is64Bit) {
     void *ctx = calloc(1, sizeof(struct context64));
@@ -995,11 +995,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_context_1allo
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    context_save
  * Signature: (JJ)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_context_1save(JNIEnv *env, jclass clazz, jlong handle, jlong context){
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_context_1save(JNIEnv *env, jclass clazz, jlong handle, jlong context){
     t_kvm kvm = (t_kvm) handle;
     t_context64 ctx = (t_context64) context;
     if(kvm->is64Bit) {
@@ -1025,11 +1025,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_context_1save(
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    context_restore
  * Signature: (JJ)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_context_1restore(JNIEnv *env, jclass clazz, jlong handle, jlong context){
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_context_1restore(JNIEnv *env, jclass clazz, jlong handle, jlong context){
     t_kvm kvm = (t_kvm) handle;
     t_context64 ctx = (t_context64) context;
     if(kvm->is64Bit) {
@@ -1057,11 +1057,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_context_1resto
 
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    mem_allocated_size
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_mem_1allocated_1size
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_mem_1allocated_1size
   (JNIEnv *env, jclass clazz, jlong handle) {
   t_kvm kvm = (t_kvm) handle;
   khash_t(memory) *memory = kvm->memory;
@@ -1069,11 +1069,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_mem_1allocate
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_kvm_Kvm
+ * Class:     com_vortexdbg_arm_backend_kvm_Kvm
  * Method:    mem_resident_size
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_kvm_Kvm_mem_1resident_1size
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_kvm_Kvm_mem_1resident_1size
   (JNIEnv *env, jclass clazz, jlong handle) {
   t_kvm kvm = (t_kvm) handle;
   khash_t(memory) *memory = kvm->memory;
@@ -1104,13 +1104,13 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
   if (JNI_OK != (*vm)->GetEnv(vm, (void **)&env, JNI_VERSION_1_6)) {
     return JNI_ERR;
   }
-  jclass cKvmCallback = (*env)->FindClass(env, "com/github/unidbg/arm/backend/kvm/KvmCallback");
+  jclass cKvmCallback = (*env)->FindClass(env, "com/vortexdbg/arm/backend/kvm/KvmCallback");
   if ((*env)->ExceptionCheck(env)) {
     return JNI_ERR;
   }
   handleException = (*env)->GetMethodID(env, cKvmCallback, "handleException", "(JJJJJ)Z");
 
-  jclass localKvmException = (*env)->FindClass(env, "com/github/unidbg/arm/backend/kvm/KvmException");
+  jclass localKvmException = (*env)->FindClass(env, "com/vortexdbg/arm/backend/kvm/KvmException");
   if ((*env)->ExceptionCheck(env)) {
     return JNI_ERR;
   }

@@ -9,7 +9,7 @@ RUN sed -i 's|^mirrorlist=|#mirrorlist=|g' /etc/yum.repos.d/CentOS-*.repo && \
 ENV JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk
 
 WORKDIR /build
-COPY kvm.c kvm.h khash.h com_github_unidbg_arm_backend_kvm_Kvm.h CMakeLists.txt ./
+COPY kvm.c kvm.h khash.h com_vortexdbg_arm_backend_kvm_Kvm.h CMakeLists.txt ./
 COPY linux-headers/ linux-headers/
 
 RUN mkdir build && cd build && cmake .. && make VERBOSE=1

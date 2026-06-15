@@ -634,11 +634,11 @@ extern "C" {
 #endif
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    setDynarmicCallback
- * Signature: (JLcom/github/unidbg/arm/backend/dynarmic/DynarmicCallback;)I
+ * Signature: (JLcom/vortexdbg/arm/backend/dynarmic/DynarmicCallback;)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_setDynarmicCallback
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_setDynarmicCallback
   (JNIEnv *env, jclass clazz, jlong handle, jobject callback) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -666,11 +666,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_setD
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    nativeInitialize
  * Signature: (Z)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_nativeInitialize
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_nativeInitialize
   (JNIEnv *env, jclass clazz, jboolean is64Bit) {
   t_dynarmic dynarmic = (t_dynarmic) calloc(1, sizeof(struct dynarmic));
   if(dynarmic == NULL) {
@@ -777,11 +777,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_nat
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    nativeDestroy
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_nativeDestroy
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_nativeDestroy
   (JNIEnv *env, jclass clazz, jlong handle) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   khash_t(memory) *memory = dynarmic->memory;
@@ -829,11 +829,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_nati
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    mem_unmap
  * Signature: (JJJ)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_mem_1unmap
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_mem_1unmap
   (JNIEnv *env, jclass clazz, jlong handle, jlong address, jlong size) {
   if(address & DYN_PAGE_MASK) {
     return 1;
@@ -871,11 +871,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_mem_
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    mem_map
  * Signature: (JJJI)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_mem_1map
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_mem_1map
   (JNIEnv *env, jclass clazz, jlong handle, jlong address, jlong size, jint perms) {
   if(address & DYN_PAGE_MASK) {
     return 1;
@@ -928,11 +928,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_mem_
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    mem_protect
  * Signature: (JJJI)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_mem_1protect
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_mem_1protect
   (JNIEnv *env, jclass clazz, jlong handle, jlong address, jlong size, jint perms) {
   if(address & DYN_PAGE_MASK) {
     return 1;
@@ -955,11 +955,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_mem_
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    mem_write
  * Signature: (JJ[B)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_mem_1write
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_mem_1write
   (JNIEnv *env, jclass clazz, jlong handle, jlong address, jbyteArray bytes) {
   jsize size = env->GetArrayLength(bytes);
   jbyte *data = env->GetByteArrayElements(bytes, NULL);
@@ -989,11 +989,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_mem_
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    mem_read
  * Signature: (JJI)[B
  */
-JNIEXPORT jbyteArray JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_mem_1read
+JNIEXPORT jbyteArray JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_mem_1read
   (JNIEnv *env, jclass clazz, jlong handle, jlong address, jint size) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   khash_t(memory) *memory = dynarmic->memory;
@@ -1020,11 +1020,11 @@ JNIEXPORT jbyteArray JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmi
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    reg_read_pc64
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_1read_1pc64
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_reg_1read_1pc64
   (JNIEnv *env, jclass clazz, jlong handle) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -1042,11 +1042,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    reg_set_sp64
  * Signature: (JJ)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_1set_1sp64
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_reg_1set_1sp64
   (JNIEnv *env, jclass clazz, jlong handle, jlong value) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -1063,11 +1063,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    reg_read_sp64
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_1read_1sp64
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_reg_1read_1sp64
   (JNIEnv *env, jclass clazz, jlong handle) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -1085,11 +1085,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    reg_read_nzcv
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_1read_1nzcv
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_reg_1read_1nzcv
   (JNIEnv *env, jclass clazz, jlong handle) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -1107,11 +1107,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    reg_set_nzcv
  * Signature: (JJ)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_1set_1nzcv
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_reg_1set_1nzcv
   (JNIEnv *env, jclass clazz, jlong handle, jlong value) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -1128,11 +1128,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    reg_set_tpidr_el0
  * Signature: (JJ)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_1set_1tpidr_1el0
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_reg_1set_1tpidr_1el0
   (JNIEnv *env, jclass clazz, jlong handle, jlong value) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -1149,11 +1149,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    reg_set_vector
  * Signature: (JI[B)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_1set_1vector
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_reg_1set_1vector
   (JNIEnv *env, jclass clazz, jlong handle, jint index, jbyteArray vector) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -1174,11 +1174,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    reg_read_vector
  * Signature: (JI)[B
  */
-JNIEXPORT jbyteArray JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_1read_1vector
+JNIEXPORT jbyteArray JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_reg_1read_1vector
   (JNIEnv *env, jclass clazz, jlong handle, jint index) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -1197,11 +1197,11 @@ JNIEXPORT jbyteArray JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmi
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    reg_set_tpidrro_el0
  * Signature: (JJ)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_1set_1tpidrro_1el0
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_reg_1set_1tpidrro_1el0
   (JNIEnv *env, jclass clazz, jlong handle, jlong value) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -1218,11 +1218,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    reg_write
  * Signature: (JIJ)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_1write
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_reg_1write
   (JNIEnv *env, jclass clazz, jlong handle, jint index, jlong value) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -1244,11 +1244,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    reg_read
  * Signature: (JI)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_1read
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_reg_1read
   (JNIEnv *env, jclass clazz, jlong handle, jint index) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -1271,11 +1271,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    reg_read_cpsr
  * Signature: (J)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_1read_1cpsr
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_reg_1read_1cpsr
   (JNIEnv *env, jclass clazz, jlong handle) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -1293,11 +1293,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    reg_write_cpsr
  * Signature: (JI)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_1write_1cpsr
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_reg_1write_1cpsr
   (JNIEnv *env, jclass clazz, jlong handle, jint value) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -1316,11 +1316,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    reg_write_c13_c0_3
  * Signature: (JI)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_1write_1c13_1c0_13
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_reg_1write_1c13_1c0_13
   (JNIEnv *env, jclass clazz, jlong handle, jint value) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -1339,11 +1339,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_reg_
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    emu_start
  * Signature: (JJ)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_emu_1start
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_emu_1start
   (JNIEnv *env, jclass clazz, jlong handle, jlong pc) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if (setjmp(t_jmp_buf) != 0) {
@@ -1396,11 +1396,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_emu_
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    emu_stop
  * Signature: (J)I
  */
-JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_emu_1stop
+JNIEXPORT jint JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_emu_1stop
   (JNIEnv *env, jclass clazz, jlong handle) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -1422,11 +1422,11 @@ JNIEXPORT jint JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_emu_
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    context_alloc
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_context_1alloc
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_context_1alloc
   (JNIEnv *env, jclass clazz, jlong handle) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -1439,11 +1439,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_con
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    context_restore
  * Signature: (JJ)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_context_1restore
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_context_1restore
   (JNIEnv *env, jclass clazz, jlong handle, jlong context) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -1474,11 +1474,11 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_cont
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    context_save
  * Signature: (JJ)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_context_1save
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_context_1save
   (JNIEnv *env, jclass clazz, jlong handle, jlong context) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   if(dynarmic->is64Bit) {
@@ -1509,22 +1509,22 @@ JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_cont
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    free
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_free
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_free
   (JNIEnv *env, jclass clazz, jlong context) {
   void *ctx = (void *) context;
   free(ctx);
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    mem_allocated_size
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_mem_1allocated_1size
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_mem_1allocated_1size
   (JNIEnv *env, jclass clazz, jlong handle) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   khash_t(memory) *memory = dynarmic->memory;
@@ -1532,11 +1532,11 @@ JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_mem
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_dynarmic_Dynarmic
+ * Class:     com_vortexdbg_arm_backend_dynarmic_Dynarmic
  * Method:    mem_resident_size
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_unidbg_arm_backend_dynarmic_Dynarmic_mem_1resident_1size
+JNIEXPORT jlong JNICALL Java_com_vortexdbg_arm_backend_dynarmic_Dynarmic_mem_1resident_1size
   (JNIEnv *env, jclass clazz, jlong handle) {
   t_dynarmic dynarmic = (t_dynarmic) handle;
   khash_t(memory) *memory = dynarmic->memory;
@@ -1573,7 +1573,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
   if (JNI_OK != vm->GetEnv((void **)&env, JNI_VERSION_1_6)) {
     return JNI_ERR;
   }
-  jclass cDynarmicCallback = env->FindClass("com/github/unidbg/arm/backend/dynarmic/DynarmicCallback");
+  jclass cDynarmicCallback = env->FindClass("com/vortexdbg/arm/backend/dynarmic/DynarmicCallback");
   if (env->ExceptionCheck()) {
     return JNI_ERR;
   }
@@ -1584,7 +1584,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
   handleMemoryWriteFailed = env->GetMethodID(cDynarmicCallback, "handleMemoryWriteFailed", "(JI)V");
   cachedJVM = vm;
 
-  jclass localDynarmicException = env->FindClass("com/github/unidbg/arm/backend/dynarmic/DynarmicException");
+  jclass localDynarmicException = env->FindClass("com/vortexdbg/arm/backend/dynarmic/DynarmicException");
   if (env->ExceptionCheck()) {
     return JNI_ERR;
   }

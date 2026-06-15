@@ -5,7 +5,7 @@
 
 #include <unicorn/unicorn.h>
 #include <string.h>
-#include "com_github_unidbg_arm_backend_unicorn_Unicorn.h"
+#include "com_vortexdbg_arm_backend_unicorn_Unicorn.h"
 
 // code to be emulated
 #define ARM64_CODE                                                             \
@@ -142,11 +142,11 @@ static void test_arm64(void)
 }
 
 /*
- * Class:     com_github_unidbg_arm_backend_unicorn_Unicorn
+ * Class:     com_vortexdbg_arm_backend_unicorn_Unicorn
  * Method:    testSampleArm64
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_com_github_unidbg_arm_backend_unicorn_Unicorn_testSampleArm64
+JNIEXPORT void JNICALL Java_com_vortexdbg_arm_backend_unicorn_Unicorn_testSampleArm64
   (JNIEnv *env, jclass cls) {
     test_arm64_mem_fetch();
     test_arm64();

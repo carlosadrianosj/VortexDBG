@@ -1,11 +1,11 @@
 package net.fornwall.jelf;
 
-import com.github.unidbg.Emulator;
-import com.github.unidbg.Module;
-import com.github.unidbg.pointer.UnidbgPointer;
-import com.github.unidbg.unwind.Frame;
-import com.github.unidbg.unwind.Unwinder;
-import com.github.unidbg.utils.Inspector;
+import com.vortexdbg.Emulator;
+import com.vortexdbg.Module;
+import com.vortexdbg.pointer.UnidbgPointer;
+import com.vortexdbg.unwind.Frame;
+import com.vortexdbg.unwind.Unwinder;
+import com.vortexdbg.utils.Inspector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import unicorn.ArmConst;

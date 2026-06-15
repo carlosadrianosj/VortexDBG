@@ -1,0 +1,113 @@
+package com.vortexdbg.ios;
+
+import com.vortexdbg.Emulator;
+import com.vortexdbg.Module;
+import com.vortexdbg.arm.backend.DynarmicFactory;
+import com.vortexdbg.arm.backend.HypervisorFactory;
+import com.vortexdbg.debugger.DebugRunnable;
+import com.vortexdbg.file.ios.DarwinFileIO;
+import com.vortexdbg.hook.DispatchAsyncCallback;
+import com.vortexdbg.hook.HookLoader;
+import com.vortexdbg.hook.MsgSendCallback;
+import com.vortexdbg.ios.classdump.ClassDumper;
+import com.vortexdbg.ios.classdump.IClassDumper;
+import com.vortexdbg.ios.ipa.BundleLoader;
+import com.vortexdbg.ios.ipa.EmulatorConfigurator;
+import com.vortexdbg.ios.ipa.LoadedBundle;
+import com.vortexdbg.ios.objc.NSString;
+import com.vortexdbg.ios.objc.ObjC;
+import com.vortexdbg.ios.struct.objc.ObjcClass;
+import com.vortexdbg.ios.struct.objc.ObjcObject;
+import com.vortexdbg.pointer.UnidbgPointer;
+import com.vortexdbg.spi.SyscallHandler;
+import com.vortexdbg.thread.UniThreadDispatcher;
+import com.sun.jna.Pointer;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+
+import java.io.File;
+
+public class FrameworkLoaderTest implements EmulatorConfigurator, DispatchAsyncCallback, MsgSendCallback {
+
+    public static void main(String[] args) throws Exception {
+        FrameworkLoaderTest test = new FrameworkLoaderTest();
+        test.testLoader();
+    }
+
+    public void testLoader() throws Exception {
+        long start = System.currentTimeMillis();
+        File dir = new File("unidbg-ios/src/test/resources/example_binaries");
+        BundleLoader loader = new BundleLoader(dir, new File("target/rootfs/approov")) {
+            @Override
+            protected String getBundleIdentifier() {
+                return "com.mobillium.papara";
+            }
+        };
+        loader.addBackendFactory(new HypervisorFactory(true));
+        loader.addBackendFactory(new DynarmicFactory(true));
+        LoadedBundle bundle = loader.load("Approov", this);
+        final Emulator<?> emulator = bundle.getEmulator();
+        final ObjC objc = ObjC.getInstance(emulator);
+        System.out.println("load offset=" + (System.currentTimeMillis() - start) + "ms");
+        final HookLoader hookLoader = HookLoader.load(emulator);
+        hookLoader.hookDispatchAsync(this);
+        final ObjcClass cApproov = objc.getClass("Approov");
+        String initialConfig = "#447440#GLWOzh88IjYKBLg5szMsGeOR4VhqPwen5Qrq0rNtdQs=";
+        boolean success = cApproov.callObjcInt("initialize:updateConfig:comment:error:",
+                objc.newString(initialConfig),
+                null, null, null) != 0;
+        if (!success) {
+            throw new IllegalStateException("Approov.initialize failed.");
+        }
+        emulator.attach().run((DebugRunnable<Void>) args -> {
+            final IClassDumper classDumper = ClassDumper.getInstance(emulator);
+            String objcClass = classDumper.dumpClass("Approov");
+            System.out.println("[" + Thread.currentThread().getName() + "]\n" + objcClass);
+            NSString sdkId = cApproov.callObjc("getSDKID").toNSString();
+            NSString deviceID = cApproov.callObjc("getDeviceID").toNSString();
+            System.out.println("sdkId=" + sdkId.getString() + ", deviceID=" + deviceID.getString());
+
+            hookLoader.hookObjcMsgSend(FrameworkLoaderTest.this);
+            Logger.getLogger(UniThreadDispatcher.class).setLevel(Level.TRACE);
+            Logger.getLogger("com.vortexdbg.ios.debug").setLevel(Level.DEBUG);
+            ObjcObject result = cApproov.callObjc("fetchApproovTokenAndWait:", objc.newString("api.papara.com"));
+            System.out.println("fetchApproovTokenAndWait result=" + result);
+            return null;
+        });
+    }
+
+    @Override
+    public boolean onMsgSend(Emulator<?> emulator, boolean systemClass, String className, String cmd, Pointer lr) {
+        System.out.println("onMsgSend [" + className + " " + cmd + "] LR=" + lr);
+        return false;
+    }
+
+    @Override
+    public void configure(Emulator<DarwinFileIO> emulator, String executableBundlePath, File rootDir, String bundleIdentifier) {
+        SyscallHandler<?> syscallHandler = emulator.getSyscallHandler();
+        syscallHandler.setVerbose(false);
+        syscallHandler.setEnableThreadDispatcher(true);
+    }
+
+    @Override
+    public void onExecutableLoaded(Emulator<DarwinFileIO> emulator, MachOModule executable) {
+    }
+
+    @Override
+    public Result canDispatch(Emulator<?> emulator, Pointer dq, Pointer fun, boolean is_barrier_async) {
+        long address = UnidbgPointer.nativeValue(fun);
+        Module module = emulator.getMemory().findModuleByAddress(address);
+        if ("Approov".equals(module.name)) {
+            long offset = address - module.base;
+            if (offset == 0x4c0e0) {
+                return Result.thread_run;
+            }
+            if (offset == 0xd2d4) {
+                return Result.thread_run;
+            }
+        }
+        System.out.println("canDispatch dq=" + dq + ", fun=" + fun + ", is_barrier_async=" + is_barrier_async);
+        return Result.skip;
+    }
+
+}

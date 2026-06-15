@@ -5,7 +5,7 @@
 #include <linux/kvm.h>
 
 #include "khash.h"
-#include "com_github_unidbg_arm_backend_kvm_Kvm.h"
+#include "com_vortexdbg_arm_backend_kvm_Kvm.h"
 
 #define REG_VBAR_EL1 0xf0000000LL
 #define MMIO_TRAP_ADDRESS 0x76543210LL

@@ -3,19 +3,19 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <groupId>com.github.zhkl0228</groupId>
-        <artifactId>unidbg</artifactId>
+        <groupId>com.vortexdbg</groupId>
+        <artifactId>vortexdbg</artifactId>
         <version>0.9.10-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>unidbg-kvm</artifactId>
+    <artifactId>vortexdbg-kvm</artifactId>
     <name>unidbg-kvm</name>
     <dependencies>
         <dependency>
-            <groupId>com.github.zhkl0228</groupId>
-            <artifactId>unidbg-api</artifactId>
+            <groupId>com.vortexdbg</groupId>
+            <artifactId>vortexdbg-api</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

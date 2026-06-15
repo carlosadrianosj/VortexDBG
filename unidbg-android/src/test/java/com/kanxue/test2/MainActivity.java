@@ -1,15 +1,15 @@
 package com.kanxue.test2;
 
-import com.github.unidbg.AndroidEmulator;
-import com.github.unidbg.LibraryResolver;
-import com.github.unidbg.arm.backend.DynarmicFactory;
-import com.github.unidbg.linux.android.AndroidEmulatorBuilder;
-import com.github.unidbg.linux.android.AndroidResolver;
-import com.github.unidbg.linux.android.dvm.DalvikModule;
-import com.github.unidbg.linux.android.dvm.DvmObject;
-import com.github.unidbg.linux.android.dvm.VM;
-import com.github.unidbg.linux.android.dvm.jni.ProxyDvmObject;
-import com.github.unidbg.memory.Memory;
+import com.vortexdbg.AndroidEmulator;
+import com.vortexdbg.LibraryResolver;
+import com.vortexdbg.arm.backend.DynarmicFactory;
+import com.vortexdbg.linux.android.AndroidEmulatorBuilder;
+import com.vortexdbg.linux.android.AndroidResolver;
+import com.vortexdbg.linux.android.dvm.DalvikModule;
+import com.vortexdbg.linux.android.dvm.DvmObject;
+import com.vortexdbg.linux.android.dvm.VM;
+import com.vortexdbg.linux.android.dvm.jni.ProxyDvmObject;
+import com.vortexdbg.memory.Memory;
 
 import java.io.File;
 

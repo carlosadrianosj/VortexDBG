@@ -47,7 +47,7 @@ RUN mkdir build && cd build && \
 WORKDIR /build/jni
 COPY dynarmic.cpp arm_dynarmic_cp15.cpp mman.c \
      dynarmic.h arm_dynarmic_cp15.h mman.h khash.h \
-     com_github_unidbg_arm_backend_dynarmic_Dynarmic.h ./
+     com_vortexdbg_arm_backend_dynarmic_Dynarmic.h ./
 
 RUN JNI_INC="$(find /usr/lib/jvm -path '*/include/jni.h' -printf '%h\n' | head -1)" && \
     x86_64-w64-mingw32-g++ -shared -O2 -static -std=c++20 -DDYNARMIC_MASTER \

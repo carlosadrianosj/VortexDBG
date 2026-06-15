@@ -1,12 +1,12 @@
 package com.bytedance.frameworks.core.encrypt;
 
 import com.alibaba.fastjson.util.IOUtils;
-import com.github.unidbg.arm.backend.HypervisorFactory;
-import com.github.unidbg.utils.Inspector;
-import com.github.unidbg.worker.Worker;
-import com.github.unidbg.worker.WorkerLoan;
-import com.github.unidbg.worker.WorkerPool;
-import com.github.unidbg.worker.WorkerPoolFactory;
+import com.vortexdbg.arm.backend.HypervisorFactory;
+import com.vortexdbg.utils.Inspector;
+import com.vortexdbg.worker.Worker;
+import com.vortexdbg.worker.WorkerLoan;
+import com.vortexdbg.worker.WorkerPool;
+import com.vortexdbg.worker.WorkerPoolFactory;
 import org.scijava.nativelib.NativeLibraryUtil;
 
 import java.util.concurrent.ExecutorService;

@@ -1,11 +1,11 @@
 package org.aeonlucid;
 
-import com.github.unidbg.AndroidEmulator;
-import com.github.unidbg.LibraryResolver;
-import com.github.unidbg.Module;
-import com.github.unidbg.android.EmulatorTest;
-import com.github.unidbg.linux.android.AndroidEmulatorBuilder;
-import com.github.unidbg.linux.android.AndroidResolver;
+import com.vortexdbg.AndroidEmulator;
+import com.vortexdbg.LibraryResolver;
+import com.vortexdbg.Module;
+import com.vortexdbg.android.EmulatorTest;
+import com.vortexdbg.linux.android.AndroidEmulatorBuilder;
+import com.vortexdbg.linux.android.AndroidResolver;
 
 import java.io.File;
 
