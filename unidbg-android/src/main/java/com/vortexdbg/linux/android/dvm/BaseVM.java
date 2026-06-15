@@ -39,6 +39,8 @@ public abstract class BaseVM implements VM, DvmClassFactory {
 
     DvmObject<?> throwable;
 
+    boolean exceptionPropagation;
+
     boolean verbose, verboseMethodOperation, verboseFieldOperation;
 
     @Override
@@ -59,6 +61,26 @@ public abstract class BaseVM implements VM, DvmClassFactory {
     @Override
     public void throwException(DvmObject<?> throwable) {
         this.throwable = throwable;
+    }
+
+    @Override
+    public void setExceptionPropagation(boolean enabled) {
+        this.exceptionPropagation = enabled;
+    }
+
+    @Override
+    public boolean isExceptionPropagation() {
+        return exceptionPropagation;
+    }
+
+    @Override
+    public DvmObject<?> getPendingException() {
+        return throwable;
+    }
+
+    @Override
+    public void clearPendingException() {
+        this.throwable = null;
     }
 
     @Override

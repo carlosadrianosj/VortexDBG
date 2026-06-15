@@ -102,6 +102,20 @@ public interface VM {
      */
     void throwException(DvmObject<?> throwable);
 
+    /**
+     * Vortex-DBG (A1): propagação de exceção native-&gt;host.
+     * Quando habilitado, ao retornar de uma chamada JNI com exceção pendente
+     * (ThrowNew/Throw não tratada pelo próprio nativo via ExceptionClear), o Vortex
+     * lança a exceção no host como {@link VortexJniException}. Opt-in (default false)
+     * para preservar o comportamento do UniDBG upstream.
+     */
+    void setExceptionPropagation(boolean enabled);
+    boolean isExceptionPropagation();
+    /** Exceção JNI pendente (ou null) — espelha ExceptionOccurred/ExceptionCheck. */
+    DvmObject<?> getPendingException();
+    /** Limpa a exceção pendente (equivalente a ExceptionClear). */
+    void clearPendingException();
+
     void setVerbose(boolean verbose);
     void setVerboseMethodOperation(boolean verboseMethodOperation);
     void setVerboseFieldOperation(boolean verboseFieldOperation);

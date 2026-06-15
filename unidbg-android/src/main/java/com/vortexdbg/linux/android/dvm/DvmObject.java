@@ -132,7 +132,17 @@ public class DvmObject<T> extends Hashable {
                 list.add(arg);
             }
         }
-        return Module.emulateFunction(emulator, fnPtr.peer, list.toArray());
+        Number ret = Module.emulateFunction(emulator, fnPtr.peer, list.toArray());
+        // Vortex-DBG (A1 / WF3): propaga exceção JNI pendente para o host (opt-in).
+        if (vm instanceof BaseVM) {
+            BaseVM baseVM = (BaseVM) vm;
+            if (baseVM.exceptionPropagation && baseVM.throwable != null) {
+                DvmObject<?> pending = baseVM.throwable;
+                baseVM.throwable = null;
+                throw new VortexJniException(pending);
+            }
+        }
+        return ret;
     }
 
     @Override
