@@ -68,14 +68,14 @@ public class SignalTask extends AbstractSignalTask {
         if (emulator.is32Bit()) {
             backend.reg_write(ArmConst.UC_ARM_REG_SP, stack.peer);
             backend.reg_write(ArmConst.UC_ARM_REG_R0, signum);
-            backend.reg_write(ArmConst.UC_ARM_REG_R1, VortexdbgPointer.nativeValue(sig_info)); // siginfo_t *info
-            backend.reg_write(ArmConst.UC_ARM_REG_R2, VortexdbgPointer.nativeValue(ucontext.getPointer()));
+            backend.reg_write(ArmConst.UC_ARM_REG_R1, VortexdbgPointer.nativeValueOf(sig_info)); // siginfo_t *info
+            backend.reg_write(ArmConst.UC_ARM_REG_R2, VortexdbgPointer.nativeValueOf(ucontext.getPointer()));
             backend.reg_write(ArmConst.UC_ARM_REG_LR, emulator.getReturnAddress());
         } else {
             backend.reg_write(Arm64Const.UC_ARM64_REG_SP, stack.peer);
             backend.reg_write(Arm64Const.UC_ARM64_REG_X0, signum);
-            backend.reg_write(Arm64Const.UC_ARM64_REG_X1, VortexdbgPointer.nativeValue(sig_info)); // siginfo_t *info
-            backend.reg_write(Arm64Const.UC_ARM64_REG_X2, VortexdbgPointer.nativeValue(ucontext.getPointer()));
+            backend.reg_write(Arm64Const.UC_ARM64_REG_X1, VortexdbgPointer.nativeValueOf(sig_info)); // siginfo_t *info
+            backend.reg_write(Arm64Const.UC_ARM64_REG_X2, VortexdbgPointer.nativeValueOf(ucontext.getPointer()));
             backend.reg_write(Arm64Const.UC_ARM64_REG_LR, emulator.getReturnAddress());
         }
         return emulator.emulate(action.getSaHandler(), emulator.getReturnAddress());

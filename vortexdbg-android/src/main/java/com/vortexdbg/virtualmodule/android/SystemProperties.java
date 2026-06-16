@@ -39,11 +39,11 @@ public class SystemProperties extends VirtualModule<Void> {
                 log.debug("__system_property_read_callback pi={}, callback={}, cookie={}", pi, callback, cookie);
                 Pointer key = pi.share(SystemPropertyHook.PROP_VALUE_MAX + 4);
                 Pointer value = pi.share(4);
-                context.setXLong(0, VortexdbgPointer.nativeValue(cookie));
-                context.setXLong(1, VortexdbgPointer.nativeValue(value));
-                context.setXLong(2, VortexdbgPointer.nativeValue(key));
+                context.setXLong(0, VortexdbgPointer.nativeValueOf(cookie));
+                context.setXLong(1, VortexdbgPointer.nativeValueOf(value));
+                context.setXLong(2, VortexdbgPointer.nativeValueOf(key));
                 context.setXLong(3, pi.getInt(0));
-                return HookStatus.RET(emulator, VortexdbgPointer.nativeValue(callback));
+                return HookStatus.RET(emulator, VortexdbgPointer.nativeValueOf(callback));
             }
         } : new ArmHook() {
             @Override
@@ -55,11 +55,11 @@ public class SystemProperties extends VirtualModule<Void> {
                 log.debug("__system_property_read_callback pi={}, callback={}, cookie={}", pi, callback, cookie);
                 Pointer key = pi.share(SystemPropertyHook.PROP_VALUE_MAX + 4);
                 Pointer value = pi.share(4);
-                context.setR0((int) VortexdbgPointer.nativeValue(cookie));
-                context.setR1((int) VortexdbgPointer.nativeValue(value));
-                context.setR2((int) VortexdbgPointer.nativeValue(key));
+                context.setR0((int) VortexdbgPointer.nativeValueOf(cookie));
+                context.setR1((int) VortexdbgPointer.nativeValueOf(value));
+                context.setR2((int) VortexdbgPointer.nativeValueOf(key));
                 context.setR3(pi.getInt(0));
-                return HookStatus.RET(emulator, VortexdbgPointer.nativeValue(callback));
+                return HookStatus.RET(emulator, VortexdbgPointer.nativeValueOf(callback));
             }
         }));
     }

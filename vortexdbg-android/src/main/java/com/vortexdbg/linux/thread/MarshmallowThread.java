@@ -54,16 +54,16 @@ public class MarshmallowThread extends ThreadTask {
         if (emulator.is32Bit()) {
             Pointer tls = thread.share(0x48);
             this.errno = tls.share(8);
-            backend.reg_write(ArmConst.UC_ARM_REG_R0, VortexdbgPointer.nativeValue(thread));
+            backend.reg_write(ArmConst.UC_ARM_REG_R0, VortexdbgPointer.nativeValueOf(thread));
             backend.reg_write(ArmConst.UC_ARM_REG_SP, stack.peer);
-            backend.reg_write(ArmConst.UC_ARM_REG_C13_C0_3, VortexdbgPointer.nativeValue(tls));
+            backend.reg_write(ArmConst.UC_ARM_REG_C13_C0_3, VortexdbgPointer.nativeValueOf(tls));
             backend.reg_write(ArmConst.UC_ARM_REG_LR, until);
         } else {
             Pointer tls = thread.share(0xb0);
             this.errno = tls.share(16);
-            backend.reg_write(Arm64Const.UC_ARM64_REG_X0, VortexdbgPointer.nativeValue(thread));
+            backend.reg_write(Arm64Const.UC_ARM64_REG_X0, VortexdbgPointer.nativeValueOf(thread));
             backend.reg_write(Arm64Const.UC_ARM64_REG_SP, stack.peer);
-            backend.reg_write(Arm64Const.UC_ARM64_REG_TPIDR_EL0, VortexdbgPointer.nativeValue(tls));
+            backend.reg_write(Arm64Const.UC_ARM64_REG_TPIDR_EL0, VortexdbgPointer.nativeValueOf(tls));
             backend.reg_write(Arm64Const.UC_ARM64_REG_LR, until);
         }
         return emulator.emulate(this.fn.peer, until);

@@ -186,7 +186,7 @@ public class Android64Test extends AbstractJni {
                 emulator.getBackend().reg_write_vector(Arm64Const.UC_ARM64_REG_Q0, buffer.array());
             }
             VortexdbgPointer fun = dvmClass.findNativeFunction(emulator, "nestedRun(Ljava/lang/String;JID)J");
-            throw NestedRun.runToFunction(VortexdbgPointer.nativeValue(fun));
+            throw NestedRun.runToFunction(VortexdbgPointer.nativeValueOf(fun));
         }
 
         return super.callStaticLongMethod(vm, dvmClass, signature, varArg);

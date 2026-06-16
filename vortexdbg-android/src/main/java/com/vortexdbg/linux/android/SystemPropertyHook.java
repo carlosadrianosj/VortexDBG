@@ -111,7 +111,7 @@ public class SystemPropertyHook implements HookListener {
                             if (propertyProvider != null) {
                                 Pointer replace = propertyProvider.__system_property_find(this.name);
                                 if (replace != null) {
-                                    context.setXLong(0, VortexdbgPointer.nativeValue(replace));
+                                    context.setXLong(0, VortexdbgPointer.nativeValueOf(replace));
                                 }
                             }
                         }

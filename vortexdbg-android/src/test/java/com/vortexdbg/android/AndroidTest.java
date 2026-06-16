@@ -179,7 +179,7 @@ public class AndroidTest extends AbstractJni {
                 context.setR2(str.hashCode());
             }
             VortexdbgPointer fun = dvmClass.findNativeFunction(emulator, "nestedRun(Ljava/lang/String;JID)J");
-            throw NestedRun.runToFunction(VortexdbgPointer.nativeValue(fun));
+            throw NestedRun.runToFunction(VortexdbgPointer.nativeValueOf(fun));
         }
 
         return super.callStaticLongMethod(vm, dvmClass, signature, varArg);

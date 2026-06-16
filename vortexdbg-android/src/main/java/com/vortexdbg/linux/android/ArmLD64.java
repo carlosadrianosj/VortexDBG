@@ -141,11 +141,11 @@ public class ArmLD64 extends Dlfcn {
                                     info.dlpi_addr = dlpi_addr.peer;
                                     ElfDynamicStructure dynamicStructure = module.dynamicStructure;
                                     if (dynamicStructure != null && dynamicStructure.soName > 0 && dynamicStructure.dt_strtab_offset > 0) {
-                                        info.dlpi_name = VortexdbgPointer.nativeValue(dlpi_addr.share(dynamicStructure.dt_strtab_offset + dynamicStructure.soName));
+                                        info.dlpi_name = VortexdbgPointer.nativeValueOf(dlpi_addr.share(dynamicStructure.dt_strtab_offset + dynamicStructure.soName));
                                     } else {
-                                        info.dlpi_name = VortexdbgPointer.nativeValue(module.createPathMemory(svcMemory));
+                                        info.dlpi_name = VortexdbgPointer.nativeValueOf(module.createPathMemory(svcMemory));
                                     }
-                                    info.dlpi_phdr = VortexdbgPointer.nativeValue(dlpi_addr.share(module.elfFile.ph_offset));
+                                    info.dlpi_phdr = VortexdbgPointer.nativeValueOf(dlpi_addr.share(module.elfFile.ph_offset));
                                     info.dlpi_phnum = module.elfFile.num_ph;
                                     info.pack();
 
@@ -253,10 +253,10 @@ public class ArmLD64 extends Dlfcn {
                             Symbol symbol = module.findClosestSymbolByAddress(addr, true);
 
                             DlInfo64 dlInfo = new DlInfo64(info);
-                            dlInfo.dli_fname = VortexdbgPointer.nativeValue(module.createPathMemory(svcMemory));
+                            dlInfo.dli_fname = VortexdbgPointer.nativeValueOf(module.createPathMemory(svcMemory));
                             dlInfo.dli_fbase = module.base;
                             if (symbol != null) {
-                                dlInfo.dli_sname = VortexdbgPointer.nativeValue(symbol.createNameMemory(svcMemory));
+                                dlInfo.dli_sname = VortexdbgPointer.nativeValueOf(symbol.createNameMemory(svcMemory));
                                 dlInfo.dli_saddr = symbol.getAddress();
                             }
                             dlInfo.pack();
