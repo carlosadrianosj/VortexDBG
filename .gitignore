@@ -22,3 +22,4 @@
 /unidbg-ios/src/test/resources/example_binaries/cpu_features
 /unidbg-ios/src/test/resources/example_binaries/ios_cpu_features
 vortexdbg-kotlin/target/
+vortexdbg-ios-dsc/target/
