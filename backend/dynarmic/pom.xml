@@ -11,7 +11,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>vortexdbg-dynarmic</artifactId>
-    <name>unidbg-dynarmic</name>
+    <name>vortexdbg-dynarmic</name>
     <dependencies>
         <dependency>
             <groupId>com.vortexdbg</groupId>

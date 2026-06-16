@@ -13,7 +13,7 @@ import com.vortexdbg.arm.ARMEmulator;
 import com.vortexdbg.arm.backend.BackendException;
 import com.vortexdbg.arm.backend.DebugHook;
 import com.vortexdbg.arm.backend.KvmBackend;
-import com.vortexdbg.pointer.UnidbgPointer;
+import com.vortexdbg.pointer.VortexdbgPointer;
 import com.sun.jna.Pointer;
 import keystone.Keystone;
 import keystone.KeystoneArchitecture;
@@ -58,7 +58,7 @@ public class KvmBackend64 extends KvmBackend {
                 buffer.putInt(0xd69f03e0); // eret
             }
         }
-        UnidbgPointer ptr = UnidbgPointer.pointer(emulator, REG_VBAR_EL1);
+        VortexdbgPointer ptr = VortexdbgPointer.pointer(emulator, REG_VBAR_EL1);
         assert ptr != null;
         ptr.write(buffer.array());
     }
@@ -74,9 +74,9 @@ public class KvmBackend64 extends KvmBackend {
     }
 
     private void handleCommRead(long vaddr, long elr) {
-        Pointer pointer = UnidbgPointer.pointer(emulator, vaddr);
+        Pointer pointer = VortexdbgPointer.pointer(emulator, vaddr);
         assert pointer != null;
-        Pointer pc = UnidbgPointer.pointer(emulator, elr);
+        Pointer pc = VortexdbgPointer.pointer(emulator, elr);
         assert pc != null;
         byte[] code = pc.getByteArray(0, 4);
         Instruction insn = createDisassembler().disasm(code, elr, 1)[0];

@@ -6,7 +6,7 @@ import com.vortexdbg.arm.ARMEmulator;
 import com.vortexdbg.arm.backend.hypervisor.Hypervisor;
 import com.vortexdbg.arm.backend.hypervisor.HypervisorCallback;
 import com.vortexdbg.arm.backend.hypervisor.HypervisorException;
-import com.vortexdbg.pointer.UnidbgPointer;
+import com.vortexdbg.pointer.VortexdbgPointer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import unicorn.Arm64Const;
@@ -49,7 +49,7 @@ public abstract class HypervisorBackend extends FastBackend implements Backend, 
             }
             buffer.putInt(0xd4201100); // brk #0x88
         }
-        UnidbgPointer ptr = Objects.requireNonNull(UnidbgPointer.pointer(emulator, Hypervisor.REG_VBAR_EL1));
+        VortexdbgPointer ptr = Objects.requireNonNull(VortexdbgPointer.pointer(emulator, Hypervisor.REG_VBAR_EL1));
         ptr.write(buffer.array());
     }
 

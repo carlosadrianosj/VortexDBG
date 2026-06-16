@@ -4,7 +4,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESOURCES_DIR="$SCRIPT_DIR/../resources/natives"
 UNICORN_HOME="${UNICORN_HOME:-$HOME/git/unicorn}"
-IMAGE_NAME="unidbg-unicorn2-builder"
+IMAGE_NAME="vortexdbg-unicorn2-builder"
 NPROC=$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)
 
 CLEAN=false

@@ -1,0 +1,46 @@
+package com.vortexdbg.memory;
+
+import com.vortexdbg.Emulator;
+import com.vortexdbg.Symbol;
+import com.vortexdbg.pointer.VortexdbgPointer;
+import com.sun.jna.Pointer;
+
+public class MemoryAllocBlock implements MemoryBlock {
+
+    public static MemoryBlock malloc(Emulator<?> emulator, Symbol malloc, Symbol free, int length) {
+        Number number = malloc.call(emulator, length);
+        long address = emulator.is64Bit() ? number.longValue() : number.intValue() & 0xffffffffL;
+        final VortexdbgPointer pointer = VortexdbgPointer.pointer(emulator, address);
+        return new MemoryAllocBlock(pointer, emulator, free);
+    }
+
+    private final VortexdbgPointer pointer;
+    private final Emulator<?> emulator;
+    private final Symbol free;
+
+    private MemoryAllocBlock(VortexdbgPointer pointer, Emulator<?> emulator, Symbol free) {
+        this.pointer = pointer;
+        this.emulator = emulator;
+        this.free = free;
+    }
+
+    @Override
+    public VortexdbgPointer getPointer() {
+        return pointer;
+    }
+
+    @Override
+    public boolean isSame(Pointer p) {
+        return pointer.equals(p);
+    }
+
+    @Override
+    public void free() {
+        if (free == null) {
+            throw new UnsupportedOperationException();
+        }
+
+        free.call(emulator, pointer);
+    }
+    
+}

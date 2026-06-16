@@ -4,7 +4,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESOURCES_DIR="$SCRIPT_DIR/../../resources/natives"
 DYNARMIC_HOME="${DYNARMIC_HOME:-$HOME/git/dynarmic}"
-IMAGE_NAME="unidbg-dynarmic-builder"
+IMAGE_NAME="vortexdbg-dynarmic-builder"
 NPROC=$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)
 
 CLEAN=false

@@ -11,7 +11,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>vortexdbg-kvm</artifactId>
-    <name>unidbg-kvm</name>
+    <name>vortexdbg-kvm</name>
     <dependencies>
         <dependency>
             <groupId>com.vortexdbg</groupId>

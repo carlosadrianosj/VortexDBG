@@ -6,8 +6,8 @@
     <packaging>pom</packaging>
     <version>0.9.10-SNAPSHOT</version>
     <modules>
-        <module>unidbg-api</module>
-        <module>unidbg-android</module>
+        <module>vortexdbg-api</module>
+        <module>vortexdbg-android</module>
         <module>backend/dynarmic</module>
         <module>backend/hypervisor</module>
         <module>backend/kvm</module>

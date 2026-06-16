@@ -3,7 +3,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESOURCES_DIR="$SCRIPT_DIR/../resources/natives"
-IMAGE_NAME="unidbg-kvm-builder"
+IMAGE_NAME="vortexdbg-kvm-builder"
 
 CLEAN=false
 while [[ "$1" == --* ]]; do

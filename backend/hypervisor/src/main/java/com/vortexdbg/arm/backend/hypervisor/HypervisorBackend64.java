@@ -16,7 +16,7 @@ import com.vortexdbg.arm.backend.hypervisor.arm64.MemorySizeDetector;
 import com.vortexdbg.arm.backend.hypervisor.arm64.SimpleMemorySizeDetector;
 import com.vortexdbg.debugger.BreakPoint;
 import com.vortexdbg.debugger.BreakPointCallback;
-import com.vortexdbg.pointer.UnidbgPointer;
+import com.vortexdbg.pointer.VortexdbgPointer;
 import com.sun.jna.Pointer;
 import keystone.Keystone;
 import keystone.KeystoneArchitecture;
@@ -334,7 +334,7 @@ public class HypervisorBackend64 extends HypervisorBackend {
     }
 
     private void onWatchpoint(long esr, long address, long elr) {
-        Pointer pc = Objects.requireNonNull(UnidbgPointer.pointer(emulator, elr));
+        Pointer pc = Objects.requireNonNull(VortexdbgPointer.pointer(emulator, elr));
         byte[] code = pc.getByteArray(0, 4);
         boolean repeatWatchpoint = lastWatchpointAddress == elr
                 && lastWatchpointDataAddress == address
@@ -411,7 +411,7 @@ public class HypervisorBackend64 extends HypervisorBackend {
             exclusiveRegionAddressList.clear();
         }
         final void onSoftwareStep(long spsr, long address) {
-            UnidbgPointer pointer = UnidbgPointer.pointer(emulator, address);
+            VortexdbgPointer pointer = VortexdbgPointer.pointer(emulator, address);
             if (pointer == null) {
                 hypervisor.reg_set_spsr_el1(spsr | Hypervisor.PSTATE$SS);
                 return;
@@ -450,7 +450,7 @@ public class HypervisorBackend64 extends HypervisorBackend {
         private boolean tryEscapeExclusiveLoop(long spsr, long address) {
             long foundAddress = 0;
             for (long pc : exclusiveRegionAddressList) {
-                Pointer ptr = Objects.requireNonNull(UnidbgPointer.pointer(emulator, pc));
+                Pointer ptr = Objects.requireNonNull(VortexdbgPointer.pointer(emulator, pc));
                 byte[] code = ptr.getByteArray(0, 4);
                 Instruction instruction = createDisassembler().disasm(code, pc, 1)[0];
                 switch (instruction.getMnemonic()) {
@@ -470,7 +470,7 @@ public class HypervisorBackend64 extends HypervisorBackend {
                 if (log.isWarnEnabled()) {
                     StringBuilder builder = new StringBuilder();
                     for (long pc : exclusiveRegionAddressList) {
-                        Pointer ptr = Objects.requireNonNull(UnidbgPointer.pointer(emulator, pc));
+                        Pointer ptr = Objects.requireNonNull(VortexdbgPointer.pointer(emulator, pc));
                         byte[] code = ptr.getByteArray(0, 4);
                         Instruction instruction = createDisassembler().disasm(code, pc, 1)[0];
                         builder.append(String.format("0x%x: %s%n", instruction.getAddress(), instruction));
@@ -697,7 +697,7 @@ public class HypervisorBackend64 extends HypervisorBackend {
     }
 
     private boolean handleCommRead(long vaddr, long elr, int accessSize) {
-        Pointer pc = Objects.requireNonNull(UnidbgPointer.pointer(emulator, elr));
+        Pointer pc = Objects.requireNonNull(VortexdbgPointer.pointer(emulator, elr));
         byte[] code = pc.getByteArray(0, 4);
         Instruction insn = createDisassembler().disasm(code, elr, 1)[0];
         if (log.isDebugEnabled()) {

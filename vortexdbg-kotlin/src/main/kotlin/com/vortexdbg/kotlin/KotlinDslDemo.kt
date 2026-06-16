@@ -13,7 +13,7 @@ object KotlinDslDemo {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val so = "unidbg-android/src/test/resources/example_binaries/libttEncrypt.so"
+        val so = "vortexdbg-android/src/test/resources/example_binaries/libttEncrypt.so"
 
         vortexSession {
             arch64 = false

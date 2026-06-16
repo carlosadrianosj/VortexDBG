@@ -5,7 +5,7 @@ import com.vortexdbg.arm.ARMEmulator;
 import com.vortexdbg.arm.backend.BackendException;
 import com.vortexdbg.arm.backend.DebugHook;
 import com.vortexdbg.arm.backend.KvmBackend;
-import com.vortexdbg.pointer.UnidbgPointer;
+import com.vortexdbg.pointer.VortexdbgPointer;
 import keystone.Keystone;
 import keystone.KeystoneArchitecture;
 import keystone.KeystoneEncoded;
@@ -46,7 +46,7 @@ public class KvmBackend32 extends KvmBackend {
                 buffer.putInt(0xd69f03e0); // eret
             }
         }
-        UnidbgPointer ptr = UnidbgPointer.pointer(emulator, REG_VBAR_EL1);
+        VortexdbgPointer ptr = VortexdbgPointer.pointer(emulator, REG_VBAR_EL1);
         assert ptr != null;
         ptr.write(buffer.array());
     }
