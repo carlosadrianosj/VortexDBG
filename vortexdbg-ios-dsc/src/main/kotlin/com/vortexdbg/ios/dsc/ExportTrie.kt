@@ -8,9 +8,24 @@ package com.vortexdbg.ios.dsc
  */
 object ExportTrie {
 
-    data class Export(val flags: Long, val address: Long)
+    const val FLAG_REEXPORT = 0x08L
+    const val FLAG_STUB_AND_RESOLVER = 0x10L
 
-    /** Resolve [symbol] na trie [trie] (bytes crus). Retorna o offset relativo à base, ou null. */
+    /**
+     * Resultado terminal da trie. Para export normal/stub: [address] é o offset relativo à base
+     * (no stub_and_resolver é o offset do stub). Para REEXPORT: [reexportOrdinal] (1-based, índice
+     * na lista de dylibs dependentes) + [reexportName] (vazio = mesmo nome).
+     */
+    data class Export(
+        val flags: Long,
+        val address: Long,
+        val reexportOrdinal: Int = -1,
+        val reexportName: String = "",
+    ) {
+        val isReexport get() = flags and FLAG_REEXPORT != 0L
+    }
+
+    /** Resolve [symbol] na trie [trie] (bytes crus). Retorna o terminal, ou null. */
     fun resolve(trie: ByteArray, symbol: String): Export? {
         var nodeOff = 0
         var matched = ""   // prefixo já consumido
@@ -18,6 +33,14 @@ object ExportTrie {
             val (termSize, afterTerm) = uleb(trie, nodeOff)
             if (matched == symbol && termSize > 0L) {
                 val (flags, p1) = uleb(trie, afterTerm)
+                if (flags and FLAG_REEXPORT != 0L) {
+                    val (ordinal, p2) = uleb(trie, p1)
+                    val start = p2
+                    var p = p2
+                    while (trie[p].toInt() != 0) p++
+                    val name = String(trie, start, p - start, Charsets.US_ASCII)
+                    return Export(flags, 0, ordinal.toInt(), name)
+                }
                 val (addr, _) = uleb(trie, p1)
                 return Export(flags, addr)
             }
