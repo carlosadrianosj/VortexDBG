@@ -20,6 +20,30 @@ object SlideRebaser {
     private const val NO_REBASE = 0xFFFF
     private const val MASK34 = 0x3FFFFFFFFL  // (1<<34)-1
 
+    /**
+     * Rebaseia UMA página (já mapeada) cujo 1º ponteiro encadeado está em [pageAddr]+[pageStart].
+     * Para o mapeamento lazy: ao faltar uma página de uma região com slide, rebaseia só ela.
+     */
+    fun rebasePage(emulator: Emulator<*>, pageAddr: Long, valueAdd: Long, pageStart: Int, slide: Long = 0): Int {
+        if (pageStart == NO_REBASE) return 0
+        val backend = emulator.backend
+        var loc = pageAddr + pageStart
+        var count = 0
+        while (true) {
+            val raw = ByteBuffer.wrap(backend.mem_read(loc, 8)).order(ByteOrder.LITTLE_ENDIAN).getLong(0)
+            val runtimeOffset = raw and MASK34
+            val next = ((raw ushr 52) and 0x7FF).toInt()
+            val auth = (raw ushr 63) and 1L
+            val newVal = if (auth == 1L) valueAdd + runtimeOffset + slide
+                else (valueAdd + runtimeOffset + slide) or (((raw ushr 34) and 0xFF) shl 56)
+            backend.mem_write(loc, ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(newVal).array())
+            count++
+            if (next == 0) break
+            loc += next.toLong() * 8
+        }
+        return count
+    }
+
     /** Reescreve os ponteiros encadeados da região [mp] usando [si]. Retorna nº de ponteiros. */
     fun rebase(
         emulator: Emulator<*>,
