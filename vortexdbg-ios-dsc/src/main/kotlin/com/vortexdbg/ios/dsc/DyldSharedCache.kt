@@ -67,6 +67,50 @@ class DyldSharedCache(val file: File) {
         }
     }
 
+    /** Uma imagem (dylib) dentro do cache: endereço de carga (__TEXT) + path. */
+    data class Image(val loadAddress: ULong, val path: String)
+
+    /**
+     * Path B [4] — lista as imagens (dylibs) do cache via o array imagesText do header.
+     * dyld_cache_header: imagesTextOffset(u64)@0x88, imagesTextCount(u64)@0x90.
+     * dyld_cache_image_text_info (32B): uuid[16], loadAddress(u64)@16, textSize(u32)@24, pathOffset(u32)@28.
+     * Só o cache PRINCIPAL tem imagens (sub-caches retornam vazio).
+     */
+    fun images(): List<Image> {
+        RandomAccessFile(file, "r").use { raf ->
+            val hdr = ByteArray(0x100)
+            raf.seek(0)
+            raf.readFully(hdr)
+            val bb = ByteBuffer.wrap(hdr).order(ByteOrder.LITTLE_ENDIAN)
+            val imagesTextOffset = bb.getLong(0x88)
+            val imagesTextCount = bb.getLong(0x90)
+            if (imagesTextCount <= 0 || imagesTextCount > 1_000_000) {
+                return emptyList()
+            }
+            val arr = ByteArray((imagesTextCount * 32).toInt())
+            raf.seek(imagesTextOffset)
+            raf.readFully(arr)
+            val ab = ByteBuffer.wrap(arr).order(ByteOrder.LITTLE_ENDIAN)
+            return (0 until imagesTextCount.toInt()).map { i ->
+                val base = i * 32
+                val loadAddress = ab.getLong(base + 16).toULong()
+                val pathOffset = ab.getInt(base + 28).toLong() and 0xffffffffL
+                Image(loadAddress, readCString(raf, pathOffset))
+            }
+        }
+    }
+
+    private fun readCString(raf: RandomAccessFile, offset: Long): String {
+        raf.seek(offset)
+        val buf = ByteArray(512)
+        val n = raf.read(buf)
+        var z = 0
+        while (z < n && buf[z].toInt() != 0) {
+            z++
+        }
+        return String(buf, 0, z, Charsets.US_ASCII)
+    }
+
     companion object {
         /** Os arquivos do cache: o principal + os sub-caches `.NN` (na mesma pasta). */
         fun cacheFiles(mainCache: File): List<File> {
