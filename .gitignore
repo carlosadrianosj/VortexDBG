@@ -23,3 +23,8 @@
 /unidbg-ios/src/test/resources/example_binaries/ios_cpu_features
 vortexdbg-kotlin/target/
 vortexdbg-ios-dsc/target/
+
+# iOS Path B: dados baixados da Apple e config gerada (NÃO redistribuir) — só o script é versionado
+scripts/ios/dsc/
+scripts/ios/vortex-ios.json
+scripts/ios/*.ipsw
