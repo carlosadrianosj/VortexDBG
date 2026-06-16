@@ -30,6 +30,11 @@
             <artifactId>fastjson</artifactId>
             <version>1.2.83</version>
         </dependency>
+        <dependency>
+            <groupId>com.vortexdbg</groupId>
+            <artifactId>vortexdbg-unicorn2</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

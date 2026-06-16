@@ -1,0 +1,46 @@
+package com.vortexdbg.ios.dsc
+
+import com.vortexdbg.Emulator
+import java.io.RandomAccessFile
+
+/**
+ * Path B [2] — mapeia as regiões do dyld_shared_cache na memória do emulador, NOS VMADDRS
+ * do cache (como o dyld real faz). Lê os bytes do arquivo (no fileOffset) e escreve no
+ * endereço do cache. Os bits de proteção do dyld (READ=1/WRITE=2/EXEC=4) batem com os do
+ * Unicorn (UC_PROT_*), então são passados direto.
+ *
+ * NOTA: o cache inteiro são ~3 GB (61 arquivos). Mapear TUDO eagerly é pesado em RAM; o
+ * mapeamento sob-demanda (lazy, por página) é um passo posterior. [mapOne] mapeia uma região
+ * só (prova do mecanismo).
+ */
+class DscMapper(private val emulator: Emulator<*>) {
+
+    private val pageAlign: Long = emulator.pageAlign.toLong()
+
+    /** Mapeia todas as mappings de UM arquivo de cache. Retorna bytes escritos. */
+    fun map(cache: DyldSharedCache): Long {
+        var total = 0L
+        RandomAccessFile(cache.file, "r").use { raf ->
+            for (mp in cache.mappings) {
+                total += mapOne(raf, mp)
+            }
+        }
+        return total
+    }
+
+    /** Mapeia uma única mapping (região contígua) no vmaddr do cache. */
+    fun mapOne(raf: RandomAccessFile, mp: DyldSharedCache.Mapping): Long {
+        val backend = emulator.backend
+        val addr = mp.address.toLong()
+        val rawSize = mp.size.toLong()
+        val mappedSize = align(rawSize)
+        backend.mem_map(addr, mappedSize, mp.initProt.toInt())
+        val data = ByteArray(rawSize.toInt())
+        raf.seek(mp.fileOffset.toLong())
+        raf.readFully(data)
+        backend.mem_write(addr, data)
+        return rawSize
+    }
+
+    private fun align(size: Long): Long = (size + pageAlign - 1) and (pageAlign - 1).inv()
+}
