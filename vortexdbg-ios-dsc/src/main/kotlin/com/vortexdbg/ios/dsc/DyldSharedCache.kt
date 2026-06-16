@@ -36,8 +36,33 @@ class DyldSharedCache(val file: File) {
             )
     }
 
+    /**
+     * Mapping COM slide info (dyld_cache_mapping_and_slide_info, 56B): além do mapping comum,
+     * aponta para a slide info (rebase chains) daquela região. address@0, size@8, fileOffset@16,
+     * slideInfoFileOffset@24, slideInfoFileSize@32, flags@40, maxProt@48, initProt@52.
+     */
+    data class MappingSlide(
+        val address: ULong,
+        val size: ULong,
+        val fileOffset: ULong,
+        val slideInfoFileOffset: ULong,
+        val slideInfoFileSize: ULong,
+        val maxProt: UInt,
+        val initProt: UInt,
+    )
+
+    /**
+     * dyld_cache_slide_info5 (layout V5, distinto de V2/V3 — NÃO tem page_starts_offset):
+     * version(u32)@0==5, page_size(u32)@4, page_starts_count(u32)@8, [pad 4B], value_add(u64)@16
+     * (alinhado a 8 — há 4 bytes de padding após count); depois uint16_t page_starts[count] @24.
+     * Cada page_start é o offset (bytes) do 1º ponteiro encadeado na página, ou 0xFFFF
+     * (DYLD_CACHE_SLIDE_V5_PAGE_ATTR_NO_REBASE = sem rebase).
+     */
+    data class SlideInfo5(val pageSize: Int, val valueAdd: ULong, val pageStarts: List<Int>)
+
     val magic: String
     val mappings: List<Mapping>
+    val mappingsWithSlide: List<MappingSlide>
 
     init {
         RandomAccessFile(file, "r").use { raf ->
@@ -64,6 +89,52 @@ class DyldSharedCache(val file: File) {
                     initProt = bb.getInt(off + 28).toUInt(),
                 )
             }
+
+            // dyld_cache_header: mappingWithSlideOffset(u32)@0x138, mappingWithSlideCount(u32)@0x13C.
+            val mwsOffset = bb.getInt(0x138)
+            val mwsCount = bb.getInt(0x13C)
+            mappingsWithSlide = if (mwsOffset in 0x140..(n - 56) && mwsCount in 1..64) {
+                (0 until mwsCount).map { i ->
+                    val off = mwsOffset + i * 56
+                    MappingSlide(
+                        address = bb.getLong(off).toULong(),
+                        size = bb.getLong(off + 8).toULong(),
+                        fileOffset = bb.getLong(off + 16).toULong(),
+                        slideInfoFileOffset = bb.getLong(off + 24).toULong(),
+                        slideInfoFileSize = bb.getLong(off + 32).toULong(),
+                        maxProt = bb.getInt(off + 48).toUInt(),
+                        initProt = bb.getInt(off + 52).toUInt(),
+                    )
+                }
+            } else {
+                emptyList()
+            }
+        }
+    }
+
+    /**
+     * Lê a slide info V5 de um [MappingSlide] (se houver e for version 5). Os bytes ficam no
+     * MESMO arquivo de cache, em slideInfoFileOffset.
+     */
+    fun slideInfo5(mp: MappingSlide): SlideInfo5? {
+        if (mp.slideInfoFileSize == 0uL) return null
+        RandomAccessFile(file, "r").use { raf ->
+            val hdr = ByteArray(24)
+            raf.seek(mp.slideInfoFileOffset.toLong())
+            raf.readFully(hdr)
+            val bb = ByteBuffer.wrap(hdr).order(ByteOrder.LITTLE_ENDIAN)
+            val version = bb.getInt(0)
+            if (version != 5) return null
+            val pageSize = bb.getInt(4)
+            val pageStartsCount = bb.getInt(8)
+            val valueAdd = bb.getLong(16).toULong()
+
+            val raw = ByteArray(pageStartsCount * 2)
+            raf.seek((mp.slideInfoFileOffset + 24uL).toLong())
+            raf.readFully(raw)
+            val pb = ByteBuffer.wrap(raw).order(ByteOrder.LITTLE_ENDIAN)
+            val starts = (0 until pageStartsCount).map { pb.getShort(it * 2).toInt() and 0xFFFF }
+            return SlideInfo5(pageSize, valueAdd, starts)
         }
     }
 
@@ -112,12 +183,20 @@ class DyldSharedCache(val file: File) {
     }
 
     companion object {
-        /** Os arquivos do cache: o principal + os sub-caches `.NN` (na mesma pasta). */
+        // Sufixos de sub-cache que SÃO regiões mapeáveis do cache (TEXT=`.NN`, e por tipo de
+        // segmento). `.atlas`/`.symbols`/`.aea`/`.pem` são metadados/chaves — não mapeáveis.
+        private val SUBCACHE = Regex("\\d+(\\.dylddata|\\.dyldlinkedit|\\.dyldreadonly)?")
+
+        /**
+         * Os arquivos do cache: o principal + os sub-caches `.NN[.tipo]` (na mesma pasta). O
+         * dsc_extractor fatia por TIPO de segmento: `.NN` (TEXT), `.NN.dylddata` (DATA, com slide
+         * info), `.NN.dyldlinkedit`, `.NN.dyldreadonly`. TODOS fazem parte do espaço de endereços.
+         */
         fun cacheFiles(mainCache: File): List<File> {
             val base = mainCache.name
             val subs = mainCache.parentFile
                 .listFiles { _, name ->
-                    name.startsWith("$base.") && name.substringAfterLast('.').matches(Regex("\\d+"))
+                    name.startsWith("$base.") && SUBCACHE.matches(name.removePrefix("$base."))
                 }
                 ?.sortedBy { it.name }
                 ?: emptyList()

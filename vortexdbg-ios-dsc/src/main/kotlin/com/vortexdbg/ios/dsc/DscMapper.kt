@@ -43,6 +43,35 @@ class DscMapper(private val emulator: Emulator<*>) {
         return rawSize
     }
 
+    /** Mapeia uma região com slide info (dyld_cache_mapping_and_slide_info). Igual a [mapOne]. */
+    fun mapSlide(raf: RandomAccessFile, mp: DyldSharedCache.MappingSlide): Long {
+        val backend = emulator.backend
+        val rawSize = mp.size.toLong()
+        backend.mem_map(mp.address.toLong(), align(rawSize), mp.initProt.toInt())
+        val data = ByteArray(rawSize.toInt())
+        raf.seek(mp.fileOffset.toLong())
+        raf.readFully(data)
+        backend.mem_write(mp.address.toLong(), data)
+        return rawSize
+    }
+
+    /**
+     * Acha (entre os arquivos do cache) a MappingSlide que contém [address] COM slide info,
+     * mapeia-a e retorna o par (arquivo cache, mapping) — ou null. Permite mapear+rebasar só a
+     * região DATA de uma dylib alvo.
+     */
+    fun mapSlideRegionContaining(files: List<File>, address: ULong): Pair<DyldSharedCache, DyldSharedCache.MappingSlide>? {
+        for (f in files) {
+            val cache = DyldSharedCache(f)
+            val mp = cache.mappingsWithSlide.firstOrNull {
+                it.slideInfoFileSize > 0uL && address >= it.address && address < it.address + it.size
+            } ?: continue
+            RandomAccessFile(f, "r").use { raf -> mapSlide(raf, mp) }
+            return cache to mp
+        }
+        return null
+    }
+
     private fun align(size: Long): Long = (size + pageAlign - 1) and (pageAlign - 1).inv()
 
     /**
