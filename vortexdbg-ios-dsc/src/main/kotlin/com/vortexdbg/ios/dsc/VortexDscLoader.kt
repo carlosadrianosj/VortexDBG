@@ -19,16 +19,12 @@ class VortexDscLoader(private val emulator: Emulator<*>, private val mainCache: 
 
     val lazy = DscLazyMapper(emulator, mainCache)
     private val resolver = DscFileResolver(mainCache)
-    private val mapper = DscMapper(emulator)
-    private val files = DyldSharedCache.cacheFiles(mainCache)
 
     // Scratch para argumentos/pilha/sentinela de retorno.
     private val scratchBase = 0x3F000000L
     private val sentinel = scratchBase + 0x1000
     private val stackTop = scratchBase + 0x80000
     private var bump = scratchBase + 0x80000  // dados crescem acima da pilha
-
-    private val mappedCode = ArrayList<LongRange>()
 
     init {
         emulator.backend.mem_map(scratchBase, 0x200000, 7) // 2 MB RWX: sentinela + pilha + dados
@@ -48,15 +44,6 @@ class VortexDscLoader(private val emulator: Emulator<*>, private val mainCache: 
         return ptr
     }
 
-    /** Garante que a região de código que contém [vmaddr] está mapeada (uma vez por região). */
-    private fun ensureCodeMapped(vmaddr: ULong): Boolean {
-        val v = vmaddr.toLong()
-        if (mappedCode.any { v in it }) return true
-        val mp = mapper.mapRegionContaining(files, vmaddr) ?: return false
-        mappedCode.add(mp.address.toLong() until (mp.address + mp.size).toLong())
-        return true
-    }
-
     /**
      * Chama a função do cache em [funcAddr] com [args] (até 8, em x0..x7) e devolve x0. O código
      * é pré-mapeado; os DADOS tocados são faltados sob demanda. Para quando a função faz RET
@@ -64,12 +51,11 @@ class VortexDscLoader(private val emulator: Emulator<*>, private val mainCache: 
      */
     fun call(funcAddr: ULong, vararg args: Long): Long {
         require(args.size <= 8) { "máx. 8 args (x0..x7)" }
-        ensureCodeMapped(funcAddr)
         val backend = emulator.backend
         for (i in args.indices) backend.reg_write(Arm64Const.UC_ARM64_REG_X0 + i, args[i])
         backend.reg_write(Arm64Const.UC_ARM64_REG_LR, sentinel)
         backend.reg_write(Arm64Const.UC_ARM64_REG_SP, stackTop)
-        backend.emu_start(funcAddr.toLong(), sentinel, 0, 0)
+        lazy.emuStart(funcAddr.toLong(), sentinel) // código faltado por região; DATA por página
         return backend.reg_read(Arm64Const.UC_ARM64_REG_X0).toLong()
     }
 

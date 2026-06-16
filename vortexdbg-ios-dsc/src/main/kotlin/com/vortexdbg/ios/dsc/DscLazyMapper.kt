@@ -52,22 +52,45 @@ class DscLazyMapper(private val emulator: Emulator<*>, mainCache: File) {
         regions = list
 
         emulator.backend.hook_add_new(object : EventMemHook {
-            override fun hook(backend: Backend, address: Long, size: Int, value: Long, user: Any?, type: EventMemHook.UnmappedType): Boolean =
-                mapFault(address)
+            override fun hook(backend: Backend, address: Long, size: Int, value: Long, user: Any?, type: EventMemHook.UnmappedType): Boolean {
+                // FETCH (código): NÃO mapear aqui — mapear mid-translation corrompe o tradutor do
+                // QEMU (SIGBUS). Retorna false p/ o emu_start parar; o emuStart() mapeia e retoma.
+                if (type == EventMemHook.UnmappedType.Fetch) return false
+                return mapDataPage(address) // READ/WRITE: mapear a página + rebase é seguro no hook.
+            }
             override fun onAttach(unHook: com.vortexdbg.arm.backend.UnHook) {}
             override fun detach() {}
         }, UnicornConst.UC_HOOK_MEM_READ_UNMAPPED or UnicornConst.UC_HOOK_MEM_WRITE_UNMAPPED or UnicornConst.UC_HOOK_MEM_FETCH_UNMAPPED, null)
     }
 
-    /** Falta a página do cache que cobre [address]. Retorna true se mapeou (acesso pode retentar). */
-    private fun mapFault(address: Long): Boolean {
+    private val mappedRegionBases = HashSet<Long>()
+
+    /** Mapeia (uma vez) a REGIÃO de código inteira que cobre [address]. Chamado FORA do hook. */
+    private fun mapCodeRegion(address: Long): Boolean {
         val region = regions.firstOrNull { address >= it.address && address < it.address + it.size } ?: return false
+        if (!mappedRegionBases.add(region.address)) return true
+        val backend = emulator.backend
+        backend.mem_map(region.address, align(region.size), region.prot)
+        val raf = rafs.getOrPut(region.file) { RandomAccessFile(region.file, "r") }
+        val data = ByteArray(region.size.toInt())
+        raf.seek(region.fileOffset)
+        raf.readFully(data)
+        backend.mem_write(region.address, data)
+        pagesMapped += (region.size / pageSize).toInt()
+        region.slide?.let { si ->
+            for (pi in si.pageStarts.indices)
+                pagesRebased += if (SlideRebaser.rebasePage(emulator, region.address + pi * pageSize, si.valueAdd.toLong(), si.pageStarts[pi]) > 0) 1 else 0
+        }
+        return true
+    }
+
+    /** Mapeia só a página (0x4000) de DATA que cobre [address] e a rebaseia. Seguro dentro do hook. */
+    private fun mapDataPage(address: Long): Boolean {
+        val region = regions.firstOrNull { address >= it.address && address < it.address + it.size } ?: return false
+        val backend = emulator.backend
         val pageIndex = (address - region.address) / pageSize
         val pageAddr = region.address + pageIndex * pageSize
-        val avail = region.size - pageIndex * pageSize
-        val chunk = minOf(pageSize, avail)
-
-        val backend = emulator.backend
+        val chunk = minOf(pageSize, region.size - pageIndex * pageSize)
         backend.mem_map(pageAddr, pageSize, region.prot)
         val raf = rafs.getOrPut(region.file) { RandomAccessFile(region.file, "r") }
         val data = ByteArray(chunk.toInt())
@@ -75,13 +98,38 @@ class DscLazyMapper(private val emulator: Emulator<*>, mainCache: File) {
         raf.readFully(data)
         backend.mem_write(pageAddr, data)
         pagesMapped++
-
         val si = region.slide
         if (si != null && pageIndex < si.pageStarts.size) {
             pagesRebased += if (SlideRebaser.rebasePage(emulator, pageAddr, si.valueAdd.toLong(), si.pageStarts[pageIndex.toInt()]) > 0) 1 else 0
         }
         return true
     }
+
+    /**
+     * Executa de [begin] até [until] tolerando faltas de CÓDIGO: quando o emu_start para por um
+     * FETCH não-mapeado, mapeia a região de código que contém o PC (FORA do tradutor) e retoma.
+     * Faltas de DATA são resolvidas no próprio hook. Lança se o PC ficar preso sem progresso.
+     */
+    fun emuStart(begin: Long, until: Long) {
+        val backend = emulator.backend
+        var pc = begin
+        var lastFault = -1L
+        while (true) {
+            try {
+                backend.emu_start(pc, until, 0, 0)
+                return // chegou em `until` (ou contou)
+            } catch (e: com.vortexdbg.arm.backend.BackendException) {
+                val faultPc = backend.reg_read(unicorn.Arm64Const.UC_ARM64_REG_PC).toLong()
+                if (faultPc == until || faultPc == 0L) return
+                if (faultPc == lastFault) throw e // sem progresso: falta real
+                if (!mapCodeRegion(faultPc)) throw e
+                lastFault = faultPc
+                pc = faultPc
+            }
+        }
+    }
+
+    private fun align(size: Long): Long = (size + pageSize - 1) and (pageSize - 1).inv()
 
     fun close() {
         rafs.values.forEach { it.close() }
