@@ -64,9 +64,14 @@ public class IosBaselineTest implements EmulatorConfigurator {
                 System.out.println("dumpClass(" + cls + ") EXCEÇÃO: " + t);
             }
         }
-        System.out.println("RESULTADO Fase 0 iOS: " + (ok > 0
+        boolean pass = ok > 0;
+        System.out.println("RESULTADO Fase 0 iOS: " + (pass
                 ? "OK (libobjc real + dyld + Mach-O loader rodando na árvore 7.1; " + ok + " classes dumpadas)"
                 : "FALHOU"));
         emulator.close();
+        // Gate de regressão: falha com exit code se o caminho 7.1 quebrar (CI-able).
+        if (!pass) {
+            System.exit(1);
+        }
     }
 }
