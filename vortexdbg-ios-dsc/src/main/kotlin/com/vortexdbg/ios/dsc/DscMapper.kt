@@ -1,6 +1,7 @@
 package com.vortexdbg.ios.dsc
 
 import com.vortexdbg.Emulator
+import java.io.File
 import java.io.RandomAccessFile
 
 /**
@@ -43,4 +44,21 @@ class DscMapper(private val emulator: Emulator<*>) {
     }
 
     private fun align(size: Long): Long = (size + pageAlign - 1) and (pageAlign - 1).inv()
+
+    /**
+     * Acha, entre os arquivos do cache, o mapping que contém [address] (vmaddr), mapeia-o e
+     * retorna a [DyldSharedCache.Mapping] mapeada (ou null se não achar). Permite mapear SÓ a
+     * região que cobre uma dylib alvo, em vez dos 3 GB.
+     */
+    fun mapRegionContaining(files: List<File>, address: ULong): DyldSharedCache.Mapping? {
+        for (f in files) {
+            val cache = DyldSharedCache(f)
+            val mp = cache.mappings.firstOrNull {
+                address >= it.address && address < it.address + it.size
+            } ?: continue
+            RandomAccessFile(f, "r").use { raf -> mapOne(raf, mp) }
+            return mp
+        }
+        return null
+    }
 }
