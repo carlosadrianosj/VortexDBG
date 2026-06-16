@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-abstract class FastBackend extends AbstractBackend {
+public abstract class FastBackend extends AbstractBackend {
 
     protected final Emulator<?> emulator;
 
