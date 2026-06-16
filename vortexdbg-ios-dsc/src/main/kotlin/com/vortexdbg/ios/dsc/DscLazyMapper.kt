@@ -32,6 +32,7 @@ class DscLazyMapper(private val emulator: Emulator<*>, mainCache: File) {
     private val rafs = HashMap<File, RandomAccessFile>()
     @Volatile var pagesMapped = 0; private set
     @Volatile var pagesRebased = 0; private set
+    @Volatile var lastUnmappedData = 0L; private set
 
     init {
         val list = ArrayList<Region>()
@@ -56,7 +57,9 @@ class DscLazyMapper(private val emulator: Emulator<*>, mainCache: File) {
                 // FETCH (código): NÃO mapear aqui — mapear mid-translation corrompe o tradutor do
                 // QEMU (SIGBUS). Retorna false p/ o emu_start parar; o emuStart() mapeia e retoma.
                 if (type == EventMemHook.UnmappedType.Fetch) return false
-                return mapDataPage(address) // READ/WRITE: mapear a página + rebase é seguro no hook.
+                val ok = mapDataPage(address) // READ/WRITE: mapear a página + rebase é seguro no hook.
+                if (!ok) lastUnmappedData = address
+                return ok
             }
             override fun onAttach(unHook: com.vortexdbg.arm.backend.UnHook) {}
             override fun detach() {}

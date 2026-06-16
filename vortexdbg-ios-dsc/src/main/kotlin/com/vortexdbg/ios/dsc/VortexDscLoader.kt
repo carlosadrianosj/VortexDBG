@@ -32,6 +32,17 @@ class VortexDscLoader(private val emulator: Emulator<*>, private val mainCache: 
 
     val imagePaths: Set<String> get() = resolver.imagePaths
 
+    /** Heap emulado (usado pelos shims de malloc). Criado sob demanda. */
+    val heap by lazy { HostHeap(emulator) }
+    private var shim: HostShim? = null
+    val shimCalls: Int get() = shim?.calls ?: 0
+
+    /** Instala os shims de malloc/free/calloc/realloc (substitui o malloc real do cache). */
+    fun installMallocShim(): List<String> {
+        val s = shim ?: HostShim(emulator, resolver, heap).also { shim = it }
+        return s.installMalloc()
+    }
+
     /** VA de um símbolo exportado direto por [dylibPath]. */
     fun resolve(dylibPath: String, symbol: String): ULong? = resolver.resolve(dylibPath, symbol)
 
