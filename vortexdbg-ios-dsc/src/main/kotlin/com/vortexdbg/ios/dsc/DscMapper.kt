@@ -72,6 +72,32 @@ class DscMapper(private val emulator: Emulator<*>) {
         return null
     }
 
+    /**
+     * Mapeia só uma JANELA (page-aligned) de [size] bytes cobrindo [vmaddr], achando o arquivo
+     * de cache e o offset correspondentes. Para ler dados pequenos (ex.: export trie) sem mapear
+     * a mapping inteira (o __LINKEDIT compartilhado tem ~186 MB). Retorna o vmaddr base alinhado.
+     */
+    fun mapWindow(files: List<File>, vmaddr: ULong, size: Long): ULong? {
+        for (f in files) {
+            val cache = DyldSharedCache(f)
+            val mp = cache.mappings.firstOrNull { vmaddr >= it.address && vmaddr < it.address + it.size } ?: continue
+            val start = vmaddr.toLong() and (pageAlign - 1).inv()
+            val end = align(vmaddr.toLong() + size)
+            val winSize = end - start
+            val fileStart = mp.fileOffset.toLong() + (start - mp.address.toLong())
+            val backend = emulator.backend
+            backend.mem_map(start, winSize, mp.initProt.toInt())
+            RandomAccessFile(f, "r").use { raf ->
+                val data = ByteArray(winSize.toInt())
+                raf.seek(fileStart)
+                raf.readFully(data)
+                backend.mem_write(start, data)
+            }
+            return start.toULong()
+        }
+        return null
+    }
+
     private fun align(size: Long): Long = (size + pageAlign - 1) and (pageAlign - 1).inv()
 
     /**
