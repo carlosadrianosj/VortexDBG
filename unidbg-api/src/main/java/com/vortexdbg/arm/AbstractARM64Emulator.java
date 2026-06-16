@@ -133,21 +133,7 @@ public abstract class AbstractARM64Emulator<T extends NewFileIO> extends Abstrac
 
     @Override
     protected Debugger createConsoleDebugger() {
-        return new SimpleARM64Debugger(this) {
-            @Override
-            protected void dumpClass(String className) {
-                AbstractARM64Emulator.this.dumpClass(className);
-            }
-            @Override
-            protected void searchClass(String keywords) {
-                AbstractARM64Emulator.this.searchClass(keywords);
-            }
-
-            @Override
-            protected void dumpGPBProtobufMsg(String className) {
-                AbstractARM64Emulator.this.dumpGPBProtobufMsg(className);
-            }
-        };
+        return new SimpleARM64Debugger(this);
     }
 
     @Override

@@ -17,9 +17,9 @@ public class SessionDemo {
         File androidAll = new File(new String(Files.readAllBytes(new File("/tmp/android_all_jar.txt").toPath())).trim());
 
         try (VortexSession s = VortexSession.builder()
-                .classes(new File("wf2-spike/obfuscated-app.jar"))
+                .classes(new File("tests/wf2-spike/obfuscated-app.jar"))
                 .androidAll(androidAll)
-                .nativeLib(new File("integ-spike/libinteg.so"))
+                .nativeLib(new File("tests/integ-spike/libinteg.so"))
                 .open()) {
 
             System.out.println("=== VortexSession aberta — backend=" + s.emulator().getBackend() + " ===");

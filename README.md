@@ -1,8 +1,8 @@
 # unidbg
 
-Allows you to emulate an Android native library, and an experimental iOS emulation.
+Allows you to emulate an Android native library.
 
-This is an educational project to learn more about the ELF/MachO file format and ARM assembly.
+This is an educational project to learn more about the ELF file format and ARM assembly.
 
 Use it at your own risk !
 
@@ -14,9 +14,7 @@ Use it at your own risk !
 - Support ARM32 and ARM64.
 - Inline hook, thanks to [Dobby](https://github.com/jmpews/Dobby).
 - Android import hook, thanks to [xHook](https://github.com/iqiyi/xHook).
-- iOS [fishhook](https://github.com/facebook/fishhook) and substrate and [whale](https://github.com/asLody/whale) hook.
 - [unicorn](https://github.com/zhkl0228/unicorn) backend support simple console debugger, gdb stub, instruction trace, memory read/write trace.
-- Support iOS objc and swift runtime.
 - Support [dynarmic](https://github.com/MerryMage/dynarmic) fast backend.
 - Support Apple M1 hypervisor, the fastest ARM64 backend.
 - Support Linux KVM backend with Raspberry Pi B4.
@@ -126,15 +124,6 @@ When the debugger breaks, type `mcp` (or `mcp 9239` to specify port) in the cons
 | `call_function` | Call native function by address with typed arguments (hex, string, bytes, null). Returns value with symbol resolution and memory preview |
 | `call_symbol` | Call exported function by module + symbol name, e.g. `libc.so` + `malloc` |
 
-**iOS Only** (available when Family=iOS)
-
-| Tool | Description |
-|------|-------------|
-| `inspect_objc_msg` | Inspect objc_msgSend call: show receiver class name and selector, e.g. `-[NSString length]` |
-| `get_objc_class_name` | Get ObjC class name of an object at a given address (pure memory parsing, no state change) |
-| `dump_objc_class` | Dump ObjC class definition (properties, methods, protocols, ivars) |
-| `dump_gpb_protobuf` | Dump GPB protobuf message schema as .proto format (64-bit only) |
-
 ### Custom MCP Tools
 
 Use `McpToolkit` to register custom tools, each implementing the `McpTool` interface. This replaces manual if-else dispatch with clean, self-contained tool classes. By this point the native library is fully loaded (JNI_OnLoad / entry point already executed), so the code inside each tool's `execute()` is the target function logic to analyze. AI can set breakpoints and traces before triggering a custom tool, then inspect execution results across different inputs without restarting the process.
@@ -173,42 +162,6 @@ toolkit.addTool(new McpTool() {
         String password = params.length > 0 ? params[0] : "123456";
         int iterations = params.length > 1 ? Integer.parseInt(params[1]) : 100000;
         pbkdf2(password.getBytes(), iterations);
-    }
-});
-toolkit.run(emulator.attach());
-```
-
-**iOS Example** — See [IpaLoaderTest.java](https://github.com/zhkl0228/unidbg/blob/master/unidbg-ios/src/test/java/com/github/unidbg/ios/IpaLoaderTest.java) for an iOS IPA loading example with custom MCP tools:
-
-```java
-IpaLoader ipaLoader = new IpaLoader64(ipa, new File("target/rootfs/ipa"));
-LoadedIpa loader = ipaLoader.load(this);
-emulator = loader.getEmulator();
-loader.callEntry();
-module = loader.getExecutable();
-
-McpToolkit toolkit = new McpToolkit();
-toolkit.addTool(new McpTool() {
-    @Override public String name() { return "dumpClass"; }
-    @Override public String description() { return "Dump an ObjC class definition by name"; }
-    @Override public String[] paramNames() { return new String[]{"className"}; }
-    @Override public void execute(String[] params) {
-        String className = params.length > 0 ? params[0] : "AppDelegate";
-        IClassDumper classDumper = ClassDumper.getInstance(emulator);
-        System.out.println("dumpClass(" + className + "):\n" + classDumper.dumpClass(className));
-    }
-});
-toolkit.addTool(new McpTool() {
-    @Override public String name() { return "readVersion"; }
-    @Override public String description() { return "Read the TelegramCoreVersionString from the executable"; }
-    @Override public void execute(String[] params) {
-        Symbol sym = module.findSymbolByName("_TelegramCoreVersionString");
-        if (sym != null) {
-            Pointer pointer = UnidbgPointer.pointer(emulator, sym.getAddress());
-            if (pointer != null) {
-                System.out.println("_TelegramCoreVersionString=" + pointer.getString(0));
-            }
-        }
     }
 });
 toolkit.run(emulator.attach());
@@ -361,9 +314,6 @@ More tests:
 - [idaemu](https://github.com/36hours/idaemu)
 - [jelf](https://github.com/fornwall/jelf)
 - [whale](https://github.com/asLody/whale)
-- [kaitai_struct](https://github.com/kaitai-io/kaitai_struct)
-- [fishhook](https://github.com/facebook/fishhook)
-- [runtime_class-dump](https://github.com/Tyilo/runtime_class-dump)
 - [mman-win32](https://github.com/mcgarrah/mman-win32)
 
 ## Stargazers over time

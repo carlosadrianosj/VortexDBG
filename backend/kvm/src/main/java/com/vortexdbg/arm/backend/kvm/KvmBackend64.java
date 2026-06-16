@@ -154,10 +154,6 @@ public class KvmBackend64 extends KvmBackend {
                 if (log.isDebugEnabled()) {
                     log.debug("handle EC_DATAABORT isv={}, isWrite={}, s1ptw={}, len={}, srt={}, dfsc=0x{}, vaddr=0x{}", isv, isWrite, s1ptw, len, srt, Integer.toHexString(dfsc), Long.toHexString(far));
                 }
-                if (dfsc == 0x00 && emulator.getFamily() == Family.iOS) {
-                    handleCommRead(far, elr);
-                    return true;
-                }
                 throw new UnsupportedOperationException("handleException ec=0x" + Integer.toHexString(ec) + ", dfsc=0x" + Integer.toHexString(dfsc));
             }
             default:

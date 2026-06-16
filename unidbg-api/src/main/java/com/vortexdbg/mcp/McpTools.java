@@ -189,18 +189,6 @@ public class McpTools {
                 param("address", "string", "Hex address to free")));
         tools.add(toolSchema("list_allocations", "List active allocations from allocate_memory."));
 
-        if (emulator.getFamily() == Family.iOS) {
-            tools.add(toolSchema("inspect_objc_msg", "Show current objc_msgSend: receiver class + selector from X0/X1. Pure memory parsing, no state change."));
-            tools.add(toolSchema("get_objc_class_name", "Get ObjC class name of object. Pure memory parsing, no state change.",
-                    param("address", "string", "Hex address of ObjC object")));
-            tools.add(toolSchema("dump_objc_class", "Dump ObjC class definition (properties, methods, ivars). Requires isRunning=false. Modifies registers/stack.",
-                    param("class_name", "string", "Exact ObjC class name, e.g. 'NSString'")));
-        }
-
-        if (emulator.getFamily() == Family.iOS && emulator.is64Bit()) {
-            tools.add(toolSchema("dump_gpb_protobuf", "Dump GPB protobuf message schema as .proto. iOS 64-bit only. Requires isRunning=false. Modifies registers/stack.",
-                    param("class_name", "string", "GPBMessage subclass name, e.g. 'GPBStruct', 'MyApp_SearchRequest'")));
-        }
 
         for (CustomTool ct : customTools) {
             JSONObject schema = new JSONObject(true);
@@ -280,10 +268,6 @@ public class McpTools {
             case "allocate_memory": return allocateMemory(args);
             case "free_memory": return freeMemory(args);
             case "list_allocations": return listAllocations();
-            case "inspect_objc_msg": return inspectObjcMsg();
-            case "get_objc_class_name": return getObjcClassName(args);
-            case "dump_objc_class": return dumpObjcClass(args);
-            case "dump_gpb_protobuf": return dumpGpbProtobuf(args);
             default:
                 for (CustomTool ct : customTools) {
                     if (ct.name.equals(name)) {
@@ -1694,160 +1678,6 @@ public class McpTools {
         return textResult(sb.toString());
     }
 
-    private JSONObject getObjcClassName(JSONObject args) {
-        if (emulator.getFamily() != Family.iOS) {
-            return errorResult("get_objc_class_name is only available on iOS emulators.");
-        }
-        long address = parseAddress(args.getString("address"));
-        if (address == 0) {
-            return errorResult("Address is null (0x0).");
-        }
-        try {
-            String className = emulator.getObjcClassName(address);
-            if (className != null) {
-                return textResult("0x" + Long.toHexString(address) + " -> " + className);
-            } else {
-                return errorResult("Failed to resolve ObjC class name at 0x" + Long.toHexString(address));
-            }
-        } catch (Exception e) {
-            return errorResult("Failed to read ObjC class at 0x" + Long.toHexString(address) + ": " + exMsg(e));
-        }
-    }
-
-    private JSONObject inspectObjcMsg() {
-        if (emulator.getFamily() != Family.iOS) {
-            return errorResult("inspect_objc_msg is only available on iOS emulators.");
-        }
-        if (!emulator.is64Bit()) {
-            return errorResult("inspect_objc_msg currently only supports ARM64.");
-        }
-        try {
-            Backend backend = emulator.getBackend();
-            long x0 = backend.reg_read(Arm64Const.UC_ARM64_REG_X0).longValue();
-            long x1 = backend.reg_read(Arm64Const.UC_ARM64_REG_X1).longValue();
-
-            StringBuilder sb = new StringBuilder();
-            String className = null;
-            if (x0 != 0) {
-                try {
-                    className = emulator.getObjcClassName(x0);
-                } catch (Exception ignored) {
-                }
-            }
-
-            String selector = null;
-            if (x1 != 0) {
-                try {
-                    byte[] selData = backend.mem_read(x1, 256);
-                    int len = 0;
-                    while (len < selData.length && selData[len] != 0) len++;
-                    selector = new String(selData, 0, len, java.nio.charset.StandardCharsets.UTF_8);
-                } catch (Exception ignored) {
-                }
-            }
-
-            if (className != null && selector != null) {
-                sb.append(String.format("-[%s %s]%n", className, selector));
-            }
-
-            sb.append(String.format("X0 (receiver): 0x%x", x0));
-            if (className != null) {
-                sb.append("  class: ").append(className);
-            } else if (x0 == 0) {
-                sb.append("  (nil)");
-            } else {
-                sb.append("  (class name not resolved)");
-            }
-            sb.append('\n');
-
-            sb.append(String.format("X1 (selector): 0x%x", x1));
-            if (selector != null) {
-                sb.append("  \"").append(selector).append('"');
-            } else if (x1 == 0) {
-                sb.append("  (nil)");
-            }
-            sb.append('\n');
-
-            for (int i = 2; i <= 7; i++) {
-                long val = backend.reg_read(Arm64Const.UC_ARM64_REG_X0 + i).longValue();
-                if (val != 0) {
-                    sb.append(String.format("X%d (arg%d):     0x%x", i, i - 2, val));
-                    Module module = emulator.getMemory().findModuleByAddress(val);
-                    if (module != null) {
-                        sb.append("  (").append(module.name).append("+0x").append(Long.toHexString(val - module.base)).append(')');
-                    } else if (val > 0x1000) {
-                        try {
-                            String s = tryPrintableString(backend.mem_read(val, 64));
-                            if (s != null) {
-                                sb.append("  \"").append(s).append('"');
-                            }
-                        } catch (Exception ignored) {
-                        }
-                    }
-                    sb.append('\n');
-                }
-            }
-
-            return textResult(sb.toString());
-        } catch (Exception e) {
-            return errorResult("Failed to inspect objc_msgSend: " + exMsg(e));
-        }
-    }
-
-    private JSONObject dumpObjcClass(JSONObject args) {
-        if (emulator.isRunning()) {
-            return errorResult("Cannot call dump_objc_class while emulator is running. " +
-                    "This tool calls ObjC runtime methods internally and requires the emulator to be stopped.");
-        }
-        if (emulator.getFamily() != Family.iOS) {
-            return errorResult("dump_objc_class is only available on iOS emulators. Current family: " + emulator.getFamily());
-        }
-        String className = args.getString("class_name");
-        if (className == null || className.isEmpty()) {
-            return errorResult("class_name parameter is required.");
-        }
-        try {
-            String classDef = emulator.dumpObjcClass(className);
-            if (classDef == null || classDef.isEmpty()) {
-                return errorResult("Class '" + className + "' not found or returned empty definition. " +
-                        "Make sure the class exists in the ObjC runtime.");
-            }
-            return textResult(classDef);
-        } catch (UnsupportedOperationException e) {
-            return errorResult("ObjC class dump not supported: " + exMsg(e));
-        } catch (Exception e) {
-            return errorResult("Failed to dump ObjC class '" + className + "': " +
-                    e.getClass().getSimpleName() + ": " + exMsg(e));
-        }
-    }
-
-    private JSONObject dumpGpbProtobuf(JSONObject args) {
-        if (emulator.isRunning()) {
-            return errorResult("Cannot call dump_gpb_protobuf while emulator is running. " +
-                    "This tool calls ObjC runtime methods internally and requires the emulator to be stopped.");
-        }
-        if (emulator.getFamily() != Family.iOS) {
-            return errorResult("dump_gpb_protobuf is only available on iOS emulators. Current family: " + emulator.getFamily());
-        }
-        if (!emulator.is64Bit()) {
-            return errorResult("dump_gpb_protobuf is only available on 64-bit iOS emulators.");
-        }
-        String className = args.getString("class_name");
-        if (className == null || className.isEmpty()) {
-            return errorResult("class_name parameter is required.");
-        }
-        try {
-            String protoDef = emulator.dumpGPBProtobufDef(className);
-            return textResult(protoDef);
-        } catch (UnsupportedOperationException e) {
-            return errorResult("GPB protobuf dump not supported: " + exMsg(e) +
-                    ". Ensure the Google Protobuf Objective-C runtime (GPB) library is loaded and the class '" +
-                    className + "' is a GPBMessage subclass that responds to 'descriptor'.");
-        } catch (Exception e) {
-            return errorResult("Failed to dump GPB protobuf for '" + className + "': " +
-                    e.getClass().getSimpleName() + ": " + exMsg(e));
-        }
-    }
 
     private static int resolvePermission(String permission) {
         if (permission == null || permission.isEmpty() || "write".equalsIgnoreCase(permission)) {

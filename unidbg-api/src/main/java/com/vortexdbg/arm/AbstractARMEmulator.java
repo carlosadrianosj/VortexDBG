@@ -142,16 +142,7 @@ public abstract class AbstractARMEmulator<T extends NewFileIO> extends AbstractE
 
     @Override
     protected Debugger createConsoleDebugger() {
-        return new SimpleARMDebugger(this) {
-            @Override
-            protected void dumpClass(String className) {
-                AbstractARMEmulator.this.dumpClass(className);
-            }
-            @Override
-            protected void searchClass(String keywords) {
-                AbstractARMEmulator.this.searchClass(keywords);
-            }
-        };
+        return new SimpleARMDebugger(this);
     }
 
     @Override

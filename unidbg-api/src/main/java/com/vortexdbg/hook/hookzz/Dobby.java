@@ -44,11 +44,10 @@ public final class Dobby extends BaseHook implements IHookZz {
     private Dobby(Emulator<?> emulator) {
         super(emulator, "libdobby");
 
-        boolean isIOS = emulator.getFamily() == Family.iOS;
-        dobby_enable_near_branch_trampoline = module.findSymbolByName(isIOS ? "_dobby_enable_near_branch_trampoline" : "dobby_enable_near_branch_trampoline", false);
-        dobby_disable_near_branch_trampoline = module.findSymbolByName(isIOS ? "_dobby_disable_near_branch_trampoline" : "dobby_disable_near_branch_trampoline", false);
-        dobbyHook = module.findSymbolByName(isIOS ? "_DobbyHook" : "DobbyHook", false);
-        dobbyInstrument = module.findSymbolByName(isIOS ? "_DobbyInstrument" : "DobbyInstrument", false);
+        dobby_enable_near_branch_trampoline = module.findSymbolByName("dobby_enable_near_branch_trampoline", false);
+        dobby_disable_near_branch_trampoline = module.findSymbolByName("dobby_disable_near_branch_trampoline", false);
+        dobbyHook = module.findSymbolByName("DobbyHook", false);
+        dobbyInstrument = module.findSymbolByName("DobbyInstrument", false);
         if (log.isDebugEnabled()) {
             log.debug("dobbyHook={}, dobbyInstrument={}", dobbyHook, dobbyInstrument);
         }
@@ -66,7 +65,7 @@ public final class Dobby extends BaseHook implements IHookZz {
             throw new IllegalStateException("dobbyInstrument is null");
         }
 
-        switch_to_file_log = module.findSymbolByName(isIOS ? "_switch_to_file_log" : "switch_to_file_log", false);
+        switch_to_file_log = module.findSymbolByName("switch_to_file_log", false);
     }
 
     @Override

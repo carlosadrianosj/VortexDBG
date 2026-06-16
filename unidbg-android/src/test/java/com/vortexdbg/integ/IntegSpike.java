@@ -36,9 +36,9 @@ public class IntegSpike {
     public static void main(String[] args) throws Exception {
         int pass = 0, fail = 0;
 
-        File appJar = new File("wf2-spike/obfuscated-app.jar");
+        File appJar = new File("tests/wf2-spike/obfuscated-app.jar");
         File androidAll = new File(new String(Files.readAllBytes(new File("/tmp/android_all_jar.txt").toPath())).trim());
-        File soFile = new File("integ-spike/libinteg.so");
+        File soFile = new File("tests/integ-spike/libinteg.so");
 
         AndroidEmulator emulator = new AndroidARM64Emulator("integ",
                 new File("target/rootfs"),

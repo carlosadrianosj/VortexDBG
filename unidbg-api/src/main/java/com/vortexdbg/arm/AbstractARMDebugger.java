@@ -211,10 +211,7 @@ public abstract class AbstractARMDebugger implements Debugger {
             }
         } catch(NumberFormatException ignored) {}
         StringType stringType = null;
-        if (command.endsWith("objc")) {
-            stringType = StringType.objc_object;
-            command = command.substring(0, command.length() - 4);
-        } else if (command.endsWith("std")) {
+        if (command.endsWith("std")) {
             stringType = StringType.std_string;
             command = command.substring(0, command.length() - 3);
         } else if (command.endsWith("s")) {
@@ -431,7 +428,6 @@ public abstract class AbstractARMDebugger implements Debugger {
     protected enum StringType {
         nullTerminated,
         std_string,
-        objc_object
     }
 
     final void dumpMemory(Pointer pointer, int _length, String label, StringType stringType) {
@@ -466,20 +462,6 @@ public abstract class AbstractARMDebugger implements Debugger {
                 long size = string.getDataSize();
                 byte[] data = string.getData(emulator);
                 Inspector.inspect(data, size >= 1024 ? (label + ", hex=" + Hex.encodeHexString(data) + ", std=" + new String(data, StandardCharsets.UTF_8)) : label);
-            } else if (stringType == StringType.objc_object) {
-                long addr = ((UnidbgPointer) pointer).peer;
-                try {
-                    String className = emulator.getObjcClassName(addr);
-                    if (className != null) {
-                        System.out.println(label + " -> ObjC class: " + className);
-                    } else {
-                        System.out.println(label + " -> ObjC class name not resolved");
-                    }
-                } catch (UnsupportedOperationException e) {
-                    System.out.println(label + " -> " + e.getMessage());
-                } catch (Exception e) {
-                    System.out.println(label + " -> failed to read ObjC class: " + e);
-                }
             } else {
                 throw new UnsupportedOperationException("stringType=" + stringType);
             }
@@ -805,27 +787,6 @@ public abstract class AbstractARMDebugger implements Debugger {
                 }
             }
         }
-        if (emulator.getFamily() == Family.iOS && !emulator.isRunning() && line.startsWith("dump ")) {
-            String className = line.substring(5).trim();
-            if (!className.isEmpty()) {
-                dumpClass(className);
-                return false;
-            }
-        }
-        if (emulator.getFamily() == Family.iOS && !emulator.isRunning() && line.startsWith("gpb ")) {
-            String className = line.substring(4).trim();
-            if (!className.isEmpty()) {
-                dumpGPBProtobufMsg(className);
-                return false;
-            }
-        }
-        if (emulator.getFamily() == Family.iOS && !emulator.isRunning() && line.startsWith("search ")) {
-            String keywords = line.substring(7).trim();
-            if (!keywords.isEmpty()) {
-                searchClass(keywords);
-                return false;
-            }
-        }
         int traceSize = 0x10000;
         if (line.startsWith("traceRead")) { // start trace memory read
             setupTraceMemory(backend, line, true, traceSize);
@@ -1082,15 +1043,6 @@ public abstract class AbstractARMDebugger implements Debugger {
         return false;
     }
 
-    protected void dumpGPBProtobufMsg(String className) {
-        throw new UnsupportedOperationException();
-    }
-
-    protected void searchClass(String keywords) {
-    }
-
-    protected void dumpClass(String className) {
-    }
 
     final boolean handleBreakpointCommand(String line, long currentAddress) {
         if (!line.startsWith("b0x")) {
@@ -1163,13 +1115,6 @@ public abstract class AbstractARMDebugger implements Debugger {
         System.out.println("threads: show thread list");
         System.out.println("mcp [port]: start MCP server for AI tool integration (default port 9239)");
 
-        if (emulator.getFamily() == Family.iOS && !emulator.isRunning()) {
-            System.out.println("dump [class name]: dump objc class");
-            System.out.println("search [keywords]: search objc classes");
-            if (emulator.is64Bit()) {
-                System.out.println("gpb [class name]: dump GPB protobuf msg def");
-            }
-        }
 
         Module module = emulator.getMemory().findModuleByAddress(address);
         if (module != null) {

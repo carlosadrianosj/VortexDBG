@@ -1,6 +1,0 @@
-{
-  "__comment": "EXEMPLO do schema. NÃO use este arquivo direto: rode scripts/ios/fetch-dsc.sh, que baixa o cache e GERA o vortex-ios.json real (com os caminhos absolutos da SUA máquina, que NÃO devem ir pro repo). 'rootfs' é um diretório cujo PAI contém o(s) dyld_shared_cache_<arch>.",
-  "rootfs": "/CAMINHO/ABSOLUTO/PARA/scripts/ios/dsc/rootfs-18.7.9",
-  "version": "18.7.9",
-  "arch": "arm64e"
-}

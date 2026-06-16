@@ -14,7 +14,7 @@ import java.nio.file.Files;
 public class VortexFrameworkDemo {
 
     public static void main(String[] args) throws Exception {
-        File appJar = new File("wf2-spike/obfuscated-app.jar");
+        File appJar = new File("tests/wf2-spike/obfuscated-app.jar");
         File androidAll = new File(new String(Files.readAllBytes(new File("/tmp/android_all_jar.txt").toPath())).trim());
 
         VortexFramework framework = VortexFramework.fromAndroidAll(androidAll);

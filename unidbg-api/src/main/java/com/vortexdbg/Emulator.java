@@ -142,29 +142,4 @@ public interface Emulator<T extends NewFileIO> extends Closeable, ArmDisassemble
     void set(String key, Object value);
     <V> V get(String key);
 
-    /**
-     * Get Objective-C class name for the object at the given address.
-     * Reads isa pointer, applies ISA_MASK, and parses class_ro_t to get the name.
-     * Only available on iOS emulators.
-     */
-    default String getObjcClassName(long address) {
-        throw new UnsupportedOperationException("ObjC introspection only available on iOS emulators");
-    }
-
-    /**
-     * Dump Objective-C class definition (properties, methods, protocols, ivars).
-     * Only available on iOS emulators with ObjC runtime loaded.
-     */
-    default String dumpObjcClass(String className) {
-        throw new UnsupportedOperationException("ObjC class dump only available on iOS emulators");
-    }
-
-    /**
-     * Dump GPB (Google Protobuf for Objective-C) message definition as .proto format.
-     * Only available on iOS 64-bit emulators with GPB protobuf library loaded.
-     */
-    default String dumpGPBProtobufDef(String className) {
-        throw new UnsupportedOperationException("GPB protobuf dump only available on iOS 64-bit emulators");
-    }
-
 }

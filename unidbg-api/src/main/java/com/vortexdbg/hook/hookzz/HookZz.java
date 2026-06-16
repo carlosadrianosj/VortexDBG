@@ -44,12 +44,11 @@ public final class HookZz extends BaseHook implements IHookZz {
     private HookZz(Emulator<?> emulator) {
         super(emulator, "libhookzz");
 
-        boolean isIOS = emulator.getFamily() == Family.iOS;
-        zz_enable_arm_arm64_b_branch = module.findSymbolByName(isIOS ? "_zz_enable_arm_arm64_b_branch" : "zz_enable_arm_arm64_b_branch", false);
-        zz_disable_arm_arm64_b_branch = module.findSymbolByName(isIOS ? "_zz_disable_arm_arm64_b_branch" : "zz_disable_arm_arm64_b_branch", false);
-        zzReplace = module.findSymbolByName(isIOS ? "_ZzReplace" : "ZzReplace", false);
-        zzWrap = module.findSymbolByName(isIOS ? "_ZzWrap" : "ZzWrap", false);
-        zzDynamicBinaryInstrumentation = module.findSymbolByName(isIOS ? "_ZzDynamicBinaryInstrumentation" : "ZzDynamicBinaryInstrumentation", false);
+        zz_enable_arm_arm64_b_branch = module.findSymbolByName("zz_enable_arm_arm64_b_branch", false);
+        zz_disable_arm_arm64_b_branch = module.findSymbolByName("zz_disable_arm_arm64_b_branch", false);
+        zzReplace = module.findSymbolByName("ZzReplace", false);
+        zzWrap = module.findSymbolByName("ZzWrap", false);
+        zzDynamicBinaryInstrumentation = module.findSymbolByName("ZzDynamicBinaryInstrumentation", false);
         if (log.isDebugEnabled()) {
             log.debug("zzReplace={}, zzWrap={}", zzReplace, zzWrap);
         }

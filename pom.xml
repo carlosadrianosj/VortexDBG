@@ -8,13 +8,11 @@
     <modules>
         <module>unidbg-api</module>
         <module>unidbg-android</module>
-        <module>unidbg-ios</module>
         <module>backend/dynarmic</module>
         <module>backend/hypervisor</module>
         <module>backend/kvm</module>
         <module>backend/unicorn2</module>
         <module>vortexdbg-kotlin</module>
-        <module>vortexdbg-ios-dsc</module>
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

@@ -8,23 +8,11 @@
 /unidbg-api/unidbg-api.iml
 /unidbg-api/target/
 /unidbg-android/unidbg-android.iml
-/unidbg-ios/unidbg-ios.iml
-/unidbg-ios/target/
 /unidbg-android/target/
 /backend/*/target/
 /backend/*/*.iml
 *.i64
 *.idb
-/unidbg-ios/src/test/resources/native/swift/swift_library.o
-/unidbg-ios/src/test/resources/native/swift/swift_library-Swift.h
 /backend/hypervisor/src/main/native/hypervisor/cmake-build-debug/
 /backend/hypervisor/src/main/native/hypervisor/.idea/
-/unidbg-ios/src/test/resources/example_binaries/cpu_features
-/unidbg-ios/src/test/resources/example_binaries/ios_cpu_features
 vortexdbg-kotlin/target/
-vortexdbg-ios-dsc/target/
-
-# iOS Path B: dados baixados da Apple e config gerada (NÃO redistribuir) — só o script é versionado
-scripts/ios/dsc/
-scripts/ios/vortex-ios.json
-scripts/ios/*.ipsw

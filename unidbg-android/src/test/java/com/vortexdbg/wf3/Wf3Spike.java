@@ -21,7 +21,7 @@ import java.util.Collections;
  * A FASE 0 mostrou que ThrowNew deixava a exceção PENDENTE em BaseVM.throwable mas
  * NÃO a propagava ao host. O WF3 adicionou {@link VM#setExceptionPropagation(boolean)}:
  * ao retornar de uma chamada JNI com exceção pendente, o Vortex lança
- * {@link VortexJniException} no host. Reusa o fase0-spike/libfase0.so.
+ * {@link VortexJniException} no host. Reusa o tests/fase0-spike/libfase0.so.
  */
 public class Wf3Spike extends AbstractJni {
 
@@ -37,7 +37,7 @@ public class Wf3Spike extends AbstractJni {
             vm.setJni(new Wf3Spike());
             vm.setVerbose(false);
             vm.setExceptionPropagation(true); // WF3: liga a propagação
-            vm.loadLibrary(new File("fase0-spike/libfase0.so"), false);
+            vm.loadLibrary(new File("tests/fase0-spike/libfase0.so"), false);
             DvmClass cls = vm.resolveClass("com/vortexdbg/fase0/Fase0Spike");
 
             System.out.println("================ WF3 — propagação de exceção ================");

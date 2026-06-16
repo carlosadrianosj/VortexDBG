@@ -22,7 +22,7 @@ public class Wf2Spike {
 
     public static void main(String[] args) throws Exception {
         int pass = 0, fail = 0;
-        File jar = new File("wf2-spike/obfuscated-app.jar");
+        File jar = new File("tests/wf2-spike/obfuscated-app.jar");
         if (!jar.exists()) {
             System.err.println("jar não encontrado: " + jar.getAbsolutePath());
             System.exit(2);

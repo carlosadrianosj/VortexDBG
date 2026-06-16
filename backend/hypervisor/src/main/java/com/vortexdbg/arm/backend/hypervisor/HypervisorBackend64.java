@@ -235,9 +235,6 @@ public class HypervisorBackend64 extends HypervisorBackend {
             int srt = (int) ((esr >> 16) & 0x1f);
             log.debug("handle EC_DATAABORT ec=0x{}, isv={}, isWrite={}, s1ptw={}, len={}, srt={}, dfsc=0x{}, vaddr=0x{}, elr=0x{}", Integer.toHexString(ec), isv, isWrite, s1ptw, len, srt, Integer.toHexString(dfsc), Long.toHexString(far), Long.toHexString(elr));
         }
-        if (dfsc == 0x00 && emulator.getFamily() == Family.iOS) {
-            return handleCommRead(far, elr, accessSize);
-        }
         if (eventMemHookNotifier != null) {
             eventMemHookNotifier.notifyDataAbort(isWrite, accessSize, far);
         }

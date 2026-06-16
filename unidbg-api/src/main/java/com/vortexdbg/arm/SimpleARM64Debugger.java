@@ -99,7 +99,6 @@ class SimpleARM64Debugger extends AbstractARMDebugger implements Debugger {
         System.out.println("m(address) [size]: show memory of specified address, address must start with 0x");
         System.out.println("  append 's' to read as C string, e.g. mx0s, m0x1234s");
         System.out.println("  append 'std' to read as std::string, e.g. mx0std, m0x1234std");
-        System.out.println("  append 'objc' to read ObjC class name, e.g. mx0objc, m0x1234objc");
         System.out.println();
         System.out.println("wx0-wx28, wfp, wip, wsp <value>: write specified register");
         System.out.println("wb(address), ws(address), wi(address), wl(address) <value>: write (byte, short, integer, long) memory of specified address, address must start with 0x");

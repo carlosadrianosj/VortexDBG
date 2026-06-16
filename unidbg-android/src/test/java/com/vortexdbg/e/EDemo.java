@@ -20,7 +20,7 @@ public class EDemo {
     public static void main(String[] args) throws Exception {
         int pass = 0, fail = 0;
         try (VortexSession s = VortexSession.builder()
-                .nativeLib(new File("e-spike/libe.so"))
+                .nativeLib(new File("tests/e-spike/libe.so"))
                 .open()) {
 
             VortexNativeDispatch.setSession(s);

@@ -29,9 +29,8 @@ public final class Whale extends BaseHook implements IWhale {
     private Whale(Emulator<?> emulator) {
         super(emulator, "libwhale");
 
-        boolean isIOS = emulator.getFamily() == Family.iOS;
-        WInlineHookFunction = module.findSymbolByName(isIOS ? "_WInlineHookFunction" : "WInlineHookFunction", false);
-        WImportHookFunction = module.findSymbolByName(isIOS ? "_WImportHookFunction" : "WImportHookFunction", false);
+        WInlineHookFunction = module.findSymbolByName("WInlineHookFunction", false);
+        WImportHookFunction = module.findSymbolByName("WImportHookFunction", false);
         if (log.isDebugEnabled()) {
             log.debug("WInlineHookFunction={}, WImportHookFunction={}", WInlineHookFunction, WImportHookFunction);
         }

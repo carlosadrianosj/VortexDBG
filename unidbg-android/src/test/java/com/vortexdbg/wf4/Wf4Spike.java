@@ -20,7 +20,7 @@ public class Wf4Spike {
     public static void main(String[] args) throws Exception {
         int pass = 0, fail = 0;
 
-        File appJar = new File("wf2-spike/obfuscated-app.jar");
+        File appJar = new File("tests/wf2-spike/obfuscated-app.jar");
         File androidAll = new File(androidAllPath());
         if (!appJar.exists() || !androidAll.exists()) {
             System.err.println("faltando jar: app=" + appJar.exists() + " android-all=" + androidAll.exists()

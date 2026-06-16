@@ -45,7 +45,7 @@ public class DbgDemo {
                 System.out.println("      pilha unificada: nativo " + dbg.nativeStack(6) + "  ->  [java " + signature + "]");
             }));
 
-            DalvikModule dm = vm.loadLibrary(new File("dbg-spike/libdbg.so"), false);
+            DalvikModule dm = vm.loadLibrary(new File("tests/dbg-spike/libdbg.so"), false);
             Module module = dm.getModule();
             DvmClass cls = vm.resolveClass("com/vortexdbg/dbg/DbgHost");
 

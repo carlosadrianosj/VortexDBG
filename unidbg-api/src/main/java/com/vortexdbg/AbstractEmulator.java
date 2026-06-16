@@ -470,18 +470,6 @@ public abstract class AbstractEmulator<T extends NewFileIO> implements Emulator<
 
     protected abstract boolean isPaddingArgument();
 
-    protected void dumpClass(String className) {
-        throw new UnsupportedOperationException("dumpClass className=" + className);
-    }
-
-    protected void searchClass(String keywords) {
-        throw new UnsupportedOperationException("searchClass keywords=" + keywords);
-    }
-
-    protected void dumpGPBProtobufMsg(String className) {
-        throw new UnsupportedOperationException("dumpGPBProtobufMsg className=" + className);
-    }
-
     @Override
     public final void serialize(DataOutput out) throws IOException {
         out.writeUTF(getClass().getName());

@@ -3,8 +3,7 @@ package com.vortexdbg;
 public enum  Family {
 
     Android32(".so", "/android/lib/armeabi-v7a/"),
-    Android64(".so", "/android/lib/arm64-v8a/"),
-    iOS(".dylib", "/ios/lib/")
+    Android64(".so", "/android/lib/arm64-v8a/")
     ;
 
     private final String libraryExtension;

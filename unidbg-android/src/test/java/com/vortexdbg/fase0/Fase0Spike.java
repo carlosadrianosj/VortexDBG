@@ -25,7 +25,7 @@ import java.util.Collections;
  *   T2) IDENTIDADE: IsSameObject através da ponte (mesmo handle => true; outro => false).
  *   T3) EXCEÇÃO: ThrowNew do native propaga para o lado Java.
  *
- * Backend: Unicorn2 (sem entitlement). .so: fase0-spike/libfase0.so (arm64).
+ * Backend: Unicorn2 (sem entitlement). .so: tests/fase0-spike/libfase0.so (arm64).
  */
 public class Fase0Spike extends AbstractJni {
 
@@ -46,7 +46,7 @@ public class Fase0Spike extends AbstractJni {
             VM vm = emulator.createDalvikVM();
             vm.setJni(new Fase0Spike());
             vm.setVerbose(false);
-            vm.loadLibrary(new File("fase0-spike/libfase0.so"), false);
+            vm.loadLibrary(new File("tests/fase0-spike/libfase0.so"), false);
             DvmClass cls = vm.resolveClass("com/vortexdbg/fase0/Fase0Spike");
 
             System.out.println("================ FASE 0 — ponte JNI ================");

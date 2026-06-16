@@ -391,10 +391,10 @@ public class McpServer {
     }
 
     private String buildInstructions() {
-        return "unidbg MCP — ARM emulator debugger for Android/iOS native libraries.\n\n" +
+        return "unidbg MCP — ARM emulator debugger for Android native libraries.\n\n" +
                 "## State\n" +
                 "- debug_idle=true: paused, tools ready. false: running, only execution tools + poll_events work.\n" +
-                "- isRunning=true: cannot call call_function/call_symbol/dump_objc_class/dump_gpb_protobuf/allocate_memory(malloc).\n\n" +
+                "- isRunning=true: cannot call call_function/call_symbol/allocate_memory(malloc).\n\n" +
                 "## Modes\n" +
                 "1. Breakpoint debug: paused at breakpoint, all tools available. Resume → next bp or exit.\n" +
                 "2. Custom tools (DebugRunnable): repeatable execution, set bp/trace BEFORE calling custom tool, poll_events after.\n\n" +
@@ -414,8 +414,7 @@ public class McpServer {
                 "- Prefer add_breakpoint_by_symbol/add_breakpoint_by_offset over find_symbol + add_breakpoint.\n" +
                 "- Use read_string/read_std_string/read_typed/read_pointer for structured data.\n" +
                 "- find_symbol only has .dynsym/exports. For stripped symbols: address = module_base + IDA_offset.\n" +
-                "- allocate_memory: malloc when stopped (efficient), mmap when running (page-aligned). free_memory to release.\n" +
-                "- iOS: dump_objc_class/dump_gpb_protobuf call ObjC runtime internally, WILL modify registers/stack.";
+                "- allocate_memory: malloc when stopped (efficient), mmap when running (page-aligned). free_memory to release.";
     }
 
     private JSONObject handleToolsList() {
