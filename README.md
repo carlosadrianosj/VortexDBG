@@ -268,4 +268,5 @@ Vortex-DBG currently runs on **macOS** and **Linux** only (the native backends s
 
 ## License
 
-[MIT](LICENSE).
+[Apache License 2.0](LICENSE). Vortex-DBG is a derivative work based on the
+architecture of [UniDBG](https://github.com/zhkl0228/unidbg) (Apache-2.0) — see [NOTICE](NOTICE).

@@ -1,0 +1,10 @@
+Vortex-DBG
+Copyright 2026 carlosadrianosj
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this product except in compliance with the License.
+A copy of the License is in the LICENSE file.
+
+This product is a derivative work based on the architecture of UniDBG
+(https://github.com/zhkl0228/unidbg), which is licensed under the
+Apache License, Version 2.0.
