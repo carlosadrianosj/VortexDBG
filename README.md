@@ -1,6 +1,20 @@
-# Vortex-DBG
+<p align="center">
+  <img src="icon/vortex-logo.png" alt="Vortex-DBG" width="200"/>
+</p>
 
-> [github.com/carlosadrianosj/VortexDBG](https://github.com/carlosadrianosj/VortexDBG)
+<h1 align="center">Vortex-DBG</h1>
+
+<p align="center"><em>Emulate Android native libraries <b>and</b> DEX/Java classes — together, off-device.</em></p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License: Apache-2.0"></a>
+  <img src="https://img.shields.io/badge/Kotlin-100%25-7F52FF?logo=kotlin&logoColor=white" alt="Kotlin">
+  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey?logo=linux&logoColor=white" alt="Platform: macOS | Linux">
+  <img src="https://img.shields.io/badge/arch-ARM32%20%7C%20ARM64-success" alt="Arch: ARM32 | ARM64">
+  <img src="https://img.shields.io/badge/backends-Unicorn2%20%7C%20Dynarmic%20%7C%20Hypervisor-orange" alt="Backends">
+  <img src="https://img.shields.io/badge/JVM-8%20build%20%C2%B7%2021%2B%20run-red?logo=openjdk&logoColor=white" alt="JVM">
+  <img src="https://img.shields.io/badge/MCP-AI%20assisted-brightgreen" alt="MCP">
+</p>
 
 Vortex-DBG was born to solve a pain every mobile reverse-engineer knows well: in
 day-to-day work you constantly need to emulate **both** sides of an app — the
