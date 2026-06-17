@@ -55,9 +55,9 @@ public class KeyChainAuto {
     }
 
     public static void main(String[] args) throws Exception {
-        File appJar = new File("tests/keychain-app/out/keychain.jar");
+        File appJar = new File("tests/keychain-test/out/keychain.jar");
         // Pull the native lib straight out of the real signed APK:
-        File apk = new File("tests/keychain-app/out/keychain.apk");
+        File apk = new File("tests/keychain-test/out/keychain.apk");
         File soFile = File.createTempFile("libkeychain", ".so");
         soFile.deleteOnExit();
         try (ZipFile zf = new ZipFile(apk)) {

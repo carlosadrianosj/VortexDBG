@@ -50,7 +50,7 @@ public class TTEncrypt {
 
         vm = emulator.createDalvikVM(); // 创建Android虚拟机
         vm.setVerbose(logging); // 设置是否打印Jni调用细节
-        DalvikModule dm = vm.loadLibrary(new File("vortexdbg-android/src/test/resources/example_binaries/libttEncrypt.so"), false); // 加载libttEncrypt.so到unicorn虚拟内存，加载成功以后会默认调用init_array等函数
+        DalvikModule dm = vm.loadLibrary(new File("tests/tiktok-test/libttEncrypt.so"), false); // 加载libttEncrypt.so到unicorn虚拟内存，加载成功以后会默认调用init_array等函数
         dm.callJNI_OnLoad(emulator); // 手动执行JNI_OnLoad函数
         module = dm.getModule(); // 加载好的libttEncrypt.so对应为一个模块
 
