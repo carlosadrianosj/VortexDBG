@@ -4,7 +4,7 @@ import com.vortexdbg.Emulator
 import com.vortexdbg.Module
 import com.vortexdbg.Symbol
 
-class VirtualSymbol(name: String, private val module: Module, private val address: Long) : Symbol(name) {
+class VirtualSymbol(name: String, private val module: Module?, private val address: Long) : Symbol(name) {
 
     override fun call(emulator: Emulator<*>, vararg args: Any?): Number {
         return Module.emulateFunction(emulator, address, *args)
@@ -15,7 +15,7 @@ class VirtualSymbol(name: String, private val module: Module, private val addres
     }
 
     override fun getValue(): Long {
-        return address - module.base
+        return address - module!!.base
     }
 
     override fun isUndef(): Boolean {
@@ -23,7 +23,7 @@ class VirtualSymbol(name: String, private val module: Module, private val addres
     }
 
     override fun getModuleName(): String {
-        return module.name
+        return module!!.name
     }
 
 }

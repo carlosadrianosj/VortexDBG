@@ -115,7 +115,7 @@ open class NetLinkSocket(private val emulator: Emulator<*>) : SocketIO(), FileIO
                 }
                 val response = baos.toByteArray()
                 if (count >= response.size) {
-                    buffer.write(0, response, 0, response.size)
+                    buffer.write(0L, response, 0, response.size)
                     this.netlinkType = (-1).toShort()
                     return response.size
                 }

@@ -61,15 +61,15 @@ abstract class SocketIO protected constructor() : BaseAndroidFileIO(IOConstants.
             when (level) {
                 SOL_SOCKET -> {
                     if (optname == SO_ERROR) {
-                        optlen.setInt(0, 4)
-                        optval.setInt(0, 0)
+                        optlen.setInt(0L, 4)
+                        optval.setInt(0L, 0)
                         return 0
                     }
                 }
                 IPPROTO_TCP -> {
                     if (optname == TCP_NODELAY) {
-                        optlen.setInt(0, 4)
-                        optval.setInt(0, getTcpNoDelay())
+                        optlen.setInt(0L, 4)
+                        optval.setInt(0L, getTcpNoDelay())
                         return 0
                     }
                 }
@@ -92,35 +92,35 @@ abstract class SocketIO protected constructor() : BaseAndroidFileIO(IOConstants.
                             if (optlen != 4) {
                                 throw IllegalStateException("optlen=$optlen")
                             }
-                            setReuseAddress(optval.getInt(0))
+                            setReuseAddress(optval.getInt(0L))
                             return 0
                         }
                         SO_BROADCAST -> {
                             if (optlen != 4) {
                                 throw IllegalStateException("optlen=$optlen")
                             }
-                            optval.getInt(0) // broadcast_pings
+                            optval.getInt(0L) // broadcast_pings
                             return 0
                         }
                         SO_SNDBUF -> {
                             if (optlen != 4) {
                                 throw IllegalStateException("optlen=$optlen")
                             }
-                            setSendBufferSize(optval.getInt(0))
+                            setSendBufferSize(optval.getInt(0L))
                             return 0
                         }
                         SO_RCVBUF -> {
                             if (optlen != 4) {
                                 throw IllegalStateException("optlen=$optlen")
                             }
-                            setReceiveBufferSize(optval.getInt(0))
+                            setReceiveBufferSize(optval.getInt(0L))
                             return 0
                         }
                         SO_KEEPALIVE -> {
                             if (optlen != 4) {
                                 throw IllegalStateException("optlen=$optlen")
                             }
-                            setKeepAlive(optval.getInt(0))
+                            setKeepAlive(optval.getInt(0L))
                             return 0
                         }
                         SO_RCVTIMEO, SO_SNDTIMEO -> {
@@ -134,14 +134,14 @@ abstract class SocketIO protected constructor() : BaseAndroidFileIO(IOConstants.
                             if (optlen != 4) {
                                 throw IllegalStateException("optlen=$optlen")
                             }
-                            setTcpNoDelay(optval.getInt(0))
+                            setTcpNoDelay(optval.getInt(0L))
                             return 0
                         }
                         TCP_MAXSEG -> {
                             if (optlen != 4) {
                                 throw IllegalStateException("optlen=$optlen")
                             }
-                            log.debug("setsockopt TCP_MAXSEG={}", optval.getInt(0))
+                            log.debug("setsockopt TCP_MAXSEG={}", optval.getInt(0L))
                             return 0
                         }
                     }
@@ -184,11 +184,11 @@ abstract class SocketIO protected constructor() : BaseAndroidFileIO(IOConstants.
         val sockAddr = SockAddr(addr)
         sockAddr.sin_port = socketAddress.port.toShort()
         if (address is Inet4Address) {
-            sockAddr.sin_family = AF_INET
+            sockAddr.sin_family = AF_INET.toShort()
             sockAddr.sin_addr = Arrays.copyOf(address.getAddress(), IPV4_ADDR_LEN - 4)
             addrlen.setInt(0L, IPV4_ADDR_LEN)
         } else if (address is Inet6Address) {
-            sockAddr.sin_family = AF_INET6
+            sockAddr.sin_family = AF_INET6.toShort()
             sockAddr.sin_addr = Arrays.copyOf(address.getAddress(), IPV6_ADDR_LEN - 4)
             addrlen.setInt(0L, IPV6_ADDR_LEN)
         } else {
@@ -267,13 +267,13 @@ abstract class SocketIO protected constructor() : BaseAndroidFileIO(IOConstants.
     companion object {
         private val log = LoggerFactory.getLogger(SocketIO::class.java)
 
-        const val AF_UNSPEC: Short = 0
-        const val AF_LOCAL: Short = 1 // AF_UNIX
-        const val AF_INET: Short = 2
-        const val AF_INET6: Short = 10
-        const val AF_NETLINK: Short = 16
-        const val AF_ROUTE: Short = 17 /* Internal Routing Protocol */
-        const val AF_LINK: Short = 18 /* Link layer interface */
+        const val AF_UNSPEC = 0
+        const val AF_LOCAL = 1 // AF_UNIX
+        const val AF_INET = 2
+        const val AF_INET6 = 10
+        const val AF_NETLINK = 16
+        const val AF_ROUTE = 17 /* Internal Routing Protocol */
+        const val AF_LINK = 18 /* Link layer interface */
 
         const val IPV4_ADDR_LEN = 16
         const val IPV6_ADDR_LEN = 28

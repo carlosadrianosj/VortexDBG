@@ -35,7 +35,7 @@ abstract class LocalUdpSocket protected constructor(@JvmField protected val emul
 
     override fun connect(addr: Pointer, addrlen: Int): Int {
         val sa_family = addr.getShort(0)
-        if (sa_family != AF_LOCAL) {
+        if (sa_family.toInt() != AF_LOCAL) {
             throw UnsupportedOperationException("sa_family=$sa_family")
         }
 

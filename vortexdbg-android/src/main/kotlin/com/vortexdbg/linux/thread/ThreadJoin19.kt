@@ -32,7 +32,7 @@ object ThreadJoin19 {
             override fun onCall(emulator: Emulator<*>, context: HookContext, originFunction: Long): HookStatus {
                 val ptr = context.getPointerArg(1)
                 if (ptr != null) {
-                    ptr.setInt(0, value_ptr.get())
+                    ptr.setInt(0L, value_ptr.get())
                 }
                 return HookStatus.LR(emulator, 0)
             }

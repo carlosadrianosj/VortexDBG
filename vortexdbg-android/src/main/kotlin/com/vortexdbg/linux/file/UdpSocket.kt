@@ -51,7 +51,7 @@ open class UdpSocket(private val emulator: Emulator<*>) : SocketIO(), FileIO {
 
     override fun connect_ipv6(addr: Pointer, addrlen: Int): Int {
         if (log.isDebugEnabled) {
-            val data = addr.getByteArray(0, addrlen)
+            val data = addr.getByteArray(0L, addrlen)
             Inspector.inspect(data, "addr")
         }
 
@@ -74,7 +74,7 @@ open class UdpSocket(private val emulator: Emulator<*>) : SocketIO(), FileIO {
 
     override fun connect_ipv4(addr: Pointer, addrlen: Int): Int {
         if (log.isDebugEnabled) {
-            val data = addr.getByteArray(0, addrlen)
+            val data = addr.getByteArray(0L, addrlen)
             Inspector.inspect(data, "addr")
         }
 
@@ -117,11 +117,11 @@ open class UdpSocket(private val emulator: Emulator<*>) : SocketIO(), FileIO {
         }
 
         if (log.isDebugEnabled) {
-            val addr = dest_addr.getByteArray(0, addrlen)
+            val addr = dest_addr.getByteArray(0L, addrlen)
             Inspector.inspect(addr, "addr")
         }
 
-        val sa_family = dest_addr.getInt(0)
+        val sa_family = dest_addr.getInt(0L)
         if (sa_family != AF_INET.toInt()) {
             throw AbstractMethodError("sa_family=$sa_family")
         }
@@ -194,7 +194,7 @@ open class UdpSocket(private val emulator: Emulator<*>) : SocketIO(), FileIO {
                 ifReq.pack()
 
                 val sockAddr = SockAddr(ifReq.getAddrPointer())
-                sockAddr.sin_family = AF_INET
+                sockAddr.sin_family = AF_INET.toShort()
                 sockAddr.sin_port = 0.toShort()
                 sockAddr.sin_addr = Arrays.copyOf(networkIF.ipv4.getAddress(), IPV4_ADDR_LEN - 4)
                 sockAddr.pack()
@@ -244,7 +244,7 @@ open class UdpSocket(private val emulator: Emulator<*>) : SocketIO(), FileIO {
     protected open fun getIFaceName(emulator: Emulator<*>, argp: Long): Int {
         val req = IFReq.createIFReq(emulator, VortexdbgPointer.pointer(emulator, argp))
         val ptr = req.getAddrPointer()
-        val ifindex = ptr.getInt(0)
+        val ifindex = ptr.getInt(0L)
         if (log.isDebugEnabled) {
             log.debug("get iface name: {}", ifindex)
         }

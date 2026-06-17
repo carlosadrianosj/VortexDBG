@@ -202,12 +202,12 @@ open class SimpleFileIO(oflags: Int, @JvmField protected val file: File, @JvmFie
             when (whence) {
                 FileIO.SEEK_SET -> {
                     randomAccessFile.seek(offset)
-                    result.setLong(0, randomAccessFile.filePointer)
+                    result.setLong(0L, randomAccessFile.filePointer)
                     return 0
                 }
                 FileIO.SEEK_END -> {
                     randomAccessFile.seek(randomAccessFile.length() - offset)
-                    result.setLong(0, randomAccessFile.filePointer)
+                    result.setLong(0L, randomAccessFile.filePointer)
                     return 0
                 }
             }

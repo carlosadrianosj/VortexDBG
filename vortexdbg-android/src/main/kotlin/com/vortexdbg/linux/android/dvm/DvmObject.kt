@@ -154,7 +154,7 @@ open class DvmObject<T> private constructor(private val vm: BaseVM?, private val
                         arg is DoubleArray ||
                         arg is Enum<*>
                     ) {
-                        val obj = ProxyDvmObject.createObject(vm, arg)
+                        val obj = ProxyDvmObject.createObject(vm, arg)!!
                         list.add(obj.hashCode())
                         vm.addLocalObject(obj)
                         continue

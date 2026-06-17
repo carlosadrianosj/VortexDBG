@@ -154,7 +154,7 @@ internal class DnsProxyDaemon(private val sdk: Int) : LocalSocketIO.SocketHandle
             buffer.order(ByteOrder.BIG_ENDIAN)
             buffer.putInt(16) // ai_addrlen
             buffer.order(ByteOrder.LITTLE_ENDIAN)
-            buffer.putShort(SocketIO.AF_INET) // sin_family
+            buffer.putShort(SocketIO.AF_INET.toShort()) // sin_family
             buffer.putShort(java.lang.Short.reverseBytes(port)) // sin_port
             buffer.put(Arrays.copyOf(address.address, 4))
             buffer.put(ByteArray(8)) // __pad
@@ -169,7 +169,7 @@ internal class DnsProxyDaemon(private val sdk: Int) : LocalSocketIO.SocketHandle
             buffer.putInt(SocketIO.IPPROTO_TCP)
             buffer.putInt(16) // ai_addrlen
             buffer.order(ByteOrder.LITTLE_ENDIAN)
-            buffer.putShort(SocketIO.AF_INET) // sin_family
+            buffer.putShort(SocketIO.AF_INET.toShort()) // sin_family
             buffer.putShort(java.lang.Short.reverseBytes(port)) // sin_port
             buffer.put(Arrays.copyOf(address.address, 4))
             buffer.put(ByteArray(8)) // __pad

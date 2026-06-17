@@ -22,7 +22,7 @@ class KitKatThread(
 
     override fun setErrno(emulator: Emulator<*>, errno: Int): Boolean {
         if (this.errno != null) {
-            this.errno!!.setInt(0, errno)
+            this.errno!!.setInt(0L, errno)
             return true
         }
         return super.setErrno(emulator, errno)

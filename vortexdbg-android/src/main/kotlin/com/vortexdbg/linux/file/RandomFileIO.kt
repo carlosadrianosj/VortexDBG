@@ -16,7 +16,7 @@ open class RandomFileIO(emulator: Emulator<*>, path: String) : DriverFileIO(emul
         var pointer = buffer
         while (total < count) {
             val read = Math.min(buf.size, count - total)
-            pointer.write(0, buf, 0, read)
+            pointer.write(0L, buf, 0, read)
             total += read
             pointer = pointer.share(read.toLong())
         }

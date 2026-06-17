@@ -44,7 +44,7 @@ open class ByteArrayFileIO(oflags: Int, @JvmField protected val path: String, @J
         if (count > remain) {
             count = remain
         }
-        buffer.write(0, bytes, pos, count)
+        buffer.write(0L, bytes, pos, count)
         if (log.isDebugEnabled) {
             log.debug(Inspector.inspectString(Arrays.copyOfRange(bytes, pos, pos + count), "read path=" + path + ", fp=" + pos + ", _count=" + count + ", length=" + bytes.size + ", buffer=" + buffer))
         }

@@ -11,7 +11,7 @@ abstract class FutexWaiter(private val uaddr: Pointer, private val `val`: Int) :
         if (wokenUp) {
             return true
         }
-        val old = uaddr.getInt(0)
+        val old = uaddr.getInt(0L)
         return old != `val`
     }
 

@@ -31,7 +31,7 @@ open class Stdin(oflags: Int) : BaseAndroidFileIO(oflags), AndroidFileIO {
                 return read
             }
 
-            buffer.write(0, Arrays.copyOf(data, read), 0, read)
+            buffer.write(0L, Arrays.copyOf(data, read), 0, read)
             return read
         } catch (e: IOException) {
             throw IllegalStateException(e)

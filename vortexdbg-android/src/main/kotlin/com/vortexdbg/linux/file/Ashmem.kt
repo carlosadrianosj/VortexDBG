@@ -13,7 +13,7 @@ internal class Ashmem internal constructor(emulator: Emulator<*>, oflags: Int, p
         if (request == ASHMEM_SET_NAME.toLong()) {
             val pointer = VortexdbgPointer.pointer(emulator, argp)
             assert(pointer != null)
-            this.name = pointer!!.getString(0)
+            this.name = pointer!!.getString(0L)
             log.debug("ashmem set name: {}", this.name)
             return 0
         }

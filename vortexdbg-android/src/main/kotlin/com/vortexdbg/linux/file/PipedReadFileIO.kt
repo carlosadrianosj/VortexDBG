@@ -23,7 +23,7 @@ open class PipedReadFileIO(private val inputStream: PipedInputStream, private va
             }
 
             val data = Arrays.copyOf(receiveBuf, read)
-            buffer.write(0, data, 0, data.size)
+            buffer.write(0L, data, 0, data.size)
             if (log.isDebugEnabled) {
                 log.debug(Inspector.inspectString(data, "read fd=$writefd"))
             }

@@ -30,9 +30,9 @@ object ThreadJoin23 {
                 val ptr = context.getPointerArg(1)
                 if (ptr != null) {
                     if (emulator.is64Bit()) {
-                        ptr.setLong(0, value_ptr.get())
+                        ptr.setLong(0L, value_ptr.get())
                     } else {
-                        ptr.setInt(0, value_ptr.get().toInt())
+                        ptr.setInt(0L, value_ptr.get().toInt())
                     }
                 }
                 return HookStatus.LR(emulator, 0)

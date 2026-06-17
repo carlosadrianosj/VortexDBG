@@ -27,8 +27,8 @@ interface Loader {
     fun findModuleByAddress(address: Long): Module?
     fun findModule(name: String): Module?
 
-    fun dlopen(filename: String): Module
-    fun dlopen(filename: String, calInit: Boolean): Module
+    fun dlopen(filename: String): Module?
+    fun dlopen(filename: String, calInit: Boolean): Module?
     fun dlclose(handle: Long): Boolean
     fun dlsym(handle: Long, symbol: String): Symbol?
 

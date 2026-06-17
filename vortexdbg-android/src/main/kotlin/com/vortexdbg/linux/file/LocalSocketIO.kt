@@ -44,12 +44,12 @@ open class LocalSocketIO(private val emulator: Emulator<*>, private val sdk: Int
     override fun read(backend: Backend, buffer: Pointer, count: Int): Int {
         val response = this.response ?: throw IllegalStateException("response is null")
         if (response.size <= count) {
-            buffer.write(0, response, 0, response.size)
+            buffer.write(0L, response, 0, response.size)
             val ret = response.size
             this.response = null
             return ret
         } else {
-            buffer.write(0, Arrays.copyOf(response, count), 0, count)
+            buffer.write(0L, Arrays.copyOf(response, count), 0, count)
             val temp = ByteArray(response.size - count)
             System.arraycopy(response, count, temp, 0, temp.size)
             this.response = temp
@@ -76,7 +76,7 @@ open class LocalSocketIO(private val emulator: Emulator<*>, private val sdk: Int
 
     final override fun connect(addr: Pointer, addrlen: Int): Int {
         val sa_family = addr.getShort(0)
-        if (sa_family != AF_LOCAL) {
+        if (sa_family.toInt() != AF_LOCAL) {
             throw UnsupportedOperationException("sa_family=$sa_family")
         }
         val path = String(addr.getByteArray(2, addrlen - 2), StandardCharsets.UTF_8).trim()
@@ -95,7 +95,7 @@ open class LocalSocketIO(private val emulator: Emulator<*>, private val sdk: Int
 
     override fun bind(addr: Pointer, addrlen: Int): Int {
         if (log.isDebugEnabled) {
-            log.debug(Inspector.inspectString(addr.getByteArray(0, addrlen), "bind addrlen=$addrlen"))
+            log.debug(Inspector.inspectString(addr.getByteArray(0L, addrlen), "bind addrlen=$addrlen"))
         }
         emulator.getMemory().setErrno(UnixEmulator.EPERM)
         return -1

@@ -44,7 +44,7 @@ open class NullFileIO(private val path: String) : BaseAndroidFileIO(IOConstants.
                 if (read <= 0) {
                     return read
                 }
-                buffer.write(0, Arrays.copyOf(buf, read), 0, read)
+                buffer.write(0L, Arrays.copyOf(buf, read), 0, read)
                 return read
             } catch (e: IOException) {
                 throw IllegalStateException(e)

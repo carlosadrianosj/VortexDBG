@@ -72,11 +72,11 @@ open class DriverFileIO internal constructor(private val emulator: Emulator<*>, 
             val tv_nsec = offset % 1000000000L
             val pointer = VortexdbgPointer.pointer(emulator, argp) ?: throw IllegalArgumentException()
             if (size == 8L) {
-                pointer.setInt(0, tv_sec.toInt())
-                pointer.setInt(4, tv_nsec.toInt())
+                pointer.setInt(0L, tv_sec.toInt())
+                pointer.setInt(4L, tv_nsec.toInt())
                 return 0
             } else if (size == 16L) {
-                pointer.setLong(0, tv_sec)
+                pointer.setLong(0L, tv_sec)
                 pointer.setLong(8, tv_nsec)
                 return 0
             } else {

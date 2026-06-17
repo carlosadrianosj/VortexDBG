@@ -26,10 +26,10 @@ open class EventFD(initval: Int, private val semaphore: Boolean, private val non
             }
         }
         if (semaphore) {
-            buffer.setLong(0, 1)
+            buffer.setLong(0L, 1)
             counter--
         } else {
-            buffer.setLong(0, counter)
+            buffer.setLong(0L, counter)
             counter = 0
         }
         return 8

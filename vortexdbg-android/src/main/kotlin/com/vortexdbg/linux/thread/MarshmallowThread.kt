@@ -22,7 +22,7 @@ class MarshmallowThread(
 
         if (tidptr != null) {
             // set tid
-            tidptr!!.setInt(0, 0)
+            tidptr!!.setInt(0L, 0)
         }
     }
 
@@ -30,7 +30,7 @@ class MarshmallowThread(
 
     override fun setErrno(emulator: Emulator<*>, errno: Int): Boolean {
         if (this.errno != null) {
-            this.errno!!.setInt(0, errno)
+            this.errno!!.setInt(0L, errno)
             return true
         }
         return super.setErrno(emulator, errno)

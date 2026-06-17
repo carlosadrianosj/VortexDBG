@@ -100,7 +100,7 @@ open class TcpSocket private constructor(private val emulator: Emulator<*>, priv
             }
 
             val data = Arrays.copyOf(receiveBuf, read)
-            buffer.write(0, data, 0, data.size)
+            buffer.write(0L, data, 0, data.size)
             if (logRead && log.isDebugEnabled) {
                 Inspector.inspect(data, "readInternal socket=$socket")
             }
@@ -151,7 +151,7 @@ open class TcpSocket private constructor(private val emulator: Emulator<*>, priv
             val port = java.lang.Short.reverseBytes(addr.getShort(2)).toInt() and 0xffff
             val address = InetSocketAddress(InetAddress.getByAddress(addr.getByteArray(4, 4)), port)
             if (log.isDebugEnabled) {
-                val data = addr.getByteArray(0, addrlen)
+                val data = addr.getByteArray(0L, addrlen)
                 Inspector.inspect(data, "address=$address")
             }
             socket.bind(address)
@@ -165,7 +165,7 @@ open class TcpSocket private constructor(private val emulator: Emulator<*>, priv
 
     override fun connect_ipv4(addr: Pointer, addrlen: Int): Int {
         if (log.isDebugEnabled) {
-            val data = addr.getByteArray(0, addrlen)
+            val data = addr.getByteArray(0L, addrlen)
             Inspector.inspect(data, "addr")
         }
 
@@ -190,7 +190,7 @@ open class TcpSocket private constructor(private val emulator: Emulator<*>, priv
 
     override fun connect_ipv6(addr: Pointer, addrlen: Int): Int {
         if (log.isDebugEnabled) {
-            val data = addr.getByteArray(0, addrlen)
+            val data = addr.getByteArray(0L, addrlen)
             Inspector.inspect(data, "addr")
         }
 
