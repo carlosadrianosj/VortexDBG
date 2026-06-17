@@ -15,8 +15,8 @@ class Whale private constructor(emulator: Emulator<*>) : BaseHook(emulator, "lib
     private val WImportHookFunction: Symbol
 
     init {
-        WInlineHookFunction = module.findSymbolByName("WInlineHookFunction", false)
-        WImportHookFunction = module.findSymbolByName("WImportHookFunction", false)
+        WInlineHookFunction = module.findSymbolByName("WInlineHookFunction", false)!!
+        WImportHookFunction = module.findSymbolByName("WImportHookFunction", false)!!
         if (log.isDebugEnabled) {
             log.debug("WInlineHookFunction={}, WImportHookFunction={}", WInlineHookFunction, WImportHookFunction)
         }

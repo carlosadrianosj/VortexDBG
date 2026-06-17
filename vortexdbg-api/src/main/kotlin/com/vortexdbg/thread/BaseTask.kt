@@ -60,12 +60,12 @@ abstract class BaseTask : RunnableTask {
         val backend = emulator.getBackend()
         val off = emulator.popContext()
         val pc: Long
-        if (emulator.is32Bit) {
+        if (emulator.is32Bit()) {
             pc = backend.reg_read(ArmConst.UC_ARM_REG_PC).toInt().toLong() and 0xfffffffeL
         } else {
             pc = backend.reg_read(Arm64Const.UC_ARM64_REG_PC).toLong()
         }
-        backend.reg_write(if (emulator.is32Bit) ArmConst.UC_ARM_REG_PC else Arm64Const.UC_ARM64_REG_PC, pc + off)
+        backend.reg_write(if (emulator.is32Bit()) ArmConst.UC_ARM_REG_PC else Arm64Const.UC_ARM64_REG_PC, pc + off)
         saveContext(emulator)
     }
 
@@ -78,7 +78,7 @@ abstract class BaseTask : RunnableTask {
         val backend = emulator.getBackend()
         backend.context_restore(this.context)
         var pc: Long
-        if (emulator.is32Bit) {
+        if (emulator.is32Bit()) {
             pc = backend.reg_read(ArmConst.UC_ARM_REG_PC).toInt().toLong() and 0xfffffffeL
             if (ARM.isThumb(backend)) {
                 pc = pc or 1L
@@ -94,7 +94,7 @@ abstract class BaseTask : RunnableTask {
             waiter.onContinueRun(emulator)
             setWaiter(emulator, null)
         }
-        return emulator.emulate(pc, until)
+        return emulator.emulate(pc, until)!!
     }
 
     override fun destroy(emulator: Emulator<*>) {
@@ -149,7 +149,7 @@ abstract class BaseTask : RunnableTask {
         }
 
         val call: FunctionCall
-        if (emulator.is64Bit) { // check LR for aarch64
+        if (emulator.is64Bit()) { // check LR for aarch64
             call = stack.peek()
             val lr = emulator.getContext<RegisterContext>().getLR()
             if (lr != call.returnAddress) {

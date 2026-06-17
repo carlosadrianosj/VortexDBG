@@ -22,7 +22,7 @@ object KotlinDslDemo {
             callJniOnLoad = true
             nativeLib(so)
         }.use { s ->
-            println("=== Kotlin DSL -> VortexSession (backend=${s.emulator().backend}) ===")
+            println("=== Kotlin DSL -> VortexSession (backend=${s.emulator().getBackend()}) ===")
             val data = ByteArray(16)
             val ret = s.resolveNativeClass("com/bytedance/frameworks/core/encrypt/TTEncryptUtils")
                 .callStaticJniMethodObject<DvmObject<*>>(

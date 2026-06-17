@@ -12,7 +12,7 @@ open class Entry(pid: Int, private val entry: Long, until: Long, private val sp:
         val backend = emulator.getBackend()
         val memory = emulator.getMemory()
         memory.setStackPoint(sp)
-        backend.reg_write(if (emulator.is64Bit) Arm64Const.UC_ARM64_REG_LR else ArmConst.UC_ARM_REG_LR, until)
+        backend.reg_write(if (emulator.is64Bit()) Arm64Const.UC_ARM64_REG_LR else ArmConst.UC_ARM_REG_LR, until)
         return emulator.emulate(entry, until)
     }
 

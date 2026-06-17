@@ -27,7 +27,7 @@ abstract class KvmBackend protected constructor(emulator: Emulator<*>, protected
     init {
         val maxSlots = kvm.getMaxSlots()
         if (log.isDebugEnabled) {
-            log.debug("init kvm backend kvm={}, maxSlots=0x{}, pageSize=0x{}", kvm, Integer.toHexString(maxSlots), Integer.toHexString(pageSize))
+            log.debug("init kvm backend kvm={}, maxSlots=0x{}, getPageSize()=0x{}", kvm, Integer.toHexString(maxSlots), Integer.toHexString(getPageSize()))
         }
 
         this.slots = arrayOfNulls(maxSlots)
@@ -50,10 +50,10 @@ abstract class KvmBackend protected constructor(emulator: Emulator<*>, protected
 
     @Throws(BackendException::class)
     override fun mem_map(address: Long, size: Long, perms: Int) {
-        if ((address and (pageSize - 1).toLong()) != 0L) {
+        if ((address and (getPageSize() - 1).toLong()) != 0L) {
             throw IllegalArgumentException("mem_map address=0x" + java.lang.Long.toHexString(address))
         }
-        if ((size and (pageSize - 1).toLong()) != 0L) {
+        if ((size and (getPageSize() - 1).toLong()) != 0L) {
             throw IllegalArgumentException("mem_map size=0x" + java.lang.Long.toHexString(size))
         }
 
@@ -71,7 +71,7 @@ abstract class KvmBackend protected constructor(emulator: Emulator<*>, protected
     }
 
     private fun mem_unmap_page(address: Long, region: UserMemoryRegion) {
-        if (pageSize.toLong() == region.memory_size) { // page size region
+        if (getPageSize().toLong() == region.memory_size) { // page size region
             if (address != region.guest_phys_addr) {
                 throw IllegalStateException("address=0x" + java.lang.Long.toHexString(address) + ", guest_phys_addr=0x" + java.lang.Long.toHexString(region.guest_phys_addr))
             }
@@ -82,30 +82,30 @@ abstract class KvmBackend protected constructor(emulator: Emulator<*>, protected
             memoryRegionMap.remove(region.guest_phys_addr)
             return
         }
-        if (address == region.guest_phys_addr && pageSize < region.memory_size) { // region first page
-            kvm.remove_user_memory_region(region.slot, region.guest_phys_addr, pageSize.toLong(), region.userspace_addr, 0x0L)
+        if (address == region.guest_phys_addr && getPageSize() < region.memory_size) { // region first page
+            kvm.remove_user_memory_region(region.slot, region.guest_phys_addr, getPageSize().toLong(), region.userspace_addr, 0x0L)
             memoryRegionMap.remove(region.guest_phys_addr)
 
-            val userspace_addr = kvm.set_user_memory_region(region.slot, region.guest_phys_addr + pageSize, region.memory_size - pageSize, region.userspace_addr + pageSize)
-            val newRegion = UserMemoryRegion(region.slot, region.guest_phys_addr + pageSize, region.memory_size - pageSize, userspace_addr)
+            val userspace_addr = kvm.set_user_memory_region(region.slot, region.guest_phys_addr + getPageSize(), region.memory_size - getPageSize(), region.userspace_addr + getPageSize())
+            val newRegion = UserMemoryRegion(region.slot, region.guest_phys_addr + getPageSize(), region.memory_size - getPageSize(), userspace_addr)
             memoryRegionMap[newRegion.guest_phys_addr] = newRegion
             slots[newRegion.slot] = newRegion
             return
         }
-        if (address > region.guest_phys_addr && address + pageSize == region.guest_phys_addr + region.memory_size) { // region last page
+        if (address > region.guest_phys_addr && address + getPageSize() == region.guest_phys_addr + region.memory_size) { // region last page
             val off = address - region.guest_phys_addr
-            kvm.remove_user_memory_region(region.slot, region.guest_phys_addr, pageSize.toLong(), region.userspace_addr, off)
+            kvm.remove_user_memory_region(region.slot, region.guest_phys_addr, getPageSize().toLong(), region.userspace_addr, off)
             memoryRegionMap.remove(region.guest_phys_addr)
 
-            val userspace_addr = kvm.set_user_memory_region(region.slot, region.guest_phys_addr, region.memory_size - pageSize, region.userspace_addr)
-            val newRegion = UserMemoryRegion(region.slot, region.guest_phys_addr, region.memory_size - pageSize, userspace_addr)
+            val userspace_addr = kvm.set_user_memory_region(region.slot, region.guest_phys_addr, region.memory_size - getPageSize(), region.userspace_addr)
+            val newRegion = UserMemoryRegion(region.slot, region.guest_phys_addr, region.memory_size - getPageSize(), userspace_addr)
             memoryRegionMap[newRegion.guest_phys_addr] = newRegion
             slots[newRegion.slot] = newRegion
             return
         }
 
         // region middle page
-        if (address > region.guest_phys_addr && address + pageSize < region.guest_phys_addr + region.memory_size) { // split region
+        if (address > region.guest_phys_addr && address + getPageSize() < region.guest_phys_addr + region.memory_size) { // split region
             kvm.remove_user_memory_region(region.slot, region.guest_phys_addr, 0L, region.userspace_addr, 0L)
             memoryRegionMap.remove(region.guest_phys_addr)
 
@@ -126,7 +126,7 @@ abstract class KvmBackend protected constructor(emulator: Emulator<*>, protected
             slots[slot++] = second
             slotIndex = slot
 
-            mem_unmap(address, pageSize.toLong())
+            mem_unmap(address, getPageSize().toLong())
             return
         }
 
@@ -135,10 +135,10 @@ abstract class KvmBackend protected constructor(emulator: Emulator<*>, protected
 
     @Throws(BackendException::class)
     override fun mem_unmap(address: Long, size: Long) {
-        if ((address and (pageSize - 1).toLong()) != 0L) {
+        if ((address and (getPageSize() - 1).toLong()) != 0L) {
             throw IllegalArgumentException("mem_unmap address=0x" + java.lang.Long.toHexString(address))
         }
-        if ((size and (pageSize - 1).toLong()) != 0L) {
+        if ((size and (getPageSize() - 1).toLong()) != 0L) {
             throw IllegalArgumentException("mem_unmap size=0x" + java.lang.Long.toHexString(size))
         }
 
@@ -149,7 +149,7 @@ abstract class KvmBackend protected constructor(emulator: Emulator<*>, protected
             val userMemoryRegion = findUserMemoryRegion(i)
 
             mem_unmap_page(i, userMemoryRegion)
-            i += pageSize
+            i += getPageSize()
         }
     }
 
@@ -157,7 +157,7 @@ abstract class KvmBackend protected constructor(emulator: Emulator<*>, protected
         var userMemoryRegion: UserMemoryRegion? = null
         for (region in memoryRegionMap.values) {
             val min = Math.max(i, region.guest_phys_addr)
-            val max = Math.min(i + pageSize, region.guest_phys_addr + region.memory_size)
+            val max = Math.min(i + getPageSize(), region.guest_phys_addr + region.memory_size)
             if (min < max) {
                 userMemoryRegion = region
                 break

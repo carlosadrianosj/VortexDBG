@@ -154,7 +154,7 @@ internal class Unicorn2Backend @Throws(BackendException::class) constructor(
                     }
                 }, begin, end, user_data
             )
-            callback.onAttach(unHook::unhook)
+            callback.onAttach(object : UnHook { override fun unhook() { unHook?.unhook() } })
         } catch (e: UnicornException) {
             throw BackendException(e)
         }
@@ -172,7 +172,7 @@ internal class Unicorn2Backend @Throws(BackendException::class) constructor(
                     callback.hook(this@Unicorn2Backend, address, size, user)
                 }
             }, begin, end, user_data)
-            callback.onAttach(unHook::unhook)
+            callback.onAttach(object : UnHook { override fun unhook() { unHook?.unhook() } })
         } catch (e: UnicornException) {
             throw BackendException(e)
         }
@@ -188,7 +188,7 @@ internal class Unicorn2Backend @Throws(BackendException::class) constructor(
                     }
                 }, begin, end, user_data
             )
-            callback.onAttach(unHook::unhook)
+            callback.onAttach(object : UnHook { override fun unhook() { unHook?.unhook() } })
         } catch (e: UnicornException) {
             throw BackendException(e)
         }
@@ -204,7 +204,7 @@ internal class Unicorn2Backend @Throws(BackendException::class) constructor(
                     }
                 }, begin, end, user_data
             )
-            callback.onAttach(unHook::unhook)
+            callback.onAttach(object : UnHook { override fun unhook() { unHook?.unhook() } })
         } catch (e: UnicornException) {
             throw BackendException(e)
         }
@@ -233,7 +233,7 @@ internal class Unicorn2Backend @Throws(BackendException::class) constructor(
                 }, type, user_data
             )
             for (unHook in map.values) {
-                callback.onAttach(unHook::unhook)
+                callback.onAttach(object : UnHook { override fun unhook() { unHook?.unhook() } })
             }
         } catch (e: UnicornException) {
             throw BackendException(e)
@@ -251,7 +251,7 @@ internal class Unicorn2Backend @Throws(BackendException::class) constructor(
                     }
                 }, user_data
             )
-            callback.onAttach(unHook::unhook)
+            callback.onAttach(object : UnHook { override fun unhook() { unHook?.unhook() } })
         } catch (e: UnicornException) {
             throw BackendException(e)
         }
@@ -267,7 +267,7 @@ internal class Unicorn2Backend @Throws(BackendException::class) constructor(
                     }
                 }, begin, end, user_data
             )
-            callback.onAttach(unHook::unhook)
+            callback.onAttach(object : UnHook { override fun unhook() { unHook?.unhook() } })
         } catch (e: UnicornException) {
             throw BackendException(e)
         }

@@ -65,7 +65,7 @@ internal class ByteArrayBackend(private val data: ByteArray) : AbstractBackend()
         throw UnsupportedOperationException()
     }
 
-    override fun addBreakPoint(address: Long, callback: BreakPointCallback, thumb: Boolean): BreakPoint {
+    override fun addBreakPoint(address: Long, callback: BreakPointCallback?, thumb: Boolean): BreakPoint {
         throw UnsupportedOperationException()
     }
 

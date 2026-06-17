@@ -29,7 +29,7 @@ open class ThreadContextSwitchException : LongJumpException() {
     open fun syncReturnValue(emulator: Emulator<*>) {
         if (setReturnValue) {
             val backend = emulator.getBackend()
-            backend.reg_write(if (emulator.is32Bit) ArmConst.UC_ARM_REG_R0 else Arm64Const.UC_ARM64_REG_X0, returnValue)
+            backend.reg_write(if (emulator.is32Bit()) ArmConst.UC_ARM_REG_R0 else Arm64Const.UC_ARM64_REG_X0, returnValue)
         }
         if (setErrno) {
             emulator.getMemory().setErrno(errno)

@@ -123,7 +123,7 @@ abstract class UnixSyscallHandler<T : NewFileIO> : SyscallHandler<T> {
         val family = emulator.getFamily()
         if (pathname.endsWith(family.libraryExtension)) {
             for (module in emulator.getMemory().getLoadedModules()) {
-                for (memRegion in module.regions) {
+                for (memRegion in module.getRegions()) {
                     if (pathname == memRegion.getName()) {
                         try {
                             emulator.getMemory().setErrno(0)
