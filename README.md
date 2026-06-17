@@ -1,42 +1,94 @@
-# unidbg
+# Vortex-DBG
 
-Allows you to emulate an Android native library.
+> [github.com/carlosadrianosj/VortexDBG](https://github.com/carlosadrianosj/VortexDBG)
 
-This is an educational project to learn more about the ELF file format and ARM assembly.
+Vortex-DBG was born to solve a pain every mobile reverse-engineer knows well: in
+day-to-day work you constantly need to emulate **both** sides of an app — the
+**native libraries** (`.so`, ARM/ARM64) **and** the **Dalvik/Java (DEX) classes** —
+and most tools make you pick one. Vortex-DBG joins the two: it emulates native code
+on a CPU emulator (Unicorn2 / Dynarmic / Apple hypervisor) **while running the app's
+Java classes on a real host JVM**, with a **bidirectional JNI bridge** between them.
 
-Use it at your own risk !
+So the mixed native↔Java logic an app actually uses — the kind you usually can only
+exercise on a device — can be reproduced and **automated off-device**.
 
-## Features
-- Support [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) for AI-assisted debugging with Cursor and other AI tools.
-- Emulation of the JNI Invocation API so JNI_OnLoad can be called.
-- Support JavaVM, JNIEnv.
-- Emulation of syscalls instruction.
-- Support ARM32 and ARM64.
-- Inline hook, thanks to [Dobby](https://github.com/jmpews/Dobby).
-- Android import hook, thanks to [xHook](https://github.com/iqiyi/xHook).
-- [unicorn](https://github.com/zhkl0228/unicorn) backend support simple console debugger, gdb stub, instruction trace, memory read/write trace.
-- Support [dynarmic](https://github.com/MerryMage/dynarmic) fast backend.
-- Support Apple M1 hypervisor, the fastest ARM64 backend.
-- Support Linux KVM backend with Raspberry Pi B4.
-- Memory leak detection for emulated native code with guest backtrace and host stack trace.
+Vortex-DBG is **based on the architecture of [UniDBG](https://github.com/zhkl0228/unidbg)** —
+a great but experimental project. The whole inspiration here was to take that experimental
+foundation and turn it into something built **for production**: optimized, rewritten end to
+end in **Kotlin**, focused on Android, with the native + DEX fusion validated against real
+apps (see the examples below).
+
+> Educational / research tool for **authorized** reverse engineering. Use at your own risk.
+
+## What it does
+
+- **Native emulation** of Android `.so` for ARM32 / ARM64 — backends: [unicorn2](https://github.com/zhkl0228/unicorn), [dynarmic](https://github.com/MerryMage/dynarmic) (fast), Apple M-series hypervisor.
+- **JNI Invocation API** emulation (JavaVM / JNIEnv), so `JNI_OnLoad` and native↔Java calls work.
+- **The fusion**: run the app's Java/DEX classes on the **host JVM** with a JNI bridge — native (emulated) and Java (host) call each other, **both directions**.
+- Inline hooks ([Dobby](https://github.com/jmpews/Dobby)/HookZz), Android import hooks ([xHook](https://github.com/iqiyi/xHook)).
+- syscall emulation, memory-leak detection, a thread-safe worker pool.
+- An **[MCP](https://modelcontextprotocol.io/) server** for AI-assisted debugging (Cursor and other AI tools).
+
+## Examples — the bundled tests
+
+Two end-to-end tests live under `tests/`, both run **fully off-device** on the emulator.
+
+### 1. Keychain APK — mixed Java↔native, automated (`tests/keychain-test/`)
+
+A tiny Android app whose key derivation is genuinely **mixed and bidirectional**:
+`KeyChain.generate(account)` is a **native** method (the mixing runs in the `.so`),
+and the native code calls **back** into the app's Java (`salt()` / `hex()`).
+Vortex-DBG pulls `libkeychain.so` straight out of the signed `keychain.apk`
+(emulated ARM64), runs the app's Java on the host JVM, and automates keychain
+generation for any account:
+
+```
+alice        -> 945cc2e13b7489ff
+bob          -> 8e56a85abf7489ff
+carol@corp   -> 985288e909bf0765
+user-12345   -> bc35bacb8c59a6ce
+```
+
+Harness: [`KeyChainAuto.java`](vortexdbg-android/src/test/java/com/vortexdbg/keychain/KeyChainAuto.java) ·
+app + APK: [`tests/keychain-test/`](tests/keychain-test).
+
+### 2. TikTok `libttEncrypt` — real native crypto (`tests/tiktok-test/`)
+
+ByteDance's real AES-based `ttEncrypt`. Vortex-DBG loads the `.so`, runs
+`JNI_OnLoad` / `init_array`, and calls the encryption — entirely emulated:
+
+```
+ttEncrypt(16x 0x00) = 7463030000019fd0866aa0cbd0323933d2d2fc8c20ec
+```
+
+Harness: [`TikTokAuto.java`](vortexdbg-android/src/test/java/com/bytedance/frameworks/core/encrypt/TikTokAuto.java).
 
 ## MCP Debugger (AI Integration)
 
-unidbg supports [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) for AI-assisted debugging. When the debugger is active, type `mcp` in the console to start an MCP server that AI tools (e.g. Cursor) can connect to.
+Vortex-DBG supports the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
+for AI-assisted debugging. When the debugger is active, type `mcp` in the console to
+start an MCP server that AI tools (e.g. Cursor) can connect to.
 
 ### Quick Start
 
-unidbg MCP has two operating modes:
+Two operating modes:
 
-**Mode 1: Breakpoint Debug** — Attach the debugger and run your code. When a breakpoint is hit, `Breaker.debug()` pauses the emulator — type `mcp` in the console to start MCP server and let AI assist with analysis. All debugging tools are available (registers, memory, disassembly, stepping, tracing, etc). After resuming, if another breakpoint is hit the debugger pauses again. Once execution completes without hitting a breakpoint, the process exits and MCP shuts down.
+**Mode 1 — Breakpoint Debug.** Attach the debugger and run your code. When a
+breakpoint is hit, `Breaker.debug()` pauses the emulator — type `mcp` in the console
+to start the MCP server and let AI assist with analysis. All debugging tools are
+available (registers, memory, disassembly, stepping, tracing, etc). After resuming,
+the next breakpoint pauses again; once execution completes, the process exits and MCP
+shuts down.
 
 ```java
 Debugger debugger = emulator.attach();
 debugger.addBreakPoint(address);
-// run your emulation logic — debugger pauses when breakpoint is hit
+// run your emulation logic — debugger pauses when the breakpoint is hit
 ```
 
-**Mode 2: Custom Tools (Repeatable)** — Use `McpToolkit` to register custom tools and let AI re-run target functions with different parameters. The native library is loaded once; after each execution the process stays alive and MCP remains active for the next run.
+**Mode 2 — Custom Tools (repeatable).** Use `McpToolkit` to register custom tools and
+let AI re-run target functions with different parameters. The native library is loaded
+once; after each execution the process stays alive and MCP remains active for the next run.
 
 ```java
 McpToolkit toolkit = new McpToolkit();
@@ -52,12 +104,13 @@ toolkit.addTool(new McpTool() {
 toolkit.run(emulator.attach());
 ```
 
-When the debugger breaks, type `mcp` (or `mcp 9239` to specify port) in the console. Then add to Cursor MCP settings:
+When the debugger breaks, type `mcp` (or `mcp 9239` to specify a port) in the console.
+Then add to your Cursor MCP settings:
 
 ```json
 {
   "mcpServers": {
-    "unidbg-mcp-server": {
+    "vortexdbg-mcp-server": {
       "url": "http://localhost:9239/sse"
     }
   }
@@ -70,8 +123,8 @@ When the debugger breaks, type `mcp` (or `mcp 9239` to specify port) in the cons
 
 | Tool | Description |
 |------|-------------|
-| `check_connection` | Emulator status: Family, architecture, backend capabilities, isRunning, loaded modules |
-| `list_modules` / `get_module_info` | List loaded modules, get detail including exported symbol count and dependencies |
+| `check_connection` | Emulator status: architecture, backend capabilities, isRunning, loaded modules |
+| `list_modules` / `get_module_info` | List loaded modules; detail incl. exported symbol count and dependencies |
 | `list_exports` | List exported/dynamic symbols of a module with optional filter and C++ demangling |
 | `find_symbol` | Find symbol by name or find nearest symbol at address |
 | `get_threads` | List all threads/tasks in the emulator |
@@ -81,7 +134,7 @@ When the debugger breaks, type `mcp` (or `mcp 9239` to specify port) in the cons
 | Tool | Description |
 |------|-------------|
 | `get_registers` / `get_register` / `set_register` | Read/write CPU registers |
-| `disassemble` | Disassemble instructions at address (branch targets auto-annotated with symbol names) |
+| `disassemble` | Disassemble at address (branch targets auto-annotated with symbol names) |
 | `assemble` | Assemble instruction text to machine code |
 | `get_callstack` | Get current call stack (backtrace) |
 
@@ -95,7 +148,7 @@ When the debugger breaks, type `mcp` (or `mcp 9239` to specify port) in the cons
 | `read_typed` | Read memory as typed values (int8–int64, float, double, pointer) |
 | `search_memory` | Search memory for byte patterns with scope/permission filters |
 | `list_memory_map` | List all memory mappings with permissions |
-| `allocate_memory` / `free_memory` / `list_allocations` | Allocate (malloc/mmap) with optional initial data, free, and track memory blocks |
+| `allocate_memory` / `free_memory` / `list_allocations` | Allocate (malloc/mmap), free, and track memory blocks |
 | `patch` | Write assembled instructions to memory |
 
 **Breakpoints & Execution**
@@ -103,9 +156,9 @@ When the debugger breaks, type `mcp` (or `mcp 9239` to specify port) in the cons
 | Tool | Description |
 |------|-------------|
 | `add_breakpoint` / `add_breakpoint_by_symbol` / `add_breakpoint_by_offset` | Add breakpoints by address, symbol, or module+offset |
-| `remove_breakpoint` / `list_breakpoints` | Remove or list breakpoints (with disassembly) |
-| `continue_execution` | Resume execution. Use poll_events to wait for breakpoint_hit or execution_completed |
-| `step_over` / `step_into` / `step_out` | Step over, into (N instructions), or out of function |
+| `remove_breakpoint` / `list_breakpoints` | Remove or list breakpoints |
+| `continue_execution` | Resume execution; use `poll_events` to wait for breakpoint_hit / execution_completed |
+| `step_over` / `step_into` / `step_out` | Step over, into (N instructions), or out of a function |
 | `next_block` | Break at next basic block (Unicorn only) |
 | `step_until_mnemonic` | Break at next instruction matching mnemonic, e.g. `bl`, `ret` (Unicorn only) |
 | `poll_events` | Poll for breakpoint_hit, execution_completed, trace events |
@@ -114,21 +167,23 @@ When the debugger breaks, type `mcp` (or `mcp 9239` to specify port) in the cons
 
 | Tool | Description |
 |------|-------------|
-| `trace_code` | Trace instructions with register read/write values (regs_read, prev_write) |
-| `trace_read` / `trace_write` | Trace memory reads/writes in address range |
+| `trace_code` | Trace instructions with register read/write values |
+| `trace_read` / `trace_write` | Trace memory reads/writes in an address range |
 
 **Function Calls**
 
 | Tool | Description |
 |------|-------------|
-| `call_function` | Call native function by address with typed arguments (hex, string, bytes, null). Returns value with symbol resolution and memory preview |
+| `call_function` | Call native function by address with typed args (hex, string, bytes, null) |
 | `call_symbol` | Call exported function by module + symbol name, e.g. `libc.so` + `malloc` |
 
 ### Custom MCP Tools
 
-Use `McpToolkit` to register custom tools, each implementing the `McpTool` interface. This replaces manual if-else dispatch with clean, self-contained tool classes. By this point the native library is fully loaded (JNI_OnLoad / entry point already executed), so the code inside each tool's `execute()` is the target function logic to analyze. AI can set breakpoints and traces before triggering a custom tool, then inspect execution results across different inputs without restarting the process.
-
-**Android Example** — See [Utilities64.java](https://github.com/zhkl0228/unidbg/blob/master/unidbg-android/src/test/java/org/telegram/messenger/Utilities64.java) for an Android JNI example with custom MCP tools:
+Use `McpToolkit` to register custom tools, each implementing the `McpTool` interface.
+By the time a tool runs, the native library is fully loaded (`JNI_OnLoad` / entry point
+already executed), so the code inside each tool's `execute()` is the target function
+logic to analyze. AI can set breakpoints and traces before triggering a custom tool,
+then inspect execution results across different inputs without restarting the process.
 
 ```java
 DalvikModule dm = vm.loadLibrary(new File("libtmessages.29.so"), true);
@@ -145,35 +200,20 @@ toolkit.addTool(new McpTool() {
         aesCbcEncryptionByteArray(input);
     }
 });
-toolkit.addTool(new McpTool() {
-    @Override public String name() { return "aesCtr"; }
-    @Override public String description() { return "Run AES-CTR decryption on input data"; }
-    @Override public String[] paramNames() { return new String[]{"input"}; }
-    @Override public void execute(String[] params) {
-        byte[] input = params.length > 0 ? params[0].getBytes() : new byte[16];
-        aesCtrDecryptionByteArray(input);
-    }
-});
-toolkit.addTool(new McpTool() {
-    @Override public String name() { return "pbkdf2"; }
-    @Override public String description() { return "Run PBKDF2 key derivation"; }
-    @Override public String[] paramNames() { return new String[]{"password", "iterations"}; }
-    @Override public void execute(String[] params) {
-        String password = params.length > 0 ? params[0] : "123456";
-        int iterations = params.length > 1 ? Integer.parseInt(params[1]) : 100000;
-        pbkdf2(password.getBytes(), iterations);
-    }
-});
 toolkit.run(emulator.attach());
 ```
 
-Once the MCP server is started, AI can call these tools via MCP to run emulations with custom parameters, set breakpoints, trace execution, and inspect results — all without restarting the process.
+Once the MCP server is started, AI can call these tools via MCP to run emulations with
+custom parameters, set breakpoints, trace execution, and inspect results — all without
+restarting the process.
 
-> **Low-level API**: You can also use `Debugger.addMcpTool()` + `Debugger.run(DebugRunnable)` directly for full control. `McpToolkit` is a higher-level wrapper that eliminates if-else dispatch.
+> **Low-level API**: you can also use `Debugger.addMcpTool()` + `Debugger.run(DebugRunnable)`
+> directly for full control. `McpToolkit` is a higher-level wrapper.
 
 ## Memory Leak Detection
 
-Track guest-side memory allocations (mmap/munmap/brk) to detect leaks in emulated native code. Use `try-with-resources` — tracking starts on creation, and the leak report is printed automatically on close.
+Track guest-side allocations (mmap/munmap/brk) to detect leaks in emulated native code.
+Use `try-with-resources` — tracking starts on creation, and the leak report is printed on close.
 
 ```java
 try (MemoryTracker tracker = emulator.traceMemoryLeaks()) {
@@ -181,128 +221,38 @@ try (MemoryTracker tracker = emulator.traceMemoryLeaks()) {
 }
 ```
 
-Each leaked block includes guest ARM backtrace (module+offset+symbol) and host Java stack trace. Sample output:
-
-```
-=== Memory Leak Report ===
-Tracking duration: 42ms
-Total allocations: 5
-Total deallocations: 3
-Leaked blocks: 2
-Total leaked size: 32768 bytes (32.0 KB)
-
---- Leak #1 ---
-Address: 0x40001000, Size: 16384 (16.0 KB), Perms: rw-
-Guest Backtrace:
-  #0 0x40123456 libexample.so+0x3456 (malloc+0x12)
-  #1 0x40124000 libexample.so+0x4000 (doSomething+0x48)
-Host Stack Trace:
-  com.github.unidbg.linux.AndroidElfLoader.mmap2(AndroidElfLoader.java:785)
-  ...
-```
-
-You can also access the report programmatically before close:
-
-```java
-try (MemoryTracker tracker = emulator.traceMemoryLeaks()) {
-    module.callFunction(emulator, "targetFunction", arg1, arg2);
-    List<AllocationRecord> leaks = tracker.getLeaks();
-    assert leaks.isEmpty() : "Memory leak detected!";
-}
-```
+Each leaked block includes the guest ARM backtrace (module+offset+symbol) and the host
+Java stack trace.
 
 ## Worker Pool
 
-A thread-safe object pool for reusing emulator instances across multiple threads, avoiding the overhead of repeated initialization.
-
-- **Lazy initialization** — Workers are created on-demand only when the pool is empty, not upfront.
-- **Max limit** — Total alive workers (borrowed + idle) never exceeds the configured maximum.
-- **Idle cleanup** — Workers idle for longer than the timeout (default 10 minutes) are automatically destroyed by the management thread.
-- **Min idle** — A minimum number of workers (default 1) is always kept alive, even when idle.
-
-### 1. Implement a Worker
+A thread-safe object pool for reusing emulator instances across threads, avoiding the
+overhead of repeated initialization (lazy init, max limit, idle cleanup, min-idle).
 
 ```java
-public class MyWorker implements Worker {
-    private final AndroidEmulator emulator;
-
-    public MyWorker() {
-        emulator = AndroidEmulatorBuilder.for64Bit().build();
-        // load .so, call JNI_OnLoad, etc.
-    }
-
-    @Override
-    public void destroy() {
-        emulator.close();
-    }
-
-    public byte[] doWork(byte[] input) {
-        // call native methods and return the result
-    }
-}
-```
-
-### 2. Create Pool, Borrow, and Close
-
-```java
-// Create a worker pool (max = CPU cores, lazy-initialized)
 WorkerPool pool = WorkerPoolFactory.create(MyWorker::new);
-// Or specify max workers explicitly
-// WorkerPool pool = WorkerPoolFactory.create(MyWorker::new, 4);
-
-// Optional: customize idle timeout (default 10 minutes, minimum 1 minute)
-pool.setIdleTimeout(30); // idle workers destroyed after 30 minutes
-// Optional: customize minimum kept-alive workers (default 1, minimum 1)
-pool.setMinIdle(2); // always keep at least 2 workers alive
-// Optional: pre-create workers eagerly (default 0, fully lazy)
-pool.setInitialSize(4); // eagerly create 4 workers on startup
-
-// Concurrent invocation from multiple threads
-ExecutorService executor = Executors.newFixedThreadPool(100);
-for (int i = 0; i < 100; i++) {
-    executor.submit(() -> {
-        try (WorkerLoan<MyWorker> loan = pool.borrow(1, TimeUnit.MINUTES)) {
-            if (loan != null) {
-                byte[] result = loan.get().doWork(input);
-            }
-        } // worker is automatically returned to the pool
-    });
+try (WorkerLoan<MyWorker> loan = pool.borrow(1, TimeUnit.MINUTES)) {
+    if (loan != null) {
+        byte[] result = loan.get().doWork(input);
+    }
 }
-
-executor.shutdown();
-executor.awaitTermination(10, TimeUnit.MINUTES);
-pool.close(); // destroy all workers and release resources
+pool.close();
 ```
 
-> See [TTEncryptWorker.java](https://github.com/zhkl0228/unidbg/blob/master/unidbg-android/src/test/java/com/bytedance/frameworks/core/encrypt/TTEncryptWorker.java) for a complete example.
+## Platforms
 
-## Examples
+Vortex-DBG currently runs on **macOS** and **Linux** only (the native backends ship for
+`osx_arm64`, `osx_64`, `linux_arm64` and `linux_64`). **Windows is not supported.**
 
-Simple tests under src/test directory:
-- [TTEncrypt.java](https://github.com/zhkl0228/unidbg/blob/master/unidbg-android/src/test/java/com/bytedance/frameworks/core/encrypt/TTEncrypt.java)  
+## Build
 
-![](assets/TTEncrypt.gif)
-***
-- [JniDispatch32.java](https://github.com/zhkl0228/unidbg/blob/master/unidbg-android/src/test/java/com/sun/jna/JniDispatch32.java)  
-![](assets/JniDispatch32.gif)
-***
-- [JniDispatch64.java](https://github.com/zhkl0228/unidbg/blob/master/unidbg-android/src/test/java/com/sun/jna/JniDispatch64.java)  
-![](assets/JniDispatch64.gif)
-***
-- [Utilities32.java](https://github.com/zhkl0228/unidbg/blob/master/unidbg-android/src/test/java/org/telegram/messenger/Utilities32.java)  
-![](assets/Utilities32.gif)
-***
-- [Utilities64.java](https://github.com/zhkl0228/unidbg/blob/master/unidbg-android/src/test/java/org/telegram/messenger/Utilities64.java)  
-![](assets/Utilities64.gif)
-
-More tests:
-- [QDReaderJni.java](https://github.com/zhkl0228/unidbg/blob/master/unidbg-android/src/test/java/com/github/unidbg/android/QDReaderJni.java)
-- [SignUtil.java](https://github.com/zhkl0228/unidbg/blob/master/unidbg-android/src/test/java/com/anjuke/mobile/sign/SignUtil.java)
-
-## License
-- unidbg uses software libraries from [Apache Software Foundation](http://apache.org).
+```bash
+./mvnw -DskipTests package   # JDK 8 to compile; run on JDK 21+
+```
 
 ## Thanks
+
+- [Vortex-DBG](https://github.com/carlosadrianosj/VortexDBG)
 - [unicorn](https://github.com/zhkl0228/unicorn)
 - [dynarmic](https://github.com/MerryMage/dynarmic)
 - [HookZz](https://github.com/jmpews/Dobby)
@@ -316,7 +266,6 @@ More tests:
 - [whale](https://github.com/asLody/whale)
 - [mman-win32](https://github.com/mcgarrah/mman-win32)
 
-## Stargazers over time
+## License
 
-[![Stargazers over time](https://starchart.cc/zhkl0228/unidbg.svg)](https://starchart.cc/zhkl0228/unidbg)
-
+[MIT](LICENSE).
