@@ -175,6 +175,16 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
                 param("address", "string", "Hex address to free")))
         tools.add(toolSchema("list_allocations", "List active allocations from allocate_memory."))
 
+        tools.add(toolSchema("read_args", "Read function arguments from calling-convention registers (ARM64: X0-X7, ARM32: R0-R3). " +
+                "Each arg is shown as hex (+ decimal when small), with module+symbol annotation and a printable-string preview when it points to one. Use at a breakpoint on a function entry.",
+                param("count", "integer", "Number of argument registers to read. Default 8 (ARM64) / 4 (ARM32).")))
+        tools.add(toolSchema("write_string", "Write a null-terminated UTF-8 C string to memory (the terminating NUL is appended).",
+                param("address", "string", "Hex address"),
+                param("text", "string", "String to write")))
+        tools.add(toolSchema("disassemble_symbol", "Disassemble a function by module + symbol name (resolves the address, then disassembles).",
+                param("module_name", "string", "Module name, e.g. libttEncrypt.so"),
+                param("symbol_name", "string", "Symbol name, e.g. ss_encrypt"),
+                param("count", "integer", "Number of instructions, default 20")))
 
         for (ct in customTools) {
             val schema = JSONObject(true)
@@ -182,6 +192,10 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
             schema.put("description", "[Custom] " + ct.description + ". Triggers target function execution (library already loaded). Set breakpoints/traces BEFORE calling, then poll_events for results.")
             schema.put("inputSchema", buildInputSchema(*ct.paramNames))
             tools.add(schema)
+        }
+
+        for (provider in server.getToolProviders()) {
+            tools.addAll(provider.schemas())
         }
         return tools
     }
@@ -254,10 +268,18 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
             "allocate_memory" -> return allocateMemory(args)
             "free_memory" -> return freeMemory(args)
             "list_allocations" -> return listAllocations()
+            "read_args" -> return readArgs(args)
+            "write_string" -> return writeString(args)
+            "disassemble_symbol" -> return disassembleSymbol(args)
             else -> {
                 for (ct in customTools) {
                     if (ct.name == name) {
                         return executeCustomTool(ct, args)
+                    }
+                }
+                for (provider in server.getToolProviders()) {
+                    if (provider.handles(name)) {
+                        return provider.call(name, args)
                     }
                 }
                 return errorResult("Unknown tool: $name")
@@ -1449,6 +1471,84 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return textResult(sb.toString())
     }
 
+    private fun readArgs(args: JSONObject): JSONObject {
+        val is64 = emulator.is64Bit()
+        val defaultCount = if (is64) 8 else 4
+        val count = if (args.containsKey("count")) args.getIntValue("count") else defaultCount
+        val ctx: RegisterContext = emulator.getContext()
+        val memory = emulator.getMemory()
+        val demangler = DemanglerFactory.createDemangler()
+        val sb = StringBuilder()
+        for (i in 0 until count) {
+            val value = ctx.getLongArg(i)
+            sb.append(if (is64) "X" else "R").append(i).append("=0x").append(java.lang.Long.toHexString(value))
+            if (value in 1 until 0x100000) {
+                sb.append(" (").append(value).append(')')
+            }
+            val module = memory.findModuleByAddress(value)
+            if (module != null) {
+                sb.append(' ').append(module.name).append("+0x").append(java.lang.Long.toHexString(value - module.base))
+                val sym = module.findClosestSymbolByAddress(value, false)
+                if (sym != null && value - sym.getAddress() <= Unwinder.SYMBOL_SIZE) {
+                    sb.append(" <").append(demangler.demangle(sym.getName())).append('>')
+                }
+            }
+            if (value > 0x1000) {
+                try {
+                    val preview = emulator.getBackend().mem_read(value, 32)
+                    val str = tryPrintableString(preview)
+                    if (str != null) {
+                        sb.append(" \"").append(str).append('"')
+                    }
+                } catch (ignored: Exception) {
+                }
+            }
+            sb.append('\n')
+        }
+        return textResult(sb.toString())
+    }
+
+    private fun writeString(args: JSONObject): JSONObject {
+        val address = parseAddress(args.getString("address"))
+        val text = args.getString("text")
+                ?: return errorResult("Missing required parameter 'text'.")
+        try {
+            val raw = text.toByteArray(java.nio.charset.StandardCharsets.UTF_8)
+            val data = ByteArray(raw.size + 1)
+            System.arraycopy(raw, 0, data, 0, raw.size)
+            data[raw.size] = 0
+            emulator.getBackend().mem_write(address, data)
+            return textResult("Written " + data.size + " bytes (string + NUL) to 0x" + java.lang.Long.toHexString(address))
+        } catch (e: Exception) {
+            return errorResult("Failed to write string at 0x" + java.lang.Long.toHexString(address) + ": " + exMsg(e))
+        }
+    }
+
+    private fun disassembleSymbol(args: JSONObject): JSONObject {
+        val moduleName = args.getString("module_name")
+        val symbolName = args.getString("symbol_name")
+        if (moduleName == null || moduleName.isEmpty()) {
+            return errorResult("Missing required parameter 'module_name'.")
+        }
+        if (symbolName == null || symbolName.isEmpty()) {
+            return errorResult("Missing required parameter 'symbol_name'.")
+        }
+        val module = emulator.getMemory().findModule(moduleName)
+                ?: return errorResult("Module not found: $moduleName")
+        var symbol = module.findSymbolByName(symbolName, false)
+        if (symbol == null) {
+            symbol = module.findSymbolByName("_" + symbolName, false)
+        }
+        if (symbol == null) {
+            return errorResult("Symbol '" + symbolName + "' not found in " + moduleName +
+                    ". Use list_exports to see available symbols.")
+        }
+        val sub = JSONObject()
+        sub.put("address", "0x" + java.lang.Long.toHexString(symbol.getAddress()))
+        sub.put("count", if (args.containsKey("count")) args.getIntValue("count") else 20)
+        return disassemble(sub)
+    }
+
     private fun executeCustomTool(tool: CustomTool, args: JSONObject): JSONObject {
         val cmd = StringBuilder("run ")
         cmd.append(tool.name)
@@ -1771,7 +1871,8 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
                     (if ((prot and 4) != 0) "x" else "-")
         }
 
-        private fun textResult(text: String): JSONObject {
+        @JvmStatic
+        fun textResult(text: String): JSONObject {
             val result = JSONObject(true)
             val content = JSONArray()
             val item = JSONObject(true)

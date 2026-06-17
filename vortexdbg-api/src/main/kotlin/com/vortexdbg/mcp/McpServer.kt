@@ -48,6 +48,17 @@ open class McpServer(emulator: Emulator<*>, private val port: Int) {
         mcpTools.addCustomTool(name, description, *paramNames)
     }
 
+    private val toolProviders: MutableList<McpToolProvider> = ArrayList()
+
+    /** Register an out-of-module tool provider (e.g. the Dalvik/DEX tools). */
+    fun addToolProvider(provider: McpToolProvider) {
+        toolProviders.add(provider)
+    }
+
+    fun getToolProviders(): List<McpToolProvider> {
+        return toolProviders
+    }
+
     @Throws(IOException::class)
     fun start() {
         commandPipe = PipedOutputStream()

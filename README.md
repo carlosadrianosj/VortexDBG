@@ -78,6 +78,17 @@ ttEncrypt(16x 0x00) = 7463030000019fd0866aa0cbd0323933d2d2fc8c20ec
 
 Harness: [`TikTokAuto.java`](vortexdbg-android/src/test/java/com/bytedance/frameworks/core/encrypt/TikTokAuto.java).
 
+### 3. SecureVault: keychain over the AES lib, plus an MCP playground (`tests/keychain-aes-test/`)
+
+A small app that seals a secret into a token with mixed logic: Java framing and checksum on
+the host JVM, the native AES (`libttEncrypt.so`) on the emulator. It doubles as a quick way to
+try the MCP server: run the playground, type `mcp`, connect Claude Code / Cursor, and drive both
+the native tools and the Dalvik/Java tools (for example `dvm_call_static` to invoke the AES by
+JNI signature). See [`tests/keychain-aes-test/`](tests/keychain-aes-test) for the step-by-step.
+
+Harness: [`AesKeychainMcp.java`](vortexdbg-android/src/test/java/com/vortexdbg/aeskeychain/AesKeychainMcp.java) (MCP) ·
+[`AesKeychainAuto.java`](vortexdbg-android/src/test/java/com/vortexdbg/aeskeychain/AesKeychainAuto.java) (automated).
+
 ## MCP Debugger (AI Integration)
 
 Vortex-DBG supports the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
@@ -148,15 +159,17 @@ Then add to your Cursor MCP settings:
 | Tool | Description |
 |------|-------------|
 | `get_registers` / `get_register` / `set_register` | Read/write CPU registers |
-| `disassemble` | Disassemble at address (branch targets auto-annotated with symbol names) |
+| `disassemble` / `disassemble_symbol` | Disassemble at an address, or at a module + symbol name (branch targets auto-annotated) |
 | `assemble` | Assemble instruction text to machine code |
 | `get_callstack` | Get current call stack (backtrace) |
+| `read_args` | Read function arguments from the calling-convention registers, annotated with symbols/strings |
 
 **Memory**
 
 | Tool | Description |
 |------|-------------|
 | `read_memory` / `write_memory` | Read/write raw memory bytes |
+| `write_string` | Write a null-terminated UTF-8 C string to memory |
 | `read_string` / `read_std_string` | Read C string or C++ std::string (with SSO detection) |
 | `read_pointer` | Read pointer chain with symbol resolution |
 | `read_typed` | Read memory as typed values (int8 to int64, float, double, pointer) |
@@ -190,6 +203,17 @@ Then add to your Cursor MCP settings:
 |------|-------------|
 | `call_function` | Call native function by address with typed args (hex, string, bytes, null) |
 | `call_symbol` | Call exported function by module + symbol name, e.g. `libc.so` + `malloc` |
+
+**Dalvik / Java (DEX)**
+
+The host-JVM side of the fusion. Register with `debugger.addMcpToolProvider(new DvmMcpTools(emulator, vm))` before starting the server.
+
+| Tool | Description |
+|------|-------------|
+| `dvm_list_classes` | List the Dalvik classes resolved on the host JVM (the app's DEX/Java classes) |
+| `dvm_list_objects` | List live JNI object references (local + global): hash handle, class, value preview |
+| `dvm_read_string` / `dvm_get_object` | Read a Java String, or inspect any DVM object, by JNI hash handle |
+| `dvm_call_static` | Call a static Java method on the host VM through JNI by signature, args/result decoded by the DVM |
 
 ### Custom MCP Tools
 

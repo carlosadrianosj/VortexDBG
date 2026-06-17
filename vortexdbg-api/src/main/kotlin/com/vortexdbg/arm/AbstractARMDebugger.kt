@@ -1257,6 +1257,16 @@ abstract class AbstractARMDebugger protected constructor(
 
     private class PendingMcpTool(@JvmField val name: String, @JvmField val description: String, @JvmField val paramNames: Array<String>)
 
+    override fun addMcpToolProvider(provider: com.vortexdbg.mcp.McpToolProvider) {
+        if (mcpServer != null) {
+            mcpServer!!.addToolProvider(provider)
+        } else {
+            pendingMcpProviders.add(provider)
+        }
+    }
+
+    private val pendingMcpProviders: MutableList<com.vortexdbg.mcp.McpToolProvider> = ArrayList()
+
     private fun startMcpServer(line: String) {
         if (mcpServer != null) {
             val p = mcpServer!!.getPort()
@@ -1280,6 +1290,10 @@ abstract class AbstractARMDebugger protected constructor(
                     mcpServer!!.addCustomTool(tool.name, tool.description, *tool.paramNames)
                 }
                 pendingMcpTools.clear()
+                for (provider in pendingMcpProviders) {
+                    mcpServer!!.addToolProvider(provider)
+                }
+                pendingMcpProviders.clear()
                 mcpServer!!.start()
                 scannerNeedsRefresh = true
                 mcpServer!!.setDebugIdle(true)

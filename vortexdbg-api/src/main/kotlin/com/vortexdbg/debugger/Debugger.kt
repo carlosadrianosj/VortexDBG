@@ -40,6 +40,9 @@ interface Debugger : Breaker, DebugHook, BlockHook {
 
     fun addMcpTool(name: String, description: String, vararg paramNames: String)
 
+    /** Register an out-of-module MCP tool provider (e.g. the Dalvik/DEX tools). Applied when the MCP server starts. */
+    fun addMcpToolProvider(provider: com.vortexdbg.mcp.McpToolProvider)
+
     fun removeBreakPoint(address: Long): Boolean
 
     fun getBreakPoints(): MutableMap<Long, BreakPoint>

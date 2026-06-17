@@ -1,0 +1,6 @@
+out/com/
+out/base.apk
+out/keychain-aes-aligned.apk
+out/classes.dex
+stage/
+debug.keystore
