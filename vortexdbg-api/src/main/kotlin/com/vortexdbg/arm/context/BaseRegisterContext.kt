@@ -13,11 +13,13 @@ abstract class BaseRegisterContext internal constructor(
     override fun getPointerArg(index: Int): VortexdbgPointer? {
         if (index < regArgCount) {
             val reg = firstArgReg + index
-            return VortexdbgPointer.register(emulator, reg)
+            val p = VortexdbgPointer.register(emulator, reg)
+            return if (p.peer == 0L) null else p
         }
 
         val sp = getStackPointer()
-        return sp.getPointer((index - regArgCount).toLong() * emulator.getPointerSize())
+        val p = sp.getPointer((index - regArgCount).toLong() * emulator.getPointerSize())
+        return if (p == null || p.peer == 0L) null else p
     }
 
     override fun getIntByReg(regId: Int): Int {

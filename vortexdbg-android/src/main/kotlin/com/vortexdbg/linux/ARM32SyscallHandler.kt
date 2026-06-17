@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit
 /**
  * [unistd](http://androidxref.com/6.0.0_r5/xref/bionic/libc/kernel/uapi/asm-arm/asm/unistd.h)
  */
-class ARM32SyscallHandler(private val svcMemory: SvcMemory) : AndroidSyscallHandler() {
+open class ARM32SyscallHandler(private val svcMemory: SvcMemory) : AndroidSyscallHandler() {
 
     @Suppress("UNCHECKED_CAST")
     override fun hook(backend: Backend, intno: Int, swi: Int, user: Any?) {
@@ -793,7 +793,7 @@ class ARM32SyscallHandler(private val svcMemory: SvcMemory) : AndroidSyscallHand
         return pointer.toUIntPeer().toInt()
     }
 
-    protected fun ptrace(emulator: Emulator<*>): Int {
+    protected open fun ptrace(emulator: Emulator<*>): Int {
         val backend = emulator.getBackend()
         val request = backend.reg_read(ArmConst.UC_ARM_REG_R0).toInt()
         val pid = backend.reg_read(ArmConst.UC_ARM_REG_R1).toInt()
@@ -874,7 +874,7 @@ class ARM32SyscallHandler(private val svcMemory: SvcMemory) : AndroidSyscallHand
         return 0
     }
 
-    protected fun fork(emulator: Emulator<*>): Int {
+    protected open fun fork(emulator: Emulator<*>): Int {
         log.info("fork")
         val log = LoggerFactory.getLogger(AbstractEmulator::class.java)
         if (log.isDebugEnabled) {

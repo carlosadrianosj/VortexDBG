@@ -51,7 +51,7 @@ import java.util.concurrent.TimeUnit
 /**
  * [unistd](http://androidxref.com/6.0.0_r5/xref/external/kernel-headers/original/uapi/asm-generic/unistd.h)
  */
-class ARM64SyscallHandler(private val svcMemory: SvcMemory) : AndroidSyscallHandler() {
+open class ARM64SyscallHandler(private val svcMemory: SvcMemory) : AndroidSyscallHandler() {
 
     @Suppress("UNCHECKED_CAST")
     override fun hook(backend: Backend, intno: Int, swi: Int, user: Any?) {
@@ -623,7 +623,7 @@ class ARM64SyscallHandler(private val svcMemory: SvcMemory) : AndroidSyscallHand
         return threadId
     }
 
-    protected fun fork(emulator: Emulator<*>): Long {
+    protected open fun fork(emulator: Emulator<*>): Long {
         log.info("fork")
         emulator.getMemory().setErrno(UnixEmulator.ENOSYS)
         return -1
@@ -1268,7 +1268,7 @@ class ARM64SyscallHandler(private val svcMemory: SvcMemory) : AndroidSyscallHand
         throw UnsupportedOperationException("clk_id=$clk_id")
     }
 
-    protected fun ptrace(emulator: Emulator<*>): Long {
+    protected open fun ptrace(emulator: Emulator<*>): Long {
         val context = emulator.getContext<RegisterContext>()
         val request = context.getIntArg(0)
         val pid = context.getIntArg(1)
