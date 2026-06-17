@@ -28,7 +28,7 @@ object KotlinDslDemo {
                 .callStaticJniMethodObject<DvmObject<*>>(
                     s.emulator(), "ttEncrypt([BI)[B", DvmByteArray(s.vm(), data), data.size,
                 )
-            val out = ret.value as ByteArray
+            val out = ret.getValue() as ByteArray
             val hex = out.joinToString("") { "%02x".format(it) }
             println("ttEncrypt(16x00) = $hex")
             println("RESULTADO Kotlin piloto: ${if (hex.isNotEmpty()) "OK (Kotlin DSL roda o emulador via API Java)" else "FALHOU"}")
