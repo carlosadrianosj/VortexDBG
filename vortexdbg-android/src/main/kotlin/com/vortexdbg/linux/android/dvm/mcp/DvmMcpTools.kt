@@ -37,6 +37,7 @@ class DvmMcpTools(private val emulator: Emulator<*>, private val vm: VM) : McpTo
             DvmFieldTools(emulator, vm),
             DvmObjectTools(emulator, vm),
             DvmHookTools(emulator, vm),
+            DvmDexTools(emulator, vm),
             phase)
 
     init {
