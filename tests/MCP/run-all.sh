@@ -31,12 +31,14 @@ fi
 CP="$MODCP:$(cat /tmp/mcp_deps.txt)"
 
 # ---- compile the harnesses if needed ----------------------------------------
-echo ">>> compiling harnesses (01app + 02app + 03app + 04app)..."
+echo ">>> compiling harnesses (01app..06app)..."
 "$JAVAC" -source 8 -target 8 -cp "$CP" -d vortexdbg-android/target/test-classes \
   tests/MCP/01app/harness/McpDemoHarness.java \
   tests/MCP/02app/harness/GuardHarness.java \
   tests/MCP/03app/harness/SecureHarness.java \
-  tests/MCP/04app/harness/StoreHarness.java 2>/dev/null
+  tests/MCP/04app/harness/StoreHarness.java \
+  tests/MCP/05app/harness/FaultyHarness.java \
+  tests/MCP/06app/harness/DeepHarness.java 2>/dev/null
 
 # ---- MCP client helpers -----------------------------------------------------
 # call <tool> <json-args> : POST a tools/call and print the text result.
@@ -304,5 +306,51 @@ t "Store.rootScore() -> deterministic risk score";                 call dvm_call
 
 echo
 echo "################  PHASE 4 (04app) DONE — see $LOG  ################"
+} 2>&1 | tee -a "$LOG"
+stop
+
+# ============================  PHASE 5: 05app  ===============================
+# 05app (com.example.faulty): the native risky() throws a Java exception via JNI. The pending
+# exception is cleared when the JNI call returns (deleteLocalRefs), so it is observed at a
+# breakpoint placed right after the throw (faulty_after_throw).
+boot com.vortexdbg.mcpfaulty.FaultyHarness
+RISKY='{"class":"com/example/faulty/Faulty","method":"risky(Ljava/lang/String;)Ljava/lang/String;","args":'
+{
+echo "################  VORTEX-DBG MCP TEST SUITE — PHASE 5 (05app / Faulty, JNI exceptions)  ################"
+
+sec "05app — a real pending JNI exception (dvm_pending_exception)"
+t "risky('ok') -> accepted (no exception)";                        call dvm_call_static "$RISKY[\"ok\"]}"
+t "dvm_pending_exception -> none (clean)";                         call dvm_pending_exception '{}'
+t "add_breakpoint_by_symbol faulty_after_throw";                   call add_breakpoint_by_symbol '{"module_name":"libfaulty.so","symbol_name":"faulty_after_throw"}'
+t "(trigger risky('hack-attempt') -> native ThrowNew)";           curl -s -X POST "http://localhost:$PORT/sse" -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"risky","arguments":{"input":"hack-attempt"}}}' >/dev/null; sleep 1
+t "poll_events -> breakpoint_hit (right after the throw)";         call poll_events '{"timeout_ms":"4000"}'
+t "dvm_pending_exception -> IllegalArgumentException (REAL)";      call dvm_pending_exception '{}'
+t "remove_breakpoint; continue_execution";                        call remove_breakpoint '{"module_name":"libfaulty.so","symbol_name":"faulty_after_throw"}' >/dev/null; call continue_execution '{}' >/dev/null; call poll_events '{"timeout_ms":"3000"}' >/dev/null; echo done
+
+echo
+echo "################  PHASE 5 (05app) DONE — see $LOG  ################"
+} 2>&1 | tee -a "$LOG"
+stop
+
+# ============================  PHASE 6: 06app  ===============================
+# 06app (com.example.deep): a deep non-inlined native call chain
+# (compute -> deep_level1 -> deep_level2 -> deep_level3). Break inside deep_level3 (past its
+# prologue) for a real get_callstack backtrace; get_threads shows the running task while paused.
+boot com.vortexdbg.mcpdeep.DeepHarness
+{
+echo "################  VORTEX-DBG MCP TEST SUITE — PHASE 6 (06app / Deep, callstack + threads)  ################"
+
+sec "06app — real backtrace (get_callstack) + running task (get_threads)"
+t "list_exports libdeep.so (the call chain)";                      call list_exports '{"module_name":"libdeep.so","filter":"deep_"}'
+t "find_symbol deep_level3 (+ break past its prologue)";           FS=$(call find_symbol '{"module_name":"libdeep.so","symbol_name":"deep_level3"}'); echo "$FS"; SYM=$(echo "$FS" | grep -oE '0x[0-9a-f]+' | head -1); BPA=$(printf '0x%x' $(( ${SYM:-0} + 8 )))
+t "add_breakpoint @ deep_level3+8 ($BPA)";                         call add_breakpoint "{\"address\":\"$BPA\"}"
+t "(trigger compute(7) -> compute->level1->level2->level3)";       curl -s -X POST "http://localhost:$PORT/sse" -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"compute","arguments":{"n":"7"}}}' >/dev/null; sleep 1
+t "poll_events -> breakpoint_hit inside deep_level3";              call poll_events '{"timeout_ms":"4000"}'
+t "get_callstack -> real multi-frame backtrace";                   call get_callstack '{}'
+t "get_threads -> the running task (with its args)";               call get_threads '{}'
+t "remove_breakpoint; continue_execution";                        call remove_breakpoint "{\"address\":\"$BPA\"}" >/dev/null; call continue_execution '{}' >/dev/null; call poll_events '{"timeout_ms":"3000"}' >/dev/null; echo done
+
+echo
+echo "################  PHASE 6 (06app) DONE — see $LOG  ################"
 } 2>&1 | tee -a "$LOG"
 stop

@@ -1,7 +1,7 @@
 # Vortex-DBG MCP test suite
 
 A self-contained playground that exercises **every Vortex-DBG MCP tool** (both the native/ARM
-side and the Dalvik/Java side) against **four complementary demo apps**. It doubles as a tutorial:
+side and the Dalvik/Java side) against **six complementary demo apps**. It doubles as a tutorial:
 read [`run-all.sh`](run-all.sh) top to bottom and you have a worked example of how to drive each
 tool, and [`run-all.log`](run-all.log) is the captured output of a full run.
 
@@ -21,7 +21,11 @@ tool, and [`run-all.log`](run-all.log) is the captured output of a full run.
   heap (`Session { id; flags; name[16]; next }`, `g_head -> alice -> bob -> carol`). It exercises
   `read_pointer` (follow real pointer chains), `read_typed` (real struct fields), `read_string`,
   `read_memory`, `search_memory` against actual structs, plus a multi-signal `rootScore()`.
-- `run-all.sh` runs **all four apps in four phases**. Everything is plain `curl` against the MCP
+- **[`05app/`](05app)** (`com.example.faulty`): a native method that raises a real Java exception
+  through JNI (`ThrowNew`), so `dvm_pending_exception` reports an actual pending exception.
+- **[`06app/`](06app)** (`com.example.deep`): a deep, non-inlined native call chain, so `get_callstack`
+  produces a real multi-frame backtrace and `get_threads` shows the running task while paused.
+- `run-all.sh` runs **all six apps in six phases**. Everything is plain `curl` against the MCP
   server, so you can copy any call into your own client.
 
 ---
@@ -112,6 +116,23 @@ Source: [`03app/src/com/example/secure/`](03app/src/com/example/secure) + [`03ap
 
 Source: [`04app/src/com/example/store/`](04app/src/com/example/store) + [`04app/jni/store.cpp`](04app/jni/store.cpp).
 
+### 05app — `com.example.faulty` (a real pending JNI exception)
+
+`Faulty.risky(input)` returns "accepted" for `"ok"`; otherwise the native code calls `ThrowNew`
+(java.lang.IllegalArgumentException). The pending exception is cleared when the JNI call returns
+(`deleteLocalRefs`), so it is observed at a breakpoint placed right after the throw
+(`faulty_after_throw`), where `dvm_pending_exception` reports the real `IllegalArgumentException`.
+
+Source: [`05app/src/com/example/faulty/`](05app/src/com/example/faulty) + [`05app/jni/faulty.c`](05app/jni/faulty.c).
+
+### 06app — `com.example.deep` (real backtrace + running task)
+
+`Deep.compute(n)` runs a non-inlined chain `compute -> deep_level1 -> deep_level2 -> deep_level3`.
+A breakpoint inside `deep_level3` (past its prologue) gives `get_callstack` a real multi-frame
+backtrace, and `get_threads` shows the running task (with its arguments) while paused.
+
+Source: [`06app/src/com/example/deep/`](06app/src/com/example/deep) + [`06app/jni/deep.c`](06app/jni/deep.c).
+
 Why "mixed": `seal` (01app) runs native code **and** calls back into Java, so a single call crosses
 the JNI bridge in both directions — the fusion Vortex-DBG reproduces off-device, and what makes the
 hook/trace tools observable.
@@ -127,6 +148,8 @@ tests/MCP/01app/build.sh   # -> 01app/out/mcpdemo.{apk,jar} + libvault.so  (C, J
 tests/MCP/02app/build.sh   # -> 02app/out/guard.{apk,jar}   + libguard.so  (C, RegisterNatives)
 tests/MCP/03app/build.sh   # -> 03app/out/secure.{apk,jar}  + libsecure.so (C++, std::string)
 tests/MCP/04app/build.sh   # -> 04app/out/store.{apk,jar}   + libstore.so  (C++, linked structs)
+tests/MCP/05app/build.sh   # -> 05app/out/faulty.{apk,jar} + libfaulty.so (C, JNI ThrowNew)
+tests/MCP/06app/build.sh   # -> 06app/out/deep.{apk,jar}   + libdeep.so   (C, deep call chain)
 ```
 
 Each bundles `classes.dex` + `lib/arm64-v8a/lib*.so` into a signed APK, plus a `.jar` of the app's
@@ -139,9 +162,10 @@ clang) and a JDK. See each script header.
 tests/MCP/run-all.sh
 ```
 
-It compiles the harnesses if needed, then runs **Phase 1** (01app full sweep of all 86 tools),
-**Phase 2** (02app visible-effect demos), **Phase 3** (03app real-C++ `std::string`) and **Phase 4**
-(04app real linked structs), writing [`run-all.log`](run-all.log). Use it to verify and to learn.
+It compiles the harnesses if needed, then runs six phases: **1** (01app full sweep of all 86 tools),
+**2** (02app visible spoof/RegisterNatives), **3** (03app real-C++ `std::string`), **4** (04app real
+linked structs), **5** (05app pending JNI exception) and **6** (06app real backtrace + threads),
+writing [`run-all.log`](run-all.log). Use it to verify and to learn.
 
 ### Run the harness by hand (to connect your own client)
 
@@ -156,6 +180,8 @@ $JEB/bin/java -cp "$CP" com.vortexdbg.mcpdemo.McpDemoHarness     # 01app
 # or:  $JEB/bin/java -cp "$CP" com.vortexdbg.mcpguard.GuardHarness    # 02app
 # or:  $JEB/bin/java -cp "$CP" com.vortexdbg.mcpsecure.SecureHarness  # 03app
 # or:  $JEB/bin/java -cp "$CP" com.vortexdbg.mcpstore.StoreHarness    # 04app
+# or:  $JEB/bin/java -cp "$CP" com.vortexdbg.mcpfaulty.FaultyHarness  # 05app
+# or:  $JEB/bin/java -cp "$CP" com.vortexdbg.mcpdeep.DeepHarness      # 06app
 # then type:  mcp
 ```
 
@@ -361,6 +387,10 @@ Object handles are JNI hashes (decimal or `0x`-hex); object/array arguments may 
 8. **Real structs (04app):** `call_symbol store_head_addr` → `read_pointer` follows `&g_head` to the
    first `Session`; `read_typed`/`read_string`/`read_memory` read its fields; `read_pointer` at `+24`
    follows `->next`; `search_memory "carol"` finds the last node; `Store.rootScore()` → `15`.
+9. **Pending exception (05app):** break at `faulty_after_throw`, trigger `Faulty.risky("hack")`,
+   then `dvm_pending_exception` → `java/lang/IllegalArgumentException`.
+10. **Backtrace + threads (06app):** break inside `deep_level3`, trigger `Deep.compute(7)`, then
+    `get_callstack` (real frames) and `get_threads` (the running task).
 
 ---
 
@@ -410,5 +440,19 @@ README.md                                        this file
   jni/store.cpp                                   C++ lib (Session linked list on the heap)
   AndroidManifest.xml · build.sh                 builds out/store.{apk,jar} + libstore.so
   harness/StoreHarness.java                      boots Vortex + MCP server for 04app
+  out/                                           build artifacts (apk/jar committed)
+
+05app/  (com.example.faulty — real pending JNI exception)
+  src/com/example/faulty/Faulty.java             native risky(input)
+  jni/faulty.c                                    native lib (ThrowNew + faulty_after_throw marker)
+  AndroidManifest.xml · build.sh                 builds out/faulty.{apk,jar} + libfaulty.so
+  harness/FaultyHarness.java                     boots Vortex + MCP server for 05app
+  out/                                           build artifacts (apk/jar committed)
+
+06app/  (com.example.deep — real backtrace + running task)
+  src/com/example/deep/Deep.java                 native compute(n)
+  jni/deep.c                                      native lib (deep non-inlined call chain)
+  AndroidManifest.xml · build.sh                 builds out/deep.{apk,jar} + libdeep.so
+  harness/DeepHarness.java                       boots Vortex + MCP server for 06app
   out/                                           build artifacts (apk/jar committed)
 ```
