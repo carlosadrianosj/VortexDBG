@@ -86,6 +86,7 @@ t "write_memory @ allocated (raw hex)";                            call write_me
 t "patch @ allocated (assemble 'nop' + write)";                    call patch "{\"address\":\"$AADDR\",\"assembly\":\"nop\"}"
 t "find_symbol libc.so strlen -> address";                         FS=$(call find_symbol '{"module_name":"libc.so","symbol_name":"strlen"}'); echo "$FS"; STRLEN=$(echo "$FS" | grep -oE '0x[0-9a-f]+' | head -1)
 t "call_function @strlen('vortex') — call by address";             call call_function "{\"address\":\"${STRLEN:-0}\",\"args\":[\"s:vortex\"]}"
+t "read_std_string — craft a libc++ SSO std::string ('mcp') and read it"; SS=$(call allocate_memory '{"size":"16","data":"066d637000"}'); grab "$SS"; SSADDR=$HANDLE; call read_std_string "{\"address\":\"$SSADDR\"}"; call free_memory "{\"address\":\"$SSADDR\"}" >/dev/null
 t "list_allocations — tracked blocks";                             call list_allocations '{}'
 t "free_memory @ allocated";                                       call free_memory "{\"address\":\"$AADDR\"}"
 t "call_symbol libc.so strlen('mcp')";                             call call_symbol '{"module_name":"libc.so","symbol_name":"strlen","args":["s:mcp"]}'
@@ -97,6 +98,7 @@ t "dvm_search_classes Vault";                                      call dvm_sear
 t "dvm_class_hierarchy Vault";                                     call dvm_class_hierarchy '{"class":"com/example/mcpdemo/Vault"}'
 t "dvm_describe_class Vault — members the VM has touched";         call dvm_describe_class '{"class":"com/example/mcpdemo/Vault"}'
 t "dvm_describe_method Vault.seal";                                call dvm_describe_method '{"class":"com/example/mcpdemo/Vault","method":"seal(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"}'
+t "dvm_resolve_method seal — find signatures by bare name";        call dvm_resolve_method '{"name":"seal"}'
 t "dvm_list_native_registrations";                                 call dvm_list_native_registrations '{}'
 
 sec "DVM — DEX static surface (reads the embedded classes.dex; no path needed)"
@@ -156,6 +158,8 @@ t "dvm_break_on_jni salt";                                         call dvm_brea
 t "(seal again -> break event recorded)";                          call dvm_call_static '{"class":"com/example/mcpdemo/Vault","method":"seal(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;","args":["dave","pw"]}' >/dev/null
 t "dvm_jni_log (clear=true) — see break events";                  call dvm_jni_log '{"clear":"true"}'
 t "dvm_mock_jni hex remove; dvm_trace_jni disable";                call dvm_mock_jni '{"signature":"hex","remove":"true"}' >/dev/null; call dvm_trace_jni '{"enable":false}'
+t "dvm_spoof_env preset=pixel — install device-identity mocks";    call dvm_spoof_env '{"preset":"pixel"}'
+t "dvm_spoof_env disable — restore";                               call dvm_spoof_env '{"enable":false}'
 
 sec "DVM — record / replay a tool sequence"
 t "dvm_call_phase start p1";                                       call dvm_call_phase '{"action":"start","name":"p1"}'
@@ -168,7 +172,10 @@ t "dvm_call_phase replay p1";                                      call dvm_call
 sec "NATIVE (ARM) — breakpoint flow (break inside seal, inspect, step)"
 t "add_breakpoint_by_symbol libvault.so seal";                     BP=$(call add_breakpoint_by_symbol '{"module_name":"libvault.so","symbol_name":"Java_com_example_mcpdemo_Vault_seal"}'); echo "$BP"; BPADDR=$(echo "$BP" | grep -oE '0x[0-9a-f]+' | head -1)
 t "add_breakpoint_by_offset libvault.so +0x7e0 (transform)";       call add_breakpoint_by_offset '{"module_name":"libvault.so","offset":"0x7e0"}'
+t "add_breakpoint (raw address) then remove — by-address bp";      call add_breakpoint '{"address":"0x12000570"}'; call remove_breakpoint '{"address":"0x12000570"}'
 t "trace_code over seal prologue (events via poll_events)";        call trace_code "{\"begin\":\"$BPADDR\",\"end\":\"0x120005a0\"}"
+t "trace_read over libvault range";                                call trace_read '{"begin":"0x12000000","end":"0x12002000"}'
+t "trace_write over libvault range";                               call trace_write '{"begin":"0x12000000","end":"0x12002000"}'
 t "list_breakpoints";                                              call list_breakpoints '{}'
 t "(trigger seal via custom tool -> hits the breakpoint)";         curl -s -X POST "http://localhost:$PORT/sse" -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"seal","arguments":{"account":"frank","secret":"pw"}}}' >/dev/null; sleep 1
 t "poll_events — expect breakpoint_hit";                           call poll_events '{"timeout_ms":"4000"}'
@@ -177,6 +184,7 @@ t "get_registers — full register set";                             REGS=$(call
 t "disassemble at PC ($PCV)";                                      call disassemble "{\"address\":\"${PCV:-0}\",\"count\":\"6\"}"
 t "get_callstack — backtrace";                                     call get_callstack '{}'
 t "step_into 2 instructions";                                      call step_into '{"count":"2"}'; call poll_events '{"timeout_ms":"3000"}'
+t "step_over — step one instruction (over calls)";                 call step_over '{}'; call poll_events '{"timeout_ms":"3000"}'
 t "next_block — run to next basic block";                          call next_block '{}'; call poll_events '{"timeout_ms":"3000"}'
 t "step_until_mnemonic bl — run to next 'bl'";                     call step_until_mnemonic '{"mnemonic":"bl"}'; call poll_events '{"timeout_ms":"3000"}'
 t "step_out — run until the function returns";                     call step_out '{}'; call poll_events '{"timeout_ms":"4000"}'

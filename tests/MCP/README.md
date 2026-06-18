@@ -292,7 +292,9 @@ Object handles are JNI hashes (decimal or `0x`-hex); object/array arguments may 
 
 * `dvm_to_string` usually falls back to a value preview: an app's `toString()` is a Java method, not
   native-registered, so the emulated path reports "not native-registered" and uses the host rendering.
-* `read_std_string` needs a real C++ `std::string`; this demo has none, so test it on a real target.
+* `read_std_string` is exercised by hand-crafting a libc++ SSO `std::string` blob in a scratch
+  buffer (`06 6d 63 70 00` = "mcp") and reading it; on a real target you'd point it at an actual
+  `std::string`.
 * `dvm_new_object` / instance field access work by constructing/reading the **host** object under
   `ProxyClassFactory` (the normal app mode); `allocObject` is not supported by `ProxyJni`.
 * `dvm_break_on_jni` records a snapshot at the callback; it does not suspend the thread (the
