@@ -2,23 +2,23 @@
 App: com.example.mcpdemo (Vault + Device), native: libvault.so (arm64)
 
 ============================================================
-## NATIVE (ARM) — status & modules
+## NATIVE (ARM): status & modules
 ============================================================
 
---- check_connection — arch/backend/state/loaded modules ---
+--- check_connection: arch/backend/state/loaded modules ---
 Android64 ARM64 | Unicorn2Backend (FULL)
 mcpdemo | custom_tools idle=true running=false bp=0 events=0
 3 modules
 
---- list_modules (filter vault) — loaded .so modules ---
+--- list_modules (filter vault): loaded .so modules ---
 1 modules (filter: 'vault', total: 3):
 libvault.so 0x12000000 0x2000
 
---- get_module_info libvault.so — base/size/exports/deps ---
+--- get_module_info libvault.so: base/size/exports/deps ---
 libvault.so 0x12000000 size=0x2000
 exports=9 deps=libc.so,libdl.so
 
---- list_exports libvault.so — exported symbols ---
+--- list_exports libvault.so: exported symbols ---
 9 exported symbol(s):
 +0x2000 _bss_end__
 +0x7e0 Java_com_example_mcpdemo_Vault_transform
@@ -30,15 +30,15 @@ exports=9 deps=libc.so,libdl.so
 +0x2000 __end__
 +0x2000 __bss_start__
 
---- find_symbol libvault.so seal — resolve a symbol ---
+--- find_symbol libvault.so seal: resolve a symbol ---
 Java_com_example_mcpdemo_Vault_seal @ 0x1200056c (libvault.so+0x56c)
---- get_threads — emulator threads/tasks ---
+--- get_threads: emulator threads/tasks ---
 No threads/tasks.
 ============================================================
-## NATIVE (ARM) — disassembly & memory (no breakpoint needed)
+## NATIVE (ARM): disassembly & memory (no breakpoint needed)
 ============================================================
 
---- disassemble_symbol libvault.so seal — disasm a function ---
+--- disassemble_symbol libvault.so seal: disasm a function ---
 0x1200056c: sub sp, sp, #0xa0
 0x12000570: stp x28, x27, [sp, #0x40]
 0x12000574: stp x26, x25, [sp, #0x50]
@@ -48,9 +48,9 @@ No threads/tasks.
 0x12000584: stp x29, x30, [sp, #0x90]
 0x12000588: ldr x8, [x0]
 
---- assemble — text -> machine code ---
+--- assemble: text -> machine code ---
 Machine code: 200080d2 (4 bytes)
---- list_memory_map — mapped regions ---
+--- list_memory_map: mapped regions ---
 3 modules, 4 anonymous:
 libvault.so 0x12000000-0x12002000 0x2000
 libdl.so 0x12010000-0x12030000 0x20000
@@ -60,17 +60,17 @@ libc.so 0x12030000-0x12120000 0xf0000
 0x12180000-0x121c0000 0x40000 rw-
 0x121c0000-0x12200000 0x40000 rw-
 
---- allocate_memory — RW scratch buffer ---
+--- allocate_memory: RW scratch buffer ---
 0x121d7000 (16 bytes, malloc) +data
 
---- read_memory @ allocated — hex dump ---
+--- read_memory @ allocated: hex dump ---
 121d7000: 41 42 43 44 00 00 00 00 00 00 00 00 00 00 00 00  ABCD............
 
 --- write_string @ allocated ---
 Written 7 bytes (string + NUL) to 0x121d7000
---- read_string @ allocated — C string ---
+--- read_string @ allocated: C string ---
 "hi-mcp" (6B)
---- read_typed @ allocated — typed view ---
+--- read_typed @ allocated: typed view ---
 [0] 0x121d7000: 1831692648
 [1] 0x121d7004: 28771
 
@@ -79,13 +79,13 @@ Written 7 bytes (string + NUL) to 0x121d7000
     -> 0x70636d2d6968
 [1] 0x70636d2d6968
 
---- search_memory — find 'hi-mcp' string (before we overwrite it) ---
+--- search_memory: find 'hi-mcp' string (before we overwrite it) ---
 Found 1 match(es):
 0x121d7000
 
---- get_register X0 — read one register ---
+--- get_register X0: read one register ---
 X0 = 0x121d7000
---- set_register X0=0xdead — write one register ---
+--- set_register X0=0xdead: write one register ---
 X0 set to 0xdead
 --- write_memory @ allocated (raw hex) ---
 Written 4 bytes to 0x121d7000
@@ -94,12 +94,12 @@ Patched 4 bytes at 0x121d7000: 1f2003d5
 --- find_symbol libc.so strlen -> address ---
 strlen @ 0x1204cbe4 (libc.so+0x1cbe4)
 
---- call_function @strlen('vortex') — call by address ---
+--- call_function @strlen('vortex'): call by address ---
 ret=0x6 (6)
 
---- read_std_string — craft a libc++ SSO std::string ('mcp') and read it ---
+--- read_std_string: craft a libc++ SSO std::string ('mcp') and read it ---
 "mcp" (3B, SSO)
---- list_allocations — tracked blocks ---
+--- list_allocations: tracked blocks ---
 1 active allocation(s):
   0x121d7000  size=16 (0x10)  type=malloc (free requires isRunning=false)
 
@@ -109,10 +109,10 @@ Freed 0x121d7000
 ret=0x3 (3)
 
 ============================================================
-## DVM — class introspection
+## DVM: class introspection
 ============================================================
 
---- dvm_list_classes — resolved DVM classes ---
+--- dvm_list_classes: resolved DVM classes ---
 5 resolved DVM classes:
   java/lang/String
   [B
@@ -131,7 +131,7 @@ superclass chain (most-derived first):
 interfaces of com/example/mcpdemo/Vault:
   (none declared)
 
---- dvm_describe_class Vault — members the VM has touched ---
+--- dvm_describe_class Vault: members the VM has touched ---
 class com.example.mcpdemo.Vault
   internal name = com/example/mcpdemo/Vault
   superclass = (none / unresolved)
@@ -160,8 +160,8 @@ static = unknown (not registered yet; not querying getMethodID to avoid side eff
 registered overloads matching name: (none touched yet)
 native-bound = false (no nativesMap entry for this name; may bind lazily by Java_ symbol)
 
---- dvm_resolve_method seal — find signatures by bare name ---
-dvm_resolve_method name='seal' native_only=true : scanned 5 class(es), 0 native-bound candidate(s).
+--- dvm_resolve_method seal: find signatures by bare name ---
+dvm_resolve_method name='vortexdbg-seal' native_only=true : scanned 5 class(es), 0 native-bound candidate(s).
 Note: this tool only enumerates native-bound methods (DvmClass.nativesMap). Methods bound implicitly by symbol lookup at call time, or pure-Java methods, are not listed here.
 
 --- dvm_list_native_registrations ---
@@ -169,7 +169,7 @@ RegisterNatives bindings (lazy: only classes the .so has registered)
 (no class has any RegisterNatives binding yet)
 
 ============================================================
-## DVM — DEX static surface (reads the embedded classes.dex; no path needed)
+## DVM: DEX static surface (reads the embedded classes.dex; no path needed)
 ============================================================
 
 --- dvm_dex_surface classes ---
@@ -193,18 +193,18 @@ matches: 3
   mcpdemo-1.0
 
 ============================================================
-## DVM — calling Java/native through the bridge
+## DVM: calling Java/native through the bridge
 ============================================================
 
 --- dvm_call_static Vault.seal(alice,hunter2) ---
 com/example/mcpdemo/Vault.seal -> "53bc1420c00bd792"
 
---- dvm_oracle — assert seal output is stable ---
+--- dvm_oracle: assert seal output is stable ---
 MATCH (mode=contains)
   actual  : "53bc1420c00bd792"
   expected: 53bc1420c00bd792
 
---- dvm_fuzz_method seal — vary arg0 over 2 inputs ---
+--- dvm_fuzz_method seal: vary arg0 over 2 inputs ---
 dvm_fuzz_method com/example/mcpdemo/Vault.seal varying arg[0]
 input -> output:
   alice -> "4bbe2608f925b992"
@@ -214,7 +214,7 @@ byte variance over 2 output(s) of 8 byte(s):
   varying positions  (5): 0, 1, 2, 3, 4
 
 ============================================================
-## DVM — object lifecycle (create -> inspect -> use -> release)
+## DVM: object lifecycle (create -> inspect -> use -> release)
 ============================================================
 
 --- dvm_make_object string -> handle ---
@@ -234,7 +234,7 @@ value = "hello-vortex"
 object 0x4802796d class=java/lang/String
 (native toString() unavailable: find method failed: toString()Ljava/lang/String; — toString is rarely native-registered, falling back)
 valuePreview = "hello-vortex"
---- dvm_inspect_object <handle> — deep view + refcount ---
+--- dvm_inspect_object <handle>: deep view + refcount ---
 object 0x4802796d (1208121709):
   class: java/lang/String
   scope: global
@@ -285,7 +285,7 @@ pinned 0x4802796d as a global ref.
 release 0x59474f18 (1497845528)
   removed from global ref map.
 ============================================================
-## DVM — live object graph & refs
+## DVM: live object graph & refs
 ============================================================
 
 --- dvm_list_objects ---
@@ -339,7 +339,7 @@ live object histogram by class (9 refs across all maps):
 --- dvm_pending_exception ---
 pending exception: none
 ============================================================
-## DVM — native<->DVM bridge (peer == hash)
+## DVM: native<->DVM bridge (peer == hash)
 ============================================================
 
 --- dvm_resolve_native_handle <a live handle> ---
@@ -371,7 +371,7 @@ JNI call args (4 slots). Convention: slot0=JNIEnv*, slot1=this/jclass, then decl
   arg3 = 0x71d44a3
 
 ============================================================
-## DVM — export, snapshot/diff
+## DVM: export, snapshot/diff
 ============================================================
 
 --- dvm_snapshot before ---
@@ -405,7 +405,7 @@ local refs (from 0 -> 0):
 --- dvm_export bytes handle -> /tmp/mcp_export.bin ---
 Wrote 69 bytes to /tmp/mcp_export.json
 ============================================================
-## DVM — JNI hooks (native->Java): trace / mock / break
+## DVM: JNI hooks (native->Java): trace / mock / break
 ============================================================
 
 --- dvm_trace_jni enable ---
@@ -416,7 +416,7 @@ JNI tracing enabled (interceptor installed via setJni, fallback = previous jni).
 Use dvm_jni_log to read recorded calls. enable=false restores the original jni.
 --- (trigger seal -> native calls back Device.salt()/hex()) ---
 
---- dvm_jni_log — recorded callbacks ---
+--- dvm_jni_log: recorded callbacks ---
 JNI interceptor: installed, tracing ON, filter=(all)
 Active mocks: 0
 Active breakpoints: 0
@@ -442,7 +442,7 @@ Breakpoint registered: signature contains 'salt' action=snapshot.
 NOTE: execution is NOT suspended; each hit records a {signature, args snapshot} break event viewable via dvm_jni_log. Interceptor installed.
 --- (seal again -> break event recorded) ---
 
---- dvm_jni_log (clear=true) — see break events ---
+--- dvm_jni_log (clear=true): see break events ---
 JNI interceptor: installed, tracing ON, filter=(all)
 Active mocks: 1
   mock 'hex' -> deadbeefdeadbeef (unlimited)
@@ -476,7 +476,7 @@ Break events (1):
 (buffers cleared)
 --- dvm_mock_jni hex remove; dvm_trace_jni disable ---
 JNI interception disabled; original jni restored. (Trace buffer kept; mocks/breaks remain registered but inert until reinstalled.)
---- dvm_spoof_env preset=pixel — install device-identity mocks ---
+--- dvm_spoof_env preset=pixel: install device-identity mocks ---
 Spoofing enabled (preset=pixel). 6 key(s) now spoofed via the JNI hook:
   Build.MODEL = Pixel 7
   Build.MANUFACTURER = Google
@@ -485,10 +485,10 @@ Spoofing enabled (preset=pixel). 6 key(s) now spoofed via the JNI hook:
   getSerial = PIXEL000SERIAL01
   ANDROID_ID = a1b2c3d4e5f60718
 Note: only affects native->Java callbacks during emulated calls. Call again with enable=false to restore the original jni.
---- dvm_spoof_env disable — restore ---
+--- dvm_spoof_env disable: restore ---
 Spoofing disabled; interceptor removed.
 ============================================================
-## DVM — record / replay a tool sequence
+## DVM: record / replay a tool sequence
 ============================================================
 
 --- dvm_call_phase start p1 ---
@@ -505,7 +505,7 @@ Replaying phase 'p1' (2 step(s)):
   1. dvm_call_static -> com/example/mcpdemo/Vault.seal -> "4fa026053b25b992"
   2. dvm_class_hierarchy -> class hierarchy for com/example/mcpdemo/Vault: superclass chain (most-derived first): * com/example/mcpdemo/Vault interf...
 ============================================================
-## NATIVE (ARM) — breakpoint flow (break inside seal, inspect, step)
+## NATIVE (ARM): breakpoint flow (break inside seal, inspect, step)
 ============================================================
 
 --- add_breakpoint_by_symbol libvault.so seal ---
@@ -513,7 +513,7 @@ Breakpoint added at Java_com_example_mcpdemo_Vault_seal (0x1200056c, libvault.so
 
 --- add_breakpoint_by_offset libvault.so +0x7e0 (transform) ---
 Breakpoint added at libvault.so+0x7e0 (0x120007e0)
---- add_breakpoint (raw address) then remove — by-address bp ---
+--- add_breakpoint (raw address) then remove: by-address bp ---
 Breakpoint added at 0x12000570Breakpoint removed at 0x12000570
 --- trace_code over seal prologue (events via poll_events) ---
 Trace code started: 0x1200056c - 0x120005a0.
@@ -528,7 +528,7 @@ Total: 2 breakpoint(s)
 
 --- (trigger seal via custom tool -> hits the breakpoint) ---
 
---- poll_events — expect breakpoint_hit ---
+--- poll_events: expect breakpoint_hit ---
 19 event(s):
 {"event":"execution_started","pc":"0x1204bb08","module":"libc.so","offset":"0x1bb08"}
 {"event":"execution_started","pc":"0x1204cbe4","module":"libc.so","offset":"0x1cbe4"}
@@ -548,15 +548,15 @@ Total: 2 breakpoint(s)
 {"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
 {"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
 {"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
-{"event":"breakpoint_hit","pc":"0x1200056c","tid":31907,"is_main_thread":true,"module":"libvault.so","offset":"0x56c"}
+{"event":"breakpoint_hit","pc":"0x1200056c","tid":7155,"is_main_thread":true,"module":"libvault.so","offset":"0x56c"}
 
---- read_args — function args at entry ---
+--- read_args: function args at entry ---
 X0=0xfffe1640
 X1=0x4f17ce0d
 X2=0x2a5c8d3f
 X3=0x752325ad
 
---- get_registers — full register set ---
+--- get_registers: full register set ---
 X0=0xfffe1640
 X1=0x4f17ce0d
 X2=0x2a5c8d3f
@@ -590,37 +590,37 @@ Zero: X19,X20,X21,X22,X23,X24,X25,X26,X27,X28
 0x1200057c: stp x22, x21, [sp, #0x70]
 0x12000580: stp x20, x19, [sp, #0x80]
 
---- get_callstack — backtrace ---
+--- get_callstack: backtrace ---
 No call stack frames available.
 --- step_into 2 instructions ---
 Stepping 2 insn.1 event(s):
-{"event":"breakpoint_hit","pc":"0x12000574","tid":31907,"is_main_thread":true,"module":"libvault.so","offset":"0x574"}
+{"event":"breakpoint_hit","pc":"0x12000574","tid":7155,"is_main_thread":true,"module":"libvault.so","offset":"0x574"}
 
---- step_over — step one instruction (over calls) ---
+--- step_over: step one instruction (over calls) ---
 Stepping over.1 event(s):
-{"event":"breakpoint_hit","pc":"0x12000578","tid":31907,"is_main_thread":true,"module":"libvault.so","offset":"0x578"}
+{"event":"breakpoint_hit","pc":"0x12000578","tid":7155,"is_main_thread":true,"module":"libvault.so","offset":"0x578"}
 
---- next_block — run to next basic block ---
+--- next_block: run to next basic block ---
 Resuming, break at next block.1 event(s):
 {"event":"execution_completed"}
 
---- step_until_mnemonic bl — run to next 'bl' ---
+--- step_until_mnemonic bl: run to next 'bl' ---
 Resuming, break on 'bl'.
---- step_out — run until the function returns ---
+--- step_out: run until the function returns ---
 
 --- remove_breakpoint @bp (0x1200056c) ---
 
 --- continue_execution -> finish (+ flush trace_code events) ---
 
 ################  PHASE 1 (01app) DONE  ################
-################  VORTEX-DBG MCP TEST SUITE — PHASE 2 (02app / Guard)  ################
+################  VORTEX-DBG MCP TEST SUITE: PHASE 2 (02app / Guard)  ################
 RegisterNatives + JNI reads of Device.MODEL/FINGERPRINT -> visible spoof/mock effects.
 
 ============================================================
-## 02app — RegisterNatives is now visible
+## 02app: RegisterNatives is now visible
 ============================================================
 
---- dvm_list_native_registrations — real bindings (was empty on 01app) ---
+--- dvm_list_native_registrations: real bindings (was empty on 01app) ---
 RegisterNatives bindings (lazy: only classes the .so has registered)
 com/example/guard/Guard (3):
   bootToken()J -> 0x12000768
@@ -628,11 +628,11 @@ com/example/guard/Guard (3):
   deviceModel()Ljava/lang/String; -> 0x1200065c
 totals: 1 class(es), 3 binding(s)
 
---- dvm_resolve_method deviceModel — now native-bound ---
+--- dvm_resolve_method deviceModel: now native-bound ---
 dvm_resolve_method name='deviceModel' native_only=true : scanned 4 class(es), 1 native-bound candidate(s).
   com/example/guard/Guard -> deviceModel()Ljava/lang/String;  [native-bound]
 
---- dvm_describe_class Guard — native-bound section populated ---
+--- dvm_describe_class Guard: native-bound section populated ---
 class com.example.guard.Guard
   internal name = com/example/guard/Guard
   superclass = (none / unresolved)
@@ -652,12 +652,12 @@ native-bound (RegisterNatives) (3):
   deviceModel()Ljava/lang/String; -> 0x1200065c
 
 ============================================================
-## 02app — dvm_spoof_env has a VISIBLE effect (defeat emulator detection)
+## 02app: dvm_spoof_env has a VISIBLE effect (defeat emulator detection)
 ============================================================
 
 --- BASELINE deviceModel() ---
 com/example/guard/Guard.deviceModel -> "sdk_gphone64_arm64"
---- BASELINE isEmulator() — detected as emulator ---
+--- BASELINE isEmulator(): detected as emulator ---
 com/example/guard/Guard.isEmulator -> true
 --- dvm_spoof_env preset=pixel ---
 Spoofing enabled (preset=pixel). 6 key(s) now spoofed via the JNI hook:
@@ -677,7 +677,7 @@ Spoofing disabled; interceptor removed.
 --- deviceModel() after disable -> back to baseline ---
 com/example/guard/Guard.deviceModel -> "sdk_gphone64_arm64"
 ============================================================
-## 02app — dvm_mock_jni / dvm_trace_jni on the device reads
+## 02app: dvm_mock_jni / dvm_trace_jni on the device reads
 ============================================================
 
 --- dvm_trace_jni enable ---
@@ -688,7 +688,7 @@ JNI tracing enabled (interceptor installed via setJni, fallback = previous jni).
 Use dvm_jni_log to read recorded calls. enable=false restores the original jni.
 --- (call deviceModel -> native reads Device.MODEL via JNI) ---
 
---- dvm_jni_log — recorded getStaticObjectField(MODEL) ---
+--- dvm_jni_log: recorded getStaticObjectField(MODEL) ---
 JNI interceptor: installed, tracing ON, filter=(all)
 Active mocks: 0
 Active breakpoints: 0
@@ -709,11 +709,11 @@ com/example/guard/Guard.deviceModel -> "PWNED-DEVICE"
 --- dvm_mock_jni MODEL remove; dvm_trace_jni disable ---
 JNI interception disabled; original jni restored. (Trace buffer kept; mocks/breaks remain registered but inert until reinstalled.)
 ============================================================
-## 02app — dvm_spoof_env currentTimeMillis affects bootToken()
+## 02app: dvm_spoof_env currentTimeMillis affects bootToken()
 ============================================================
 
 --- BASELINE bootToken() (System.currentTimeMillis()/1000) ---
-com/example/guard/Guard.bootToken -> 1781811592
+com/example/guard/Guard.bootToken -> 1781813753
 --- dvm_spoof_env currentTimeMillis=1700000000000 ---
 Spoofing enabled. 7 key(s) now spoofed via the JNI hook:
   Build.MODEL = Android SDK built for arm64
@@ -729,12 +729,12 @@ com/example/guard/Guard.bootToken -> 1700000000
 --- dvm_spoof_env disable ---
 done
 
-################  PHASE 2 (02app) DONE — see tests/MCP/run-all.log  ################
-################  VORTEX-DBG MCP TEST SUITE — PHASE 3 (03app / Secure, real C++)  ################
+################  PHASE 2 (02app) DONE: see tests/MCP/run-all.log  ################
+################  VORTEX-DBG MCP TEST SUITE: PHASE 3 (03app / Secure, real C++)  ################
 libsecure.so is C++ (std::string/std::vector); read_std_string reads a REAL std::string global.
 
 ============================================================
-## 03app — real C++ native crypto
+## 03app: real C++ native crypto
 ============================================================
 
 --- list_modules (libsecure.so) ---
@@ -759,7 +759,7 @@ Showing 2 of 415 symbols (filter: 'secure')
 --- process('hi') -> hex ciphertext (rolling-key XOR) ---
 com/example/secure/Secure.process -> "79ce"
 ============================================================
-## 03app — read_std_string on a REAL libc++ std::string (SSO)
+## 03app: read_std_string on a REAL libc++ std::string (SSO)
 ============================================================
 
 --- call_symbol secure_plaintext_addr -> &g_last_plaintext ---
@@ -768,7 +768,7 @@ ret=0x12035030 libsecure.so+0x35030 <g_last_plaintext>
 --- read_std_string @ &g_last_plaintext -> 'hi' (SSO) ---
 "hi" (2B, SSO)
 ============================================================
-## 03app — read_std_string on a heap std::string (long input)
+## 03app: read_std_string on a heap std::string (long input)
 ============================================================
 
 --- process(37-char license) to force heap allocation ---
@@ -777,12 +777,12 @@ ret=0x12035030 libsecure.so+0x35030 <g_last_plaintext>
 
 --- read_std_string @ heap std::string -> full plaintext ---
 "this-is-a-long-license-key-0123456789" (37B, heap)
-################  PHASE 3 (03app) DONE — see tests/MCP/run-all.log  ################
-################  VORTEX-DBG MCP TEST SUITE — PHASE 4 (04app / Store, real C++ structs)  ################
+################  PHASE 3 (03app) DONE: see tests/MCP/run-all.log  ################
+################  VORTEX-DBG MCP TEST SUITE: PHASE 4 (04app / Store, real C++ structs)  ################
 Session = {u32 id; u32 flags; char name[16]; Session* next} (32B). g_head -> alice -> bob -> carol.
 
 ============================================================
-## 04app — follow real pointers / read real struct fields
+## 04app: follow real pointers / read real struct fields
 ============================================================
 
 --- Store.build() -> node count ---
@@ -817,16 +817,16 @@ Found 3 match(es):
 0x12257068
 
 ============================================================
-## 04app — multi-signal rootScore (chain walk + access() su checks)
+## 04app: multi-signal rootScore (chain walk + access() su checks)
 ============================================================
 
 --- Store.rootScore() -> deterministic risk score ---
 com/example/store/Store.rootScore -> 15
-################  PHASE 4 (04app) DONE — see tests/MCP/run-all.log  ################
-################  VORTEX-DBG MCP TEST SUITE — PHASE 5 (05app / Faulty, JNI exceptions)  ################
+################  PHASE 4 (04app) DONE: see tests/MCP/run-all.log  ################
+################  VORTEX-DBG MCP TEST SUITE: PHASE 5 (05app / Faulty, JNI exceptions)  ################
 
 ============================================================
-## 05app — a real pending JNI exception (dvm_pending_exception)
+## 05app: a real pending JNI exception (dvm_pending_exception)
 ============================================================
 
 --- risky('ok') -> accepted (no exception) ---
@@ -841,7 +841,7 @@ Breakpoint added at faulty_after_throw (0x1200063c, libfaulty.so+0x63c)
 3 event(s):
 {"event":"execution_started","pc":"0x12000654","module":"libfaulty.so","offset":"0x654"}
 {"event":"execution_started","pc":"0x12000654","module":"libfaulty.so","offset":"0x654"}
-{"event":"breakpoint_hit","pc":"0x1200063c","tid":101,"is_main_thread":true,"module":"libfaulty.so","offset":"0x63c"}
+{"event":"breakpoint_hit","pc":"0x1200063c","tid":9765,"is_main_thread":true,"module":"libfaulty.so","offset":"0x63c"}
 
 --- dvm_pending_exception -> IllegalArgumentException (REAL) ---
 pending exception:
@@ -851,11 +851,11 @@ note: deleteLocalRefs() clears the pending exception after each JNI call.
 --- remove_breakpoint; continue_execution ---
 done
 
-################  PHASE 5 (05app) DONE — see tests/MCP/run-all.log  ################
-################  VORTEX-DBG MCP TEST SUITE — PHASE 6 (06app / Deep, callstack + threads)  ################
+################  PHASE 5 (05app) DONE: see tests/MCP/run-all.log  ################
+################  VORTEX-DBG MCP TEST SUITE: PHASE 6 (06app / Deep, callstack + threads)  ################
 
 ============================================================
-## 06app — real backtrace (get_callstack) + running task (get_threads)
+## 06app: real backtrace (get_callstack) + running task (get_threads)
 ============================================================
 
 --- list_exports libdeep.so (the call chain) ---
@@ -875,7 +875,7 @@ Breakpoint added at 0x120005b4
 --- poll_events -> breakpoint_hit inside deep_level3 ---
 2 event(s):
 {"event":"execution_started","pc":"0x12000618","module":"libdeep.so","offset":"0x618"}
-{"event":"breakpoint_hit","pc":"0x120005b4","tid":613,"is_main_thread":true,"module":"libdeep.so","offset":"0x5b4"}
+{"event":"breakpoint_hit","pc":"0x120005b4","tid":9953,"is_main_thread":true,"module":"libdeep.so","offset":"0x5b4"}
 
 --- get_callstack -> real multi-frame backtrace ---
 #0   0x120005d4  libdeep.so+0x5d4  (deep_level2+0xc)
@@ -883,9 +883,9 @@ Breakpoint added at 0x120005b4
 
 --- get_threads -> the running task (with its args) ---
 1 thread(s):
-  tid=613: Runnable|Function64 address=0x12000618, arguments=[vortexdbg@0xfffe1640, 1960155356, 7]
+  tid=9953: Runnable|Function64 address=0x12000618, arguments=[vortexdbg@0xfffe1640, 1960155356, 7]
 
 --- remove_breakpoint; continue_execution ---
 done
 
-################  PHASE 6 (06app) DONE — see tests/MCP/run-all.log  ################
+################  PHASE 6 (06app) DONE: see tests/MCP/run-all.log  ################

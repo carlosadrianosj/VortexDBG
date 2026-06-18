@@ -28,6 +28,10 @@ tool, and [`run-all.log`](run-all.log) is the captured output of a full run.
 - `run-all.sh` runs **all six apps in six phases**. Everything is plain `curl` against the MCP
   server, so you can copy any call into your own client.
 
+> **Tool names are namespaced with the `vortexdbg-` prefix** (e.g. `vortexdbg-read_memory`,
+> `vortexdbg-dvm_call_static`). The server also accepts the bare name, so the short names used in
+> the examples below work too.
+
 ---
 
 ## 1. How MCP works here (who is the server, who is the client)

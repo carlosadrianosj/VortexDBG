@@ -439,12 +439,22 @@ open class McpServer(emulator: Emulator<*>, private val port: Int) {
     private fun handleToolsList(): JSONObject {
         val result = JSONObject()
         val toolsArray = mcpTools.getToolSchemas()
+        // Standardize every advertised tool name with the "vortexdbg-" prefix.
+        for (i in 0 until toolsArray.size) {
+            val tool = toolsArray.getJSONObject(i)
+            val name = tool.getString("name")
+            if (name != null && !name.startsWith(TOOL_PREFIX)) {
+                tool.put("name", TOOL_PREFIX + name)
+            }
+        }
         result.put("tools", toolsArray)
         return result
     }
 
     private fun handleToolsCall(params: JSONObject?): JSONObject {
-        val name = params!!.getString("name")
+        val raw = params!!.getString("name")
+        // Accept both the prefixed name (canonical) and the bare name; dispatch uses the bare name.
+        val name = if (raw != null && raw.startsWith(TOOL_PREFIX)) raw.substring(TOOL_PREFIX.length) else raw
         var arguments = params.getJSONObject("arguments")
         if (arguments == null) {
             arguments = JSONObject()
@@ -470,5 +480,8 @@ open class McpServer(emulator: Emulator<*>, private val port: Int) {
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(McpServer::class.java)
+
+        /** Every MCP tool is advertised under this prefix so the tool names are namespaced. */
+        const val TOOL_PREFIX = "vortexdbg-"
     }
 }
