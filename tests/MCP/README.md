@@ -1,7 +1,7 @@
 # Vortex-DBG MCP test suite
 
 A self-contained playground that exercises **every Vortex-DBG MCP tool** (both the native/ARM
-side and the Dalvik/Java side) against **two complementary demo apps**. It doubles as a tutorial:
+side and the Dalvik/Java side) against **three complementary demo apps**. It doubles as a tutorial:
 read [`run-all.sh`](run-all.sh) top to bottom and you have a worked example of how to drive each
 tool, and [`run-all.log`](run-all.log) is the captured output of a full run.
 
@@ -13,9 +13,13 @@ tool, and [`run-all.log`](run-all.log) is the captured output of a full run.
   returned "empty but correct" against 01app show a **real, visible effect** — `dvm_spoof_env`
   actually flips emulator detection, `dvm_mock_jni` changes the model string, and
   `dvm_list_native_registrations` / `dvm_resolve_method` now list real bindings.
-- `run-all.sh` runs **both apps in two phases** (Phase 1 = 01app full sweep, Phase 2 = 02app
-  visible-effect demos). Everything is plain `curl` against the MCP server, so you can copy any
-  call into your own client.
+- **[`03app/`](03app)** (`com.example.secure`): a real **C++** native target (`std::string` /
+  `std::vector`, libc++ linked statically). It keeps the last plaintext in a libc++ `std::string`
+  global, so `read_std_string` is exercised on an **actual** `std::string` (SSO and heap), and the
+  app shows a real native crypto routine to disassemble.
+- `run-all.sh` runs **all three apps in three phases** (Phase 1 = 01app full sweep, Phase 2 = 02app
+  visible-effect demos, Phase 3 = 03app real-C++ `std::string`). Everything is plain `curl` against
+  the MCP server, so you can copy any call into your own client.
 
 ---
 
@@ -78,6 +82,20 @@ and "the tool *did* something":
 Source: [`02app/src/com/example/guard/`](02app/src/com/example/guard) + [`02app/jni/guard.c`](02app/jni/guard.c).
 (`Device` here is a host-backed stand-in for `android.os.Build`, since the host JVM has no `android.os.Build`.)
 
+### 03app — `com.example.secure` (a real C++ target for `read_std_string`)
+
+`libsecure.so` is written in C++ and uses `std::string` / `std::vector` (libc++ linked statically,
+so the emulator needs no `libc++_shared.so`). `Secure.process(input)` runs a rolling-key stream
+cipher and stashes the plaintext in a global libc++ `std::string`.
+
+| Element | Kind | Makes this VISIBLE |
+|---|---|---|
+| `Secure.process(input)` | **C++ native** (std::string/std::vector) | `dvm_call_static` real crypto; `disassemble_symbol` real C++ codegen |
+| `g_last_plaintext` (global `std::string`) | **real libc++ std::string** | `read_std_string` on an actual std::string: short = SSO, long (>22 chars) = heap |
+| `secure_plaintext_addr()` | exported `extern "C"` accessor | `find_symbol` / `call_symbol` to locate the std::string, then `read_std_string` |
+
+Source: [`03app/src/com/example/secure/`](03app/src/com/example/secure) + [`03app/jni/secure.cpp`](03app/jni/secure.cpp).
+
 Why "mixed": `seal` (01app) runs native code **and** calls back into Java, so a single call crosses
 the JNI bridge in both directions — the fusion Vortex-DBG reproduces off-device, and what makes the
 hook/trace tools observable.
@@ -89,8 +107,9 @@ hook/trace tools observable.
 ### Build both apps (APK + jar + native lib each)
 
 ```bash
-tests/MCP/01app/build.sh   # -> 01app/out/mcpdemo.{apk,jar} + libvault.so
-tests/MCP/02app/build.sh   # -> 02app/out/guard.{apk,jar}   + libguard.so
+tests/MCP/01app/build.sh   # -> 01app/out/mcpdemo.{apk,jar} + libvault.so  (C, Java_-bound)
+tests/MCP/02app/build.sh   # -> 02app/out/guard.{apk,jar}   + libguard.so  (C, RegisterNatives)
+tests/MCP/03app/build.sh   # -> 03app/out/secure.{apk,jar}  + libsecure.so (C++, std::string)
 ```
 
 Each bundles `classes.dex` + `lib/arm64-v8a/lib*.so` into a signed APK, plus a `.jar` of the app's
@@ -103,8 +122,9 @@ clang) and a JDK. See each script header.
 tests/MCP/run-all.sh
 ```
 
-It compiles the harnesses if needed, then runs **Phase 1** (01app full sweep of all 86 tools) and
-**Phase 2** (02app visible-effect demos), writing [`run-all.log`](run-all.log). Use it to verify and to learn.
+It compiles the harnesses if needed, then runs **Phase 1** (01app full sweep of all 86 tools),
+**Phase 2** (02app visible-effect demos) and **Phase 3** (03app real-C++ `std::string`), writing
+[`run-all.log`](run-all.log). Use it to verify and to learn.
 
 ### Run the harness by hand (to connect your own client)
 
@@ -115,8 +135,9 @@ CP=vortexdbg-api/target/classes:vortexdbg-android/target/classes:vortexdbg-andro
 for b in dynarmic unicorn2 kvm hypervisor; do CP="$CP:backend/$b/target/classes"; done
 CP="$CP:$(cat /tmp/mcp_deps.txt)"   # third-party deps (see run-all.sh for how this is produced)
 
-$JEB/bin/java -cp "$CP" com.vortexdbg.mcpdemo.McpDemoHarness   # 01app
-# or:  $JEB/bin/java -cp "$CP" com.vortexdbg.mcpguard.GuardHarness   # 02app
+$JEB/bin/java -cp "$CP" com.vortexdbg.mcpdemo.McpDemoHarness     # 01app
+# or:  $JEB/bin/java -cp "$CP" com.vortexdbg.mcpguard.GuardHarness    # 02app
+# or:  $JEB/bin/java -cp "$CP" com.vortexdbg.mcpsecure.SecureHarness  # 03app
 # then type:  mcp
 ```
 
@@ -315,6 +336,10 @@ Object handles are JNI hashes (decimal or `0x`-hex); object/array arguments may 
 5. **Native debugging:** `add_breakpoint_by_symbol ...seal`, trigger seal, `poll_events` →
    `breakpoint_hit`, then `read_args` / `get_registers` / `disassemble` / `step_into` / `step_out` /
    `continue_execution`. `dvm_args_at_breakpoint` maps the arg registers to DVM objects.
+6. **Visible effects (02app):** `dvm_list_native_registrations` lists real RegisterNatives bindings;
+   `dvm_spoof_env preset=pixel` flips `Guard.isEmulator()` from `true` to `false`.
+7. **Real C++ (03app):** `Secure.process("hi")`, then `call_symbol secure_plaintext_addr` →
+   `read_std_string` reads the real libc++ `std::string` (`"hi" (SSO)`; long input → `(heap)`).
 
 ---
 
@@ -322,9 +347,8 @@ Object handles are JNI hashes (decimal or `0x`-hex); object/array arguments may 
 
 * `dvm_to_string` usually falls back to a value preview: an app's `toString()` is a Java method, not
   native-registered, so the emulated path reports "not native-registered" and uses the host rendering.
-* `read_std_string` is exercised by hand-crafting a libc++ SSO `std::string` blob in a scratch
-  buffer (`06 6d 63 70 00` = "mcp") and reading it; on a real target you'd point it at an actual
-  `std::string`.
+* `read_std_string` is exercised two ways: a hand-crafted SSO blob in 01app, and a REAL libc++
+  `std::string` global in 03app (both SSO and heap), located via `call_symbol secure_plaintext_addr`.
 * `dvm_new_object` / instance field access work by constructing/reading the **host** object under
   `ProxyClassFactory` (the normal app mode); `allocObject` is not supported by `ProxyJni`.
 * `dvm_break_on_jni` records a snapshot at the callback; it does not suspend the thread (the
@@ -351,5 +375,12 @@ README.md                                        this file
   jni/guard.c                                    native lib (JNI_OnLoad RegisterNatives)
   AndroidManifest.xml · build.sh                 builds out/guard.{apk,jar} + libguard.so
   harness/GuardHarness.java                      boots Vortex + MCP server for 02app
+  out/                                           build artifacts (apk/jar committed)
+
+03app/  (com.example.secure — real C++ target for read_std_string)
+  src/com/example/secure/Secure.java             native process(input)
+  jni/secure.cpp                                 C++ lib (std::string/std::vector, real crypto)
+  AndroidManifest.xml · build.sh                 builds out/secure.{apk,jar} + libsecure.so
+  harness/SecureHarness.java                     boots Vortex + MCP server for 03app
   out/                                           build artifacts (apk/jar committed)
 ```

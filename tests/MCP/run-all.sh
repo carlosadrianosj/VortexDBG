@@ -31,10 +31,11 @@ fi
 CP="$MODCP:$(cat /tmp/mcp_deps.txt)"
 
 # ---- compile the harnesses if needed ----------------------------------------
-echo ">>> compiling harnesses (01app + 02app)..."
+echo ">>> compiling harnesses (01app + 02app + 03app)..."
 "$JAVAC" -source 8 -target 8 -cp "$CP" -d vortexdbg-android/target/test-classes \
   tests/MCP/01app/harness/McpDemoHarness.java \
-  tests/MCP/02app/harness/GuardHarness.java 2>/dev/null
+  tests/MCP/02app/harness/GuardHarness.java \
+  tests/MCP/03app/harness/SecureHarness.java 2>/dev/null
 
 # ---- MCP client helpers -----------------------------------------------------
 # call <tool> <json-args> : POST a tools/call and print the text result.
@@ -243,5 +244,35 @@ t "dvm_spoof_env disable";                                         call dvm_spoo
 
 echo
 echo "################  PHASE 2 (02app) DONE — see $LOG  ################"
+} 2>&1 | tee -a "$LOG"
+stop
+
+# ============================  PHASE 3: 03app  ===============================
+# 03app (com.example.secure) is a real C++ native target: libsecure.so uses std::string/std::vector
+# and keeps the last plaintext in a libc++ std::string global, so read_std_string is exercised on an
+# ACTUAL std::string (SSO + heap) rather than a hand-crafted blob.
+boot com.vortexdbg.mcpsecure.SecureHarness
+PROC='{"class":"com/example/secure/Secure","method":"process(Ljava/lang/String;)Ljava/lang/String;","args":'
+{
+echo "################  VORTEX-DBG MCP TEST SUITE — PHASE 3 (03app / Secure, real C++)  ################"
+echo "libsecure.so is C++ (std::string/std::vector); read_std_string reads a REAL std::string global."
+
+sec "03app — real C++ native crypto"
+t "list_modules (libsecure.so)";                                   call list_modules '{"filter":"secure"}'
+t "list_exports libsecure.so (filter secure)";                     call list_exports '{"module_name":"libsecure.so","filter":"secure"}'
+t "disassemble_symbol Secure.process (real C++ codegen)";          call disassemble_symbol '{"module_name":"libsecure.so","symbol_name":"Java_com_example_secure_Secure_process","count":"8"}'
+t "process('hi') -> hex ciphertext (rolling-key XOR)";             call dvm_call_static "$PROC[\"hi\"]}"
+
+sec "03app — read_std_string on a REAL libc++ std::string (SSO)"
+t "call_symbol secure_plaintext_addr -> &g_last_plaintext";        A=$(call call_symbol '{"module_name":"libsecure.so","symbol_name":"secure_plaintext_addr","args":[]}'); echo "$A"; ADDR=$(echo "$A" | grep -oE 'ret=0x[0-9a-f]+' | sed 's/ret=//')
+t "read_std_string @ &g_last_plaintext -> 'hi' (SSO)";             call read_std_string "{\"address\":\"${ADDR:-0}\"}"
+
+sec "03app — read_std_string on a heap std::string (long input)"
+t "process(37-char license) to force heap allocation";             call dvm_call_static "$PROC[\"this-is-a-long-license-key-0123456789\"]}" >/dev/null
+t "call_symbol secure_plaintext_addr (again)";                     A2=$(call call_symbol '{"module_name":"libsecure.so","symbol_name":"secure_plaintext_addr","args":[]}'); ADDR2=$(echo "$A2" | grep -oE 'ret=0x[0-9a-f]+' | sed 's/ret=//')
+t "read_std_string @ heap std::string -> full plaintext";          call read_std_string "{\"address\":\"${ADDR2:-0}\"}"
+
+echo
+echo "################  PHASE 3 (03app) DONE — see $LOG  ################"
 } 2>&1 | tee -a "$LOG"
 stop

@@ -548,7 +548,7 @@ Total: 2 breakpoint(s)
 {"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
 {"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
 {"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
-{"event":"breakpoint_hit","pc":"0x1200056c","tid":5304,"is_main_thread":true,"module":"libvault.so","offset":"0x56c"}
+{"event":"breakpoint_hit","pc":"0x1200056c","tid":11161,"is_main_thread":true,"module":"libvault.so","offset":"0x56c"}
 
 --- read_args — function args at entry ---
 X0=0xfffe1640
@@ -594,11 +594,11 @@ Zero: X19,X20,X21,X22,X23,X24,X25,X26,X27,X28
 No call stack frames available.
 --- step_into 2 instructions ---
 Stepping 2 insn.1 event(s):
-{"event":"breakpoint_hit","pc":"0x12000574","tid":5304,"is_main_thread":true,"module":"libvault.so","offset":"0x574"}
+{"event":"breakpoint_hit","pc":"0x12000574","tid":11161,"is_main_thread":true,"module":"libvault.so","offset":"0x574"}
 
 --- step_over — step one instruction (over calls) ---
 Stepping over.1 event(s):
-{"event":"breakpoint_hit","pc":"0x12000578","tid":5304,"is_main_thread":true,"module":"libvault.so","offset":"0x578"}
+{"event":"breakpoint_hit","pc":"0x12000578","tid":11161,"is_main_thread":true,"module":"libvault.so","offset":"0x578"}
 
 --- next_block — run to next basic block ---
 Resuming, break at next block.1 event(s):
@@ -713,7 +713,7 @@ JNI interception disabled; original jni restored. (Trace buffer kept; mocks/brea
 ============================================================
 
 --- BASELINE bootToken() (System.currentTimeMillis()/1000) ---
-com/example/guard/Guard.bootToken -> 1781808336
+com/example/guard/Guard.bootToken -> 1781809510
 --- dvm_spoof_env currentTimeMillis=1700000000000 ---
 Spoofing enabled. 7 key(s) now spoofed via the JNI hook:
   Build.MODEL = Android SDK built for arm64
@@ -730,3 +730,51 @@ com/example/guard/Guard.bootToken -> 1700000000
 done
 
 ################  PHASE 2 (02app) DONE — see tests/MCP/run-all.log  ################
+################  VORTEX-DBG MCP TEST SUITE — PHASE 3 (03app / Secure, real C++)  ################
+libsecure.so is C++ (std::string/std::vector); read_std_string reads a REAL std::string global.
+
+============================================================
+## 03app — real C++ native crypto
+============================================================
+
+--- list_modules (libsecure.so) ---
+1 modules (filter: 'secure', total: 4):
+libsecure.so 0x12000000 0x36000
+
+--- list_exports libsecure.so (filter secure) ---
+Showing 2 of 415 symbols (filter: 'secure')
++0xf6fc Java_com_example_secure_Secure_process
++0xf6f0 secure_plaintext_addr
+
+--- disassemble_symbol Secure.process (real C++ codegen) ---
+0x1200f6fc: sub sp, sp, #0xb0
+0x1200f700: stp x28, x27, [sp, #0x50]
+0x1200f704: stp x26, x25, [sp, #0x60]
+0x1200f708: stp x24, x23, [sp, #0x70]
+0x1200f70c: stp x22, x21, [sp, #0x80]
+0x1200f710: stp x20, x19, [sp, #0x90]
+0x1200f714: stp x29, x30, [sp, #0xa0]
+0x1200f718: add x29, sp, #0xa0
+
+--- process('hi') -> hex ciphertext (rolling-key XOR) ---
+com/example/secure/Secure.process -> "79ce"
+============================================================
+## 03app — read_std_string on a REAL libc++ std::string (SSO)
+============================================================
+
+--- call_symbol secure_plaintext_addr -> &g_last_plaintext ---
+ret=0x12035030 libsecure.so+0x35030 <g_last_plaintext>
+
+--- read_std_string @ &g_last_plaintext -> 'hi' (SSO) ---
+"hi" (2B, SSO)
+============================================================
+## 03app — read_std_string on a heap std::string (long input)
+============================================================
+
+--- process(37-char license) to force heap allocation ---
+
+--- call_symbol secure_plaintext_addr (again) ---
+
+--- read_std_string @ heap std::string -> full plaintext ---
+"this-is-a-long-license-key-0123456789" (37B, heap)
+################  PHASE 3 (03app) DONE — see tests/MCP/run-all.log  ################
