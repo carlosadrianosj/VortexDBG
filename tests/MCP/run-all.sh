@@ -31,11 +31,12 @@ fi
 CP="$MODCP:$(cat /tmp/mcp_deps.txt)"
 
 # ---- compile the harnesses if needed ----------------------------------------
-echo ">>> compiling harnesses (01app + 02app + 03app)..."
+echo ">>> compiling harnesses (01app + 02app + 03app + 04app)..."
 "$JAVAC" -source 8 -target 8 -cp "$CP" -d vortexdbg-android/target/test-classes \
   tests/MCP/01app/harness/McpDemoHarness.java \
   tests/MCP/02app/harness/GuardHarness.java \
-  tests/MCP/03app/harness/SecureHarness.java 2>/dev/null
+  tests/MCP/03app/harness/SecureHarness.java \
+  tests/MCP/04app/harness/StoreHarness.java 2>/dev/null
 
 # ---- MCP client helpers -----------------------------------------------------
 # call <tool> <json-args> : POST a tools/call and print the text result.
@@ -274,5 +275,34 @@ t "read_std_string @ heap std::string -> full plaintext";          call read_std
 
 echo
 echo "################  PHASE 3 (03app) DONE — see $LOG  ################"
+} 2>&1 | tee -a "$LOG"
+stop
+
+# ============================  PHASE 4: 04app  ===============================
+# 04app (com.example.store) has a real C++ linked structure on the heap:
+#   Session { u32 id; u32 flags; char name[16]; Session* next; }  (32 bytes)
+#   g_head -> alice -> bob -> carol. This exercises read_pointer/read_typed/read_string/read_memory/
+#   search_memory against ACTUAL structs, plus a multi-signal rootScore() (chain + access() su checks).
+hexadd() { printf '0x%x' $(( $1 + $2 )); }   # hexadd 0x.. <dec offset>
+boot com.vortexdbg.mcpstore.StoreHarness
+{
+echo "################  VORTEX-DBG MCP TEST SUITE — PHASE 4 (04app / Store, real C++ structs)  ################"
+echo "Session = {u32 id; u32 flags; char name[16]; Session* next} (32B). g_head -> alice -> bob -> carol."
+
+sec "04app — follow real pointers / read real struct fields"
+t "Store.build() -> node count";                                   call dvm_call_static '{"class":"com/example/store/Store","method":"build()I","args":[]}'
+t "call_symbol store_head_addr -> &g_head";                        HA=$(call call_symbol '{"module_name":"libstore.so","symbol_name":"store_head_addr","args":[]}'); echo "$HA"; HEAD=$(echo "$HA" | grep -oE 'ret=0x[0-9a-f]+' | sed 's/ret=//')
+t "read_pointer @ &g_head -> first Session";                       RP=$(call read_pointer "{\"address\":\"${HEAD:-0}\"}"); echo "$RP"; NODEA=$(echo "$RP" | grep -oE '0x[0-9a-f]+' | tail -1)
+t "read_typed @ node uint32 x2 -> id, flags (1, 1)";               call read_typed "{\"address\":\"${NODEA:-0}\",\"type\":\"uint32\",\"count\":\"2\"}"
+t "read_string @ node+8 -> name ('alice')";                        call read_string "{\"address\":\"$(hexadd ${NODEA:-0} 8)\"}"
+t "read_memory @ node (32-byte struct dump)";                      call read_memory "{\"address\":\"${NODEA:-0}\",\"size\":\"32\"}"
+t "read_pointer @ node+24 -> next Session (->next)";               call read_pointer "{\"address\":\"$(hexadd ${NODEA:-0} 24)\"}"
+t "search_memory 'carol' (the last node's name)";                  call search_memory '{"pattern":"carol","type":"string"}'
+
+sec "04app — multi-signal rootScore (chain walk + access() su checks)"
+t "Store.rootScore() -> deterministic risk score";                 call dvm_call_static '{"class":"com/example/store/Store","method":"rootScore()I","args":[]}'
+
+echo
+echo "################  PHASE 4 (04app) DONE — see $LOG  ################"
 } 2>&1 | tee -a "$LOG"
 stop

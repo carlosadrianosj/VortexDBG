@@ -548,7 +548,7 @@ Total: 2 breakpoint(s)
 {"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
 {"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
 {"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
-{"event":"breakpoint_hit","pc":"0x1200056c","tid":11161,"is_main_thread":true,"module":"libvault.so","offset":"0x56c"}
+{"event":"breakpoint_hit","pc":"0x1200056c","tid":17818,"is_main_thread":true,"module":"libvault.so","offset":"0x56c"}
 
 --- read_args — function args at entry ---
 X0=0xfffe1640
@@ -594,11 +594,11 @@ Zero: X19,X20,X21,X22,X23,X24,X25,X26,X27,X28
 No call stack frames available.
 --- step_into 2 instructions ---
 Stepping 2 insn.1 event(s):
-{"event":"breakpoint_hit","pc":"0x12000574","tid":11161,"is_main_thread":true,"module":"libvault.so","offset":"0x574"}
+{"event":"breakpoint_hit","pc":"0x12000574","tid":17818,"is_main_thread":true,"module":"libvault.so","offset":"0x574"}
 
 --- step_over — step one instruction (over calls) ---
 Stepping over.1 event(s):
-{"event":"breakpoint_hit","pc":"0x12000578","tid":11161,"is_main_thread":true,"module":"libvault.so","offset":"0x578"}
+{"event":"breakpoint_hit","pc":"0x12000578","tid":17818,"is_main_thread":true,"module":"libvault.so","offset":"0x578"}
 
 --- next_block — run to next basic block ---
 Resuming, break at next block.1 event(s):
@@ -713,7 +713,7 @@ JNI interception disabled; original jni restored. (Trace buffer kept; mocks/brea
 ============================================================
 
 --- BASELINE bootToken() (System.currentTimeMillis()/1000) ---
-com/example/guard/Guard.bootToken -> 1781809510
+com/example/guard/Guard.bootToken -> 1781810207
 --- dvm_spoof_env currentTimeMillis=1700000000000 ---
 Spoofing enabled. 7 key(s) now spoofed via the JNI hook:
   Build.MODEL = Android SDK built for arm64
@@ -778,3 +778,48 @@ ret=0x12035030 libsecure.so+0x35030 <g_last_plaintext>
 --- read_std_string @ heap std::string -> full plaintext ---
 "this-is-a-long-license-key-0123456789" (37B, heap)
 ################  PHASE 3 (03app) DONE — see tests/MCP/run-all.log  ################
+################  VORTEX-DBG MCP TEST SUITE — PHASE 4 (04app / Store, real C++ structs)  ################
+Session = {u32 id; u32 flags; char name[16]; Session* next} (32B). g_head -> alice -> bob -> carol.
+
+============================================================
+## 04app — follow real pointers / read real struct fields
+============================================================
+
+--- Store.build() -> node count ---
+com/example/store/Store.build -> 3
+--- call_symbol store_head_addr -> &g_head ---
+ret=0x12031030 libstore.so+0x31030 <g_head>
+
+--- read_pointer @ &g_head -> first Session ---
+[0] 0x12031030  (libstore.so+0x31030)  <g_head>
+    -> 0x122570a0
+[1] 0x122570a0
+
+--- read_typed @ node uint32 x2 -> id, flags (1, 1) ---
+[0] 0x122570a0: 1
+[1] 0x122570a4: 1
+
+--- read_string @ node+8 -> name ('alice') ---
+"alice" (5B)
+--- read_memory @ node (32-byte struct dump) ---
+122570a0: 01 00 00 00 01 00 00 00 61 6C 69 63 65 00 00 00  ........alice...
+122570b0: 00 00 00 00 00 00 00 00 80 70 25 12 00 00 00 00  .........p%.....
+
+--- read_pointer @ node+24 -> next Session (->next) ---
+[0] 0x122570b8
+    -> 0x12257080
+[1] 0x12257080
+
+--- search_memory 'carol' (the last node's name) ---
+Found 3 match(es):
+0x12025980  (libstore.so+0x25980)
+0x12257008
+0x12257068
+
+============================================================
+## 04app — multi-signal rootScore (chain walk + access() su checks)
+============================================================
+
+--- Store.rootScore() -> deterministic risk score ---
+com/example/store/Store.rootScore -> 15
+################  PHASE 4 (04app) DONE — see tests/MCP/run-all.log  ################

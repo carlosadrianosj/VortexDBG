@@ -1,7 +1,7 @@
 # Vortex-DBG MCP test suite
 
 A self-contained playground that exercises **every Vortex-DBG MCP tool** (both the native/ARM
-side and the Dalvik/Java side) against **three complementary demo apps**. It doubles as a tutorial:
+side and the Dalvik/Java side) against **four complementary demo apps**. It doubles as a tutorial:
 read [`run-all.sh`](run-all.sh) top to bottom and you have a worked example of how to drive each
 tool, and [`run-all.log`](run-all.log) is the captured output of a full run.
 
@@ -17,9 +17,12 @@ tool, and [`run-all.log`](run-all.log) is the captured output of a full run.
   `std::vector`, libc++ linked statically). It keeps the last plaintext in a libc++ `std::string`
   global, so `read_std_string` is exercised on an **actual** `std::string` (SSO and heap), and the
   app shows a real native crypto routine to disassemble.
-- `run-all.sh` runs **all three apps in three phases** (Phase 1 = 01app full sweep, Phase 2 = 02app
-  visible-effect demos, Phase 3 = 03app real-C++ `std::string`). Everything is plain `curl` against
-  the MCP server, so you can copy any call into your own client.
+- **[`04app/`](04app)** (`com.example.store`): a C++ target with a real **linked structure** on the
+  heap (`Session { id; flags; name[16]; next }`, `g_head -> alice -> bob -> carol`). It exercises
+  `read_pointer` (follow real pointer chains), `read_typed` (real struct fields), `read_string`,
+  `read_memory`, `search_memory` against actual structs, plus a multi-signal `rootScore()`.
+- `run-all.sh` runs **all four apps in four phases**. Everything is plain `curl` against the MCP
+  server, so you can copy any call into your own client.
 
 ---
 
@@ -96,6 +99,19 @@ cipher and stashes the plaintext in a global libc++ `std::string`.
 
 Source: [`03app/src/com/example/secure/`](03app/src/com/example/secure) + [`03app/jni/secure.cpp`](03app/jni/secure.cpp).
 
+### 04app — `com.example.store` (real linked structs for the pointer/struct tools)
+
+`libstore.so` builds a chain of `Session` structs on the native heap
+(`{ uint32 id; uint32 flags; char name[16]; Session* next; }`, 32 bytes), `g_head -> alice -> bob -> carol`.
+`store_head_addr()` exports `&g_head` (a pointer-to-pointer).
+
+| Element | Kind | Makes this VISIBLE |
+|---|---|---|
+| `g_head` chain | **real heap structs + pointers** | `read_pointer` follows `&g_head` → node → `+24` (`->next`); `read_typed` reads `id`/`flags`; `read_string` reads `name`; `read_memory` dumps the struct; `search_memory` finds a node name |
+| `Store.rootScore()` | **multi-signal native** | walks the chain (`id ^ flags`) and probes `access("/system/.../su")` (emulated syscall) → deterministic score |
+
+Source: [`04app/src/com/example/store/`](04app/src/com/example/store) + [`04app/jni/store.cpp`](04app/jni/store.cpp).
+
 Why "mixed": `seal` (01app) runs native code **and** calls back into Java, so a single call crosses
 the JNI bridge in both directions — the fusion Vortex-DBG reproduces off-device, and what makes the
 hook/trace tools observable.
@@ -110,6 +126,7 @@ hook/trace tools observable.
 tests/MCP/01app/build.sh   # -> 01app/out/mcpdemo.{apk,jar} + libvault.so  (C, Java_-bound)
 tests/MCP/02app/build.sh   # -> 02app/out/guard.{apk,jar}   + libguard.so  (C, RegisterNatives)
 tests/MCP/03app/build.sh   # -> 03app/out/secure.{apk,jar}  + libsecure.so (C++, std::string)
+tests/MCP/04app/build.sh   # -> 04app/out/store.{apk,jar}   + libstore.so  (C++, linked structs)
 ```
 
 Each bundles `classes.dex` + `lib/arm64-v8a/lib*.so` into a signed APK, plus a `.jar` of the app's
@@ -123,8 +140,8 @@ tests/MCP/run-all.sh
 ```
 
 It compiles the harnesses if needed, then runs **Phase 1** (01app full sweep of all 86 tools),
-**Phase 2** (02app visible-effect demos) and **Phase 3** (03app real-C++ `std::string`), writing
-[`run-all.log`](run-all.log). Use it to verify and to learn.
+**Phase 2** (02app visible-effect demos), **Phase 3** (03app real-C++ `std::string`) and **Phase 4**
+(04app real linked structs), writing [`run-all.log`](run-all.log). Use it to verify and to learn.
 
 ### Run the harness by hand (to connect your own client)
 
@@ -138,6 +155,7 @@ CP="$CP:$(cat /tmp/mcp_deps.txt)"   # third-party deps (see run-all.sh for how t
 $JEB/bin/java -cp "$CP" com.vortexdbg.mcpdemo.McpDemoHarness     # 01app
 # or:  $JEB/bin/java -cp "$CP" com.vortexdbg.mcpguard.GuardHarness    # 02app
 # or:  $JEB/bin/java -cp "$CP" com.vortexdbg.mcpsecure.SecureHarness  # 03app
+# or:  $JEB/bin/java -cp "$CP" com.vortexdbg.mcpstore.StoreHarness    # 04app
 # then type:  mcp
 ```
 
@@ -340,6 +358,9 @@ Object handles are JNI hashes (decimal or `0x`-hex); object/array arguments may 
    `dvm_spoof_env preset=pixel` flips `Guard.isEmulator()` from `true` to `false`.
 7. **Real C++ (03app):** `Secure.process("hi")`, then `call_symbol secure_plaintext_addr` →
    `read_std_string` reads the real libc++ `std::string` (`"hi" (SSO)`; long input → `(heap)`).
+8. **Real structs (04app):** `call_symbol store_head_addr` → `read_pointer` follows `&g_head` to the
+   first `Session`; `read_typed`/`read_string`/`read_memory` read its fields; `read_pointer` at `+24`
+   follows `->next`; `search_memory "carol"` finds the last node; `Store.rootScore()` → `15`.
 
 ---
 
@@ -382,5 +403,12 @@ README.md                                        this file
   jni/secure.cpp                                 C++ lib (std::string/std::vector, real crypto)
   AndroidManifest.xml · build.sh                 builds out/secure.{apk,jar} + libsecure.so
   harness/SecureHarness.java                     boots Vortex + MCP server for 03app
+  out/                                           build artifacts (apk/jar committed)
+
+04app/  (com.example.store — real linked structs for read_pointer/read_typed)
+  src/com/example/store/Store.java               native build() / rootScore()
+  jni/store.cpp                                   C++ lib (Session linked list on the heap)
+  AndroidManifest.xml · build.sh                 builds out/store.{apk,jar} + libstore.so
+  harness/StoreHarness.java                      boots Vortex + MCP server for 04app
   out/                                           build artifacts (apk/jar committed)
 ```
