@@ -25,11 +25,23 @@ import com.vortexdbg.mcp.McpTools
  */
 class DvmMcpTools(private val emulator: Emulator<*>, private val vm: VM) : McpToolProvider {
 
+    private val phase = DvmPhaseTools(emulator, vm)
+
     private val subs: List<DvmSubTools> = listOf(
             DvmBridgeTools(emulator, vm),
             DvmDiscoveryTools(emulator, vm),
             DvmStateTools(emulator, vm),
-            DvmSpoofTools(emulator, vm))
+            DvmSpoofTools(emulator, vm),
+            DvmIntrospectTools(emulator, vm),
+            DvmReflectTools(emulator, vm),
+            DvmFieldTools(emulator, vm),
+            DvmObjectTools(emulator, vm),
+            DvmHookTools(emulator, vm),
+            phase)
+
+    init {
+        phase.replay = { n, a -> call(n, a) }
+    }
 
     private val coreNames = setOf(
             "dvm_list_classes", "dvm_list_objects", "dvm_read_string",
@@ -65,6 +77,9 @@ class DvmMcpTools(private val emulator: Emulator<*>, private val vm: VM) : McpTo
     }
 
     override fun call(name: String, args: JSONObject): JSONObject {
+        if (name != "dvm_call_phase" && phase.isRecording()) {
+            phase.record(name, args)
+        }
         return try {
             when (name) {
                 "dvm_list_classes" -> listClasses()

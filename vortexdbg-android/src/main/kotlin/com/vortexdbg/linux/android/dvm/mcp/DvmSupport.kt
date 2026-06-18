@@ -204,4 +204,26 @@ object DvmSupport {
             else -> throw IllegalArgumentException("Unsupported return type: $retDescriptor")
         }
     }
+
+    /** Dispatch an INSTANCE native-registered method on [obj] by JNI signature. */
+    fun callInstance(emulator: Emulator<*>, vm: VM, obj: DvmObject<*>, method: String, argArray: JSONArray?): CallResult {
+        val close = method.indexOf(')')
+        val retDescriptor = method.substring(close + 1)
+        require(retDescriptor.isNotEmpty()) { "Invalid method signature (no return type): $method" }
+        val callArgs = buildArgs(vm, method, argArray)
+        return when (retDescriptor[0]) {
+            'V' -> { obj.callJniMethod(emulator, method, *callArgs); CallResult("void", null) }
+            'Z' -> { val v = obj.callJniMethodBoolean(emulator, method, *callArgs); CallResult(v.toString(), v) }
+            'B', 'C', 'S', 'I' -> { val v = obj.callJniMethodInt(emulator, method, *callArgs); CallResult(v.toString(), v) }
+            'J' -> { val v = obj.callJniMethodLong(emulator, method, *callArgs); CallResult(v.toString(), v) }
+            'L', '[' -> {
+                val o = obj.callJniMethodObject<DvmObject<*>>(emulator, method, *callArgs)
+                CallResult(formatObjectResult(o), o?.getValue())
+            }
+            else -> throw IllegalArgumentException("Unsupported return type: $retDescriptor")
+        }
+    }
+
+    /** Register an object as a GLOBAL ref (survives deleteLocalRefs) and return its JNI hash handle. */
+    fun registerGlobal(vm: VM, obj: DvmObject<*>): Int = baseVm(vm).addGlobalObject(obj)
 }

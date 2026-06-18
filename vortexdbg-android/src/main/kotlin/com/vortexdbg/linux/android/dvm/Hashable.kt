@@ -7,7 +7,7 @@ abstract class Hashable {
         if (vm.jni == null && classJni == null) {
             throw IllegalStateException("Please vm.setJni(jni)")
         }
-        return classJni ?: vm.jni!!
+        return vm.interceptJni(classJni ?: vm.jni!!)
     }
 
     override fun hashCode(): Int {

@@ -27,6 +27,18 @@ abstract class BaseVM protected constructor(private val emulator: AndroidEmulato
     @JvmField
     var jni: Jni? = null
 
+    /** Optional wrappers applied to whatever jni checkJni selects (class-specific or global). */
+    @JvmField
+    val jniInterceptors: MutableList<JniInterceptor> = ArrayList()
+
+    /** Apply registered [jniInterceptors] (innermost first) around [base]. */
+    fun interceptJni(base: Jni): Jni {
+        if (jniInterceptors.isEmpty()) return base
+        var j = base
+        for (f in jniInterceptors) j = f.wrap(j)
+        return j
+    }
+
     @JvmField
     var throwable: DvmObject<*>? = null
 

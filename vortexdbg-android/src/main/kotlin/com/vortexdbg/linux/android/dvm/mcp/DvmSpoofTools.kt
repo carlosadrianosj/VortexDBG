@@ -5,9 +5,12 @@ import com.alibaba.fastjson.JSONObject
 import com.vortexdbg.Emulator
 import com.vortexdbg.linux.android.dvm.BaseVM
 import com.vortexdbg.linux.android.dvm.DvmClass
+import com.vortexdbg.linux.android.dvm.DvmField
+import com.vortexdbg.linux.android.dvm.DvmMethod
 import com.vortexdbg.linux.android.dvm.DvmObject
 import com.vortexdbg.linux.android.dvm.Jni
 import com.vortexdbg.linux.android.dvm.JniFunction
+import com.vortexdbg.linux.android.dvm.JniInterceptor
 import com.vortexdbg.linux.android.dvm.StringObject
 import com.vortexdbg.linux.android.dvm.VM
 import com.vortexdbg.linux.android.dvm.VarArg
@@ -24,11 +27,9 @@ import com.vortexdbg.mcp.McpTools
  */
 class DvmSpoofTools(private val emulator: Emulator<*>, private val vm: VM) : DvmSubTools {
 
-    /** Original jni captured the first time we enable spoofing, so disable can restore it. */
-    private var originalJni: Jni? = null
-    /** The currently installed spoof interceptor (null when disabled). */
-    private var installed: SpoofJni? = null
-    /** Last applied value map (for reporting). */
+    /** Registered jni interceptor (null when disabled). */
+    private var interceptor: JniInterceptor? = null
+    /** Last applied value map (read live by the interceptor). */
     private var currentValues: Map<String, String> = emptyMap()
 
     override fun handles(name: String): Boolean = name == "dvm_spoof_env"
@@ -74,14 +75,13 @@ class DvmSpoofTools(private val emulator: Emulator<*>, private val vm: VM) : Dvm
         val enable = parseBool(args.get("enable"), true)
 
         if (!enable) {
-            if (installed == null) {
+            if (interceptor == null) {
                 return McpTools.textResult("Spoofing already disabled; nothing to restore.")
             }
-            // Restore whatever was installed before we first enabled.
-            originalJni?.let { base.setJni(it) }
-            installed = null
+            interceptor?.let { base.jniInterceptors.remove(it) }
+            interceptor = null
             currentValues = emptyMap()
-            return McpTools.textResult("Spoofing disabled; original jni restored.")
+            return McpTools.textResult("Spoofing disabled; interceptor removed.")
         }
 
         // Build the value table: preset defaults merged with explicit overrides.
@@ -89,16 +89,14 @@ class DvmSpoofTools(private val emulator: Emulator<*>, private val vm: VM) : Dvm
         val values = LinkedHashMap<String, String>()
         values.putAll(presetTable(preset))
         applyOverrides(values, args.get("overrides"))
-
-        // Capture the original jni the first time only, so repeated enables keep the true original.
-        if (installed == null) {
-            originalJni = base.jni
-        }
-        val fallback = originalJni
-        val spoof = SpoofJni(fallback, values)
-        base.setJni(spoof)
-        installed = spoof
         currentValues = values
+
+        // Register the interceptor once; it reads currentValues live on each call.
+        if (interceptor == null) {
+            val itc = JniInterceptor { fallback -> SpoofJni(fallback) }
+            base.jniInterceptors.add(itc)
+            interceptor = itc
+        }
 
         val sb = StringBuilder()
         sb.append("Spoofing enabled")
@@ -173,31 +171,33 @@ class DvmSpoofTools(private val emulator: Emulator<*>, private val vm: VM) : Dvm
      * the equivalent instance object methods, and System.currentTimeMillis(). All other Jni calls are
      * delegated to [fallback] automatically by [JniFunction].
      */
-    private inner class SpoofJni(fallback: Jni?, private val values: Map<String, String>) : JniFunction(fallback) {
+    private inner class SpoofJni(private val fallback: Jni) : Jni by fallback {
 
-        override fun getStaticObjectField(vm: BaseVM, dvmClass: DvmClass, signature: String): DvmObject<*> {
-            spoofForField(signature)?.let { return StringObject(vm, it) }
-            return super.getStaticObjectField(vm, dvmClass, signature)
+        private val values: Map<String, String> get() = currentValues
+
+        override fun getStaticObjectField(vm: BaseVM, dvmClass: DvmClass, dvmField: DvmField): DvmObject<*> {
+            spoofForField(dvmField.getSignature())?.let { return StringObject(vm, it) }
+            return fallback.getStaticObjectField(vm, dvmClass, dvmField)
         }
 
-        override fun callStaticObjectMethod(vm: BaseVM, dvmClass: DvmClass, signature: String, varArg: VarArg): DvmObject<*> {
-            spoofForMethod(signature)?.let { return StringObject(vm, it) }
-            return super.callStaticObjectMethod(vm, dvmClass, signature, varArg)
+        override fun callStaticObjectMethod(vm: BaseVM, dvmClass: DvmClass, dvmMethod: DvmMethod, varArg: VarArg): DvmObject<*> {
+            spoofForMethod(dvmMethod.getSignature())?.let { return StringObject(vm, it) }
+            return fallback.callStaticObjectMethod(vm, dvmClass, dvmMethod, varArg)
         }
 
-        override fun callObjectMethod(vm: BaseVM, dvmObject: DvmObject<*>, signature: String, varArg: VarArg): DvmObject<*> {
-            spoofForMethod(signature)?.let { return StringObject(vm, it) }
-            return super.callObjectMethod(vm, dvmObject, signature, varArg)
+        override fun callObjectMethod(vm: BaseVM, dvmObject: DvmObject<*>, dvmMethod: DvmMethod, varArg: VarArg): DvmObject<*> {
+            spoofForMethod(dvmMethod.getSignature())?.let { return StringObject(vm, it) }
+            return fallback.callObjectMethod(vm, dvmObject, dvmMethod, varArg)
         }
 
-        override fun callStaticLongMethod(vm: BaseVM, dvmClass: DvmClass, signature: String, varArg: VarArg): Long {
-            spoofedMillis(signature)?.let { return it }
-            return super.callStaticLongMethod(vm, dvmClass, signature, varArg)
+        override fun callStaticLongMethod(vm: BaseVM, dvmClass: DvmClass, dvmMethod: DvmMethod, varArg: VarArg): Long {
+            spoofedMillis(dvmMethod.getSignature())?.let { return it }
+            return fallback.callStaticLongMethod(vm, dvmClass, dvmMethod, varArg)
         }
 
-        override fun callLongMethod(vm: BaseVM, dvmObject: DvmObject<*>, signature: String, varArg: VarArg): Long {
-            spoofedMillis(signature)?.let { return it }
-            return super.callLongMethod(vm, dvmObject, signature, varArg)
+        override fun callLongMethod(vm: BaseVM, dvmObject: DvmObject<*>, dvmMethod: DvmMethod, varArg: VarArg): Long {
+            spoofedMillis(dvmMethod.getSignature())?.let { return it }
+            return fallback.callLongMethod(vm, dvmObject, dvmMethod, varArg)
         }
 
         /** Resolve a spoof string for a Build.* static field signature; null = not spoofed. */

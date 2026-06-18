@@ -212,6 +212,12 @@ open class DvmClass protected constructor(
     @JvmField
     val nativesMap: MutableMap<String, VortexdbgPointer> = HashMap()
 
+    /** Methods/fields the VM has registered/touched so far (lazy; for introspection tools). */
+    fun registeredStaticMethods(): Collection<DvmMethod> = staticMethodMap.values
+    fun registeredMethods(): Collection<DvmMethod> = methodMap.values
+    fun registeredStaticFields(): Collection<DvmField> = staticFieldMap.values
+    fun registeredFields(): Collection<DvmField> = fieldMap.values
+
     fun findNativeFunction(emulator: Emulator<*>, method: String): VortexdbgPointer {
         var fnPtr = nativesMap[method]
         var index = method.indexOf('(')
