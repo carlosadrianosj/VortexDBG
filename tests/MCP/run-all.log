@@ -1,0 +1,586 @@
+################  VORTEX-DBG MCP TEST SUITE  ################
+App: com.example.mcpdemo (Vault + Device), native: libvault.so (arm64)
+
+============================================================
+## NATIVE (ARM) — status & modules
+============================================================
+
+--- check_connection — arch/backend/state/loaded modules ---
+Android64 ARM64 | Unicorn2Backend (FULL)
+mcpdemo | custom_tools idle=true running=false bp=0 events=0
+3 modules
+
+--- list_modules (filter vault) — loaded .so modules ---
+1 modules (filter: 'vault', total: 3):
+libvault.so 0x12000000 0x2000
+
+--- get_module_info libvault.so — base/size/exports/deps ---
+libvault.so 0x12000000 size=0x2000
+exports=9 deps=libc.so,libdl.so
+
+--- list_exports libvault.so — exported symbols ---
+9 exported symbol(s):
++0x2000 _bss_end__
++0x7e0 Java_com_example_mcpdemo_Vault_transform
++0x2000 _edata
++0x2000 _end
++0x2000 __bss_start
++0x56c Java_com_example_mcpdemo_Vault_seal
++0x2000 __bss_end__
++0x2000 __end__
++0x2000 __bss_start__
+
+--- find_symbol libvault.so seal — resolve a symbol ---
+Java_com_example_mcpdemo_Vault_seal @ 0x1200056c (libvault.so+0x56c)
+--- get_threads — emulator threads/tasks ---
+No threads/tasks.
+============================================================
+## NATIVE (ARM) — disassembly & memory (no breakpoint needed)
+============================================================
+
+--- disassemble_symbol libvault.so seal — disasm a function ---
+0x1200056c: sub sp, sp, #0xa0
+0x12000570: stp x28, x27, [sp, #0x40]
+0x12000574: stp x26, x25, [sp, #0x50]
+0x12000578: stp x24, x23, [sp, #0x60]
+0x1200057c: stp x22, x21, [sp, #0x70]
+0x12000580: stp x20, x19, [sp, #0x80]
+0x12000584: stp x29, x30, [sp, #0x90]
+0x12000588: ldr x8, [x0]
+
+--- assemble — text -> machine code ---
+Machine code: 200080d2 (4 bytes)
+--- list_memory_map — mapped regions ---
+3 modules, 4 anonymous:
+libvault.so 0x12000000-0x12002000 0x2000
+libdl.so 0x12010000-0x12030000 0x20000
+libc.so 0x12030000-0x12120000 0xf0000
+0x12002000-0x12003000 0x1000 r--
+0x12120000-0x12141000 0x21000 r--
+0x12180000-0x121c0000 0x40000 rw-
+0x121c0000-0x12200000 0x40000 rw-
+
+--- allocate_memory — RW scratch buffer ---
+0x121d7000 (16 bytes, malloc) +data
+
+--- read_memory @ allocated — hex dump ---
+121d7000: 41 42 43 44 00 00 00 00 00 00 00 00 00 00 00 00  ABCD............
+
+--- write_string @ allocated ---
+Written 7 bytes (string + NUL) to 0x121d7000
+--- read_string @ allocated — C string ---
+"hi-mcp" (6B)
+--- read_typed @ allocated — typed view ---
+[0] 0x121d7000: 1831692648
+[1] 0x121d7004: 28771
+
+--- read_pointer @ allocated ---
+[0] 0x121d7000
+    -> 0x70636d2d6968
+[1] 0x70636d2d6968
+
+--- search_memory — find 'hi-mcp' string (before we overwrite it) ---
+Found 1 match(es):
+0x121d7000
+
+--- get_register X0 — read one register ---
+X0 = 0x121d7000
+--- set_register X0=0xdead — write one register ---
+X0 set to 0xdead
+--- write_memory @ allocated (raw hex) ---
+Written 4 bytes to 0x121d7000
+--- patch @ allocated (assemble 'nop' + write) ---
+Patched 4 bytes at 0x121d7000: 1f2003d5
+--- find_symbol libc.so strlen -> address ---
+strlen @ 0x1204cbe4 (libc.so+0x1cbe4)
+
+--- call_function @strlen('vortex') — call by address ---
+ret=0x6 (6)
+
+--- list_allocations — tracked blocks ---
+1 active allocation(s):
+  0x121d7000  size=16 (0x10)  type=malloc (free requires isRunning=false)
+
+--- free_memory @ allocated ---
+Freed 0x121d7000
+--- call_symbol libc.so strlen('mcp') ---
+ret=0x3 (3)
+
+============================================================
+## DVM — class introspection
+============================================================
+
+--- dvm_list_classes — resolved DVM classes ---
+5 resolved DVM classes:
+  java/lang/String
+  [B
+  com/example/mcpdemo/Device
+  com/example/mcpdemo/Vault
+  java/lang/Class
+
+--- dvm_search_classes Vault ---
+class search for 'Vault' (substring): 1 match(es)
+  com/example/mcpdemo/Vault
+
+--- dvm_class_hierarchy Vault ---
+class hierarchy for com/example/mcpdemo/Vault:
+superclass chain (most-derived first):
+* com/example/mcpdemo/Vault
+interfaces of com/example/mcpdemo/Vault:
+  (none declared)
+
+--- dvm_describe_class Vault — members the VM has touched ---
+class com.example.mcpdemo.Vault
+  internal name = com/example/mcpdemo/Vault
+  superclass = (none / unresolved)
+  interfaces = (none recorded)
+note: members below are only those the VM has touched so far (lazy model).
+static methods (0):
+  (none registered)
+instance methods (0):
+  (none registered)
+static fields (0):
+  (none registered)
+instance fields (0):
+  (none registered)
+native-bound (RegisterNatives) (0):
+  (none)
+
+--- dvm_describe_method Vault.seal ---
+method com/example/mcpdemo/Vault->seal
+source = full JNI signature
+  signature = seal(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+  args (2):
+    Ljava/lang/String;  -> java.lang.String
+    Ljava/lang/String;  -> java.lang.String
+  return = Ljava/lang/String;  -> java.lang.String
+static = unknown (not registered yet; not querying getMethodID to avoid side effects)
+registered overloads matching name: (none touched yet)
+native-bound = false (no nativesMap entry for this name; may bind lazily by Java_ symbol)
+
+--- dvm_list_native_registrations ---
+RegisterNatives bindings (lazy: only classes the .so has registered)
+(no class has any RegisterNatives binding yet)
+
+============================================================
+## DVM — DEX static surface (reads the embedded classes.dex; no path needed)
+============================================================
+
+--- dvm_dex_surface classes ---
+DEX class surface (1 dex file(s); 2 classes, 13 methods, 34 strings)
+matches: 2
+  com/example/mcpdemo/Device
+  com/example/mcpdemo/Vault
+
+--- dvm_dex_surface methods (filter seal) ---
+DEX method surface (1 dex file(s); 2 classes, 13 methods, 34 strings)
+filter: 'seal'
+matches: 1
+  com/example/mcpdemo/Vault : seal(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+
+--- dvm_dex_surface strings (filter mcpdemo) ---
+DEX string surface (1 dex file(s); 2 classes, 13 methods, 34 strings)
+filter: 'mcpdemo'
+matches: 3
+  Lcom/example/mcpdemo/Device;
+  Lcom/example/mcpdemo/Vault;
+  mcpdemo-1.0
+
+============================================================
+## DVM — calling Java/native through the bridge
+============================================================
+
+--- dvm_call_static Vault.seal(alice,hunter2) ---
+com/example/mcpdemo/Vault.seal -> "53bc1420c00bd792"
+
+--- dvm_oracle — assert seal output is stable ---
+MATCH (mode=contains)
+  actual  : "53bc1420c00bd792"
+  expected: 53bc1420c00bd792
+
+--- dvm_fuzz_method seal — vary arg0 over 2 inputs ---
+dvm_fuzz_method com/example/mcpdemo/Vault.seal varying arg[0]
+input -> output:
+  alice -> "4bbe2608f925b992"
+  bob -> "48bd2dcc3b25b992"
+byte variance over 2 output(s) of 8 byte(s):
+  constant positions (3): 5, 6, 7
+  varying positions  (5): 0, 1, 2, 3, 4
+
+============================================================
+## DVM — object lifecycle (create -> inspect -> use -> release)
+============================================================
+
+--- dvm_make_object string -> handle ---
+Created object (type=string).
+  class = java/lang/String
+  value = "hello-vortex"
+  handle = 0x76505305 (1984975621)
+  (registered as a global ref; reuse as @0x76505305)
+
+--- dvm_read_string <handle> ---
+hello-vortex
+--- dvm_get_object <handle> ---
+0x76505305 : java/lang/String
+value = "hello-vortex"
+
+--- dvm_to_string <handle> ---
+object 0x76505305 class=java/lang/String
+(native toString() unavailable: find method failed: toString()Ljava/lang/String; — toString is rarely native-registered, falling back)
+valuePreview = "hello-vortex"
+--- dvm_inspect_object <handle> — deep view + refcount ---
+object 0x76505305 (1984975621):
+  class: java/lang/String
+  scope: global
+  refCount: 1
+  weak: false
+  preview: "hello-vortex"
+
+--- dvm_make_object bytes -> handle ---
+Created object (type=bytes).
+  class = [B
+  value = bytes[4] deadbeef
+  handle = 0x77888435 (2005435445)
+  (registered as a global ref; reuse as @0x77888435)
+
+--- dvm_read_array <bytes handle> ---
+array 0x77888435 class=[B length=4
+type=byte[] 4 bytes
+deadbeef
+--- dvm_new_object Vault(label) -> handle ---
+Constructed com/example/mcpdemo/Vault via <init>(Ljava/lang/String;)V (host-side, wrapped).
+  class = com/example/mcpdemo/Vault
+  value = com.example.mcpdemo.Vault@7b98f307
+  handle = 0x71d44a3 (119358627)
+  (registered as a global ref; reuse as @0x71d44a3)
+
+--- dvm_call_instance <vault>.transform('hello') ---
+called com/example/mcpdemo/Vault->transform(Ljava/lang/String;)Ljava/lang/String;
+  result = "OLLEH"
+--- dvm_read_field <vault>.label (instance) ---
+instance 0x71d44a3.label:Ljava/lang/String; = "mylabel"
+--- dvm_set_field <vault>.counter = 7 ---
+set instance 0x71d44a3.counter:I = 7 (host)
+--- dvm_read_field <vault>.counter (after set) ---
+instance 0x71d44a3.counter:I = 7
+--- dvm_read_field Device.API_LEVEL (static) ---
+static com/example/mcpdemo/Device->API_LEVEL:I = 23
+--- dvm_new_array_object [str handle, 'x'] ---
+Created Object[2].
+  class = ArrayObject
+  value = [Lcom.vortexdbg.linux.android.dvm.DvmObject;@33d512c1
+  handle = 0x397fbdb (60292059)
+  (registered as a global ref; reuse as @0x397fbdb)
+--- dvm_pin_ref <str handle> ---
+pinned 0x76505305 as a global ref.
+  class = java/lang/String
+  handle = 0x76505305 (1984975621)
+--- dvm_release_ref <bytes handle> ---
+release 0x77888435 (2005435445)
+  removed from global ref map.
+============================================================
+## DVM — live object graph & refs
+============================================================
+
+--- dvm_list_objects ---
+local refs (0):
+global refs (9):
+  0x7c015a33 (2080463411) java/lang/Class = class java.lang.Object
+  0x83d61705 (-2083121403) java/lang/Class = class java.lang.String
+  0x76505305 (1984975621) java/lang/String = "hello-vortex"
+  0xb47 (2887) java/lang/Class
+  0x75637ddb (1969454555) java/lang/Class = class com.example.mcpdemo.Device
+  0x4f17ce0d (1326960141) java/lang/Class = class com.example.mcpdemo.Vault
+  0x76f84404 (1995981828) java/lang/Class = class java.lang.Class
+  0x397fbdb (60292059) ArrayObject = [Lcom.vortexdbg.linux.android.dvm.DvmObject;@33d512c1
+  0x71d44a3 (119358627) com/example/mcpdemo/Vault = com.example.mcpdemo.Vault@7b98f307
+
+--- dvm_object_graph ---
+object graph (9 live refs, grouped by class, limit=200):
+[ArrayObject] 1 ref(s)
+  0x397fbdb scope=global refCount=1 weak=false = [Lcom.vortexdbg.linux.android.dvm.DvmObject;@33d512c1
+[com/example/mcpdemo/Vault] 1 ref(s)
+  0x71d44a3 scope=global refCount=1 weak=false = com.example.mcpdemo.Vault@7b98f307
+[java/lang/Class] 6 ref(s)
+  0x7c015a33 scope=global refCount=1 weak=false = class java.lang.Object
+  0x83d61705 scope=global refCount=19 weak=false = class java.lang.String
+  0xb47 scope=global refCount=11 weak=false
+  0x75637ddb scope=global refCount=7 weak=false = class com.example.mcpdemo.Device
+  0x4f17ce0d scope=global refCount=7 weak=false = class com.example.mcpdemo.Vault
+  0x76f84404 scope=global refCount=5 weak=false = class java.lang.Class
+[java/lang/String] 1 ref(s)
+  0x76505305 scope=global refCount=2 weak=false = "hello-vortex"
+
+--- dvm_find_objects_by_class Vault ---
+live objects of class com/example/mcpdemo/Vault:
+  0x71d44a3 scope=global refCount=1 weak=false = com.example.mcpdemo.Vault@7b98f307
+total: 1
+
+--- dvm_ref_table_stats ---
+DVM ref table stats:
+  classMap: 6 resolved classes
+  local refs: 0
+  global refs: 9
+  weak global refs: 0
+note: resolved classes are also registered as global refs, so the maps overlap.
+
+live object histogram by class (9 refs across all maps):
+  6  java/lang/Class
+  1  ArrayObject
+  1  com/example/mcpdemo/Vault
+  1  java/lang/String
+
+--- dvm_pending_exception ---
+pending exception: none
+============================================================
+## DVM — native<->DVM bridge (peer == hash)
+============================================================
+
+--- dvm_resolve_native_handle <a live handle> ---
+native handle 0x7c015a33 (2080463411)
+[object]
+  class = java/lang/Class
+  value = class java.lang.Object
+  scope = global, refCount = 1
+
+--- dvm_handle_to_native <a live handle> ---
+DVM handle 0x7c015a33 (2080463411)
+  native peer (32-bit) = 0x7c015a33
+  native peer (jobject, 64-bit) = 0x7c015a33
+  scope = global, refCount = 1
+  class = java/lang/Class
+  value = class java.lang.Object
+
+--- dvm_class_of_native (Java_ symbol) ---
+symbol = Java_com_example_mcpdemo_Vault_seal (best-effort match)
+owning class = com/example/mcpdemo/Vault
+  mangled method tail = seal
+  (no RegisterNatives bindings; resolves by symbol lookup in loaded modules)
+
+--- dvm_args_at_breakpoint (current regs; no bp set) ---
+JNI call args (4 slots). Convention: slot0=JNIEnv*, slot1=this/jclass, then declared Java args.
+  arg0 = 0x59474f18  [JNIEnv*]
+  arg1 = 0xe4fff5e0  [this/jclass]
+  arg2 = 0x12003000
+  arg3 = 0x5656be13
+
+============================================================
+## DVM — export, snapshot/diff
+============================================================
+
+--- dvm_snapshot before ---
+Captured snapshot 'before':
+  classes: 6
+  local refs: 0
+  global refs: 9
+  weak global refs: 0
+  (1 snapshot(s) stored)
+--- (trigger Vault.seal again to change the heap) ---
+
+--- dvm_diff before -> now ---
+diff 'before' -> 'now'
+note: local refs are wiped by deleteLocalRefs() after each JNI call; global/weak diffs are the meaningful ones.
+
+classes (from 6 -> 6):
+  (no changes)
+
+global refs (from 9 -> 9):
+  ~ 0x83d61705 java/lang/Class refCount 19 -> 22
+  ~ 0xb47 java/lang/Class refCount 11 -> 13
+  ~ 0x75637ddb java/lang/Class refCount 7 -> 8
+  ~ 0x4f17ce0d java/lang/Class refCount 7 -> 8
+
+weak global refs (from 0 -> 0):
+  (no changes)
+
+local refs (from 0 -> 0):
+  (no changes)
+
+--- dvm_export bytes handle -> /tmp/mcp_export.bin ---
+Wrote 69 bytes to /tmp/mcp_export.json
+============================================================
+## DVM — JNI hooks (native->Java): trace / mock / break
+============================================================
+
+--- dvm_trace_jni enable ---
+JNI tracing enabled (interceptor installed via setJni, fallback = previous jni).
+  filter: (all)
+  max:    200
+  buffered entries: 0
+Use dvm_jni_log to read recorded calls. enable=false restores the original jni.
+--- (trigger seal -> native calls back Device.salt()/hex()) ---
+
+--- dvm_jni_log — recorded callbacks ---
+JNI interceptor: installed, tracing ON, filter=(all)
+Active mocks: 0
+Active breakpoints: 0
+
+Trace entries (2):
+  #0 [callStaticObjectMethod] com/example/mcpdemo/Device->salt()[B
+      args: 
+      ret:  bytes[8] 5aa51337c0de4269
+  #1 [callStaticObjectMethod] com/example/mcpdemo/Device->hex([B)Ljava/lang/String;
+      args: [B@0x4eb3390e3b25b992
+      ret:  "4eb3390e3b25b992"
+
+Break events (0):
+  (none)
+
+--- dvm_mock_jni hex -> deadbeefdeadbeef ---
+Mock registered: signature contains 'hex' -> 'deadbeefdeadbeef' (unlimited uses).
+Object returns => Java String; int/long => parsed number; boolean => true/1/yes. Interceptor installed; mock applies to overridden object/primitive calls during emulation.
+--- (seal again, hex() now mocked) ---
+com/example/mcpdemo/Vault.seal -> "deadbeefdeadbeef"
+--- dvm_break_on_jni salt ---
+Breakpoint registered: signature contains 'salt' action=snapshot.
+NOTE: execution is NOT suspended; each hit records a {signature, args snapshot} break event viewable via dvm_jni_log. Interceptor installed.
+--- (seal again -> break event recorded) ---
+
+--- dvm_jni_log (clear=true) — see break events ---
+JNI interceptor: installed, tracing ON, filter=(all)
+Active mocks: 1
+  mock 'hex' -> deadbeefdeadbeef (unlimited)
+Active breakpoints: 1
+  break 'salt' action=snapshot
+
+Trace entries (6):
+  #0 [callStaticObjectMethod] com/example/mcpdemo/Device->salt()[B
+      args: 
+      ret:  bytes[8] 5aa51337c0de4269
+  #1 [callStaticObjectMethod] com/example/mcpdemo/Device->hex([B)Ljava/lang/String;
+      args: [B@0x4eb3390e3b25b992
+      ret:  "4eb3390e3b25b992"
+  #2 [callStaticObjectMethod] com/example/mcpdemo/Device->salt()[B
+      args: 
+      ret:  bytes[8] 5aa51337c0de4269
+  #3 [callStaticObjectMethod(mock)] com/example/mcpdemo/Device->hex([B)Ljava/lang/String;
+      args: [B@0x4eb3390e3b25b992
+      ret:  "deadbeefdeadbeef"
+  #4 [callStaticObjectMethod] com/example/mcpdemo/Device->salt()[B
+      args: 
+      ret:  bytes[8] 5aa51337c0de4269
+  #5 [callStaticObjectMethod(mock)] com/example/mcpdemo/Device->hex([B)Ljava/lang/String;
+      args: [B@0x4eb3390e3b25b992
+      ret:  "deadbeefdeadbeef"
+
+Break events (1):
+  #0 'salt' (snapshot) hit com/example/mcpdemo/Device->salt()[B
+      args: 
+
+(buffers cleared)
+--- dvm_mock_jni hex remove; dvm_trace_jni disable ---
+JNI interception disabled; original jni restored. (Trace buffer kept; mocks/breaks remain registered but inert until reinstalled.)
+============================================================
+## DVM — record / replay a tool sequence
+============================================================
+
+--- dvm_call_phase start p1 ---
+Recording phase 'p1' started; subsequent dvm_* calls are captured. Use action=stop to finish.
+--- (record: a seal + a class lookup) ---
+
+--- dvm_call_phase stop ---
+Recording phase 'p1' stopped (2 step(s) captured).
+--- dvm_call_phase list ---
+Phases:
+  p1: 2 step(s)
+--- dvm_call_phase replay p1 ---
+Replaying phase 'p1' (2 step(s)):
+  1. dvm_call_static -> com/example/mcpdemo/Vault.seal -> "4fa026053b25b992"
+  2. dvm_class_hierarchy -> class hierarchy for com/example/mcpdemo/Vault: superclass chain (most-derived first): * com/example/mcpdemo/Vault interf...
+============================================================
+## NATIVE (ARM) — breakpoint flow (break inside seal, inspect, step)
+============================================================
+
+--- add_breakpoint_by_symbol libvault.so seal ---
+Breakpoint added at Java_com_example_mcpdemo_Vault_seal (0x1200056c, libvault.so+0x56c)
+
+--- add_breakpoint_by_offset libvault.so +0x7e0 (transform) ---
+Breakpoint added at libvault.so+0x7e0 (0x120007e0)
+--- trace_code over seal prologue (events via poll_events) ---
+Trace code started: 0x1200056c - 0x120005a0.
+--- list_breakpoints ---
+Total: 2 breakpoint(s)
+0x1200056c  libvault.so+0x56c  ; sub sp, sp, #0xa0
+0x120007e0  libvault.so+0x7e0  ; sub sp, sp, #0x130
+
+--- (trigger seal via custom tool -> hits the breakpoint) ---
+
+--- poll_events — expect breakpoint_hit ---
+17 event(s):
+{"event":"execution_started","pc":"0x1204bb08","module":"libc.so","offset":"0x1bb08"}
+{"event":"execution_started","pc":"0x1204cbe4","module":"libc.so","offset":"0x1cbe4"}
+{"event":"execution_started","pc":"0x1204bac0","module":"libc.so","offset":"0x1bac0"}
+{"event":"execution_started","pc":"0x1204cbe4","module":"libc.so","offset":"0x1cbe4"}
+{"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
+{"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
+{"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
+{"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
+{"event":"execution_started","pc":"0x120007e0","module":"libvault.so","offset":"0x7e0"}
+{"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
+{"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
+{"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
+{"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
+{"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
+{"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
+{"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
+{"event":"breakpoint_hit","pc":"0x1200056c","tid":27350,"is_main_thread":true,"module":"libvault.so","offset":"0x56c"}
+
+--- read_args — function args at entry ---
+X0=0xfffe1640
+X1=0x4f17ce0d
+X2=0x4e08711f
+X3=0xbcec361
+
+--- get_registers — full register set ---
+X0=0xfffe1640
+X1=0x4f17ce0d
+X2=0x4e08711f
+X3=0xbcec361
+X4=0xe4fff670
+X5=0x8080808080000000
+X6=0x8080808080
+X7=0xfefefefeff6f626c
+X8=0xfffe0770
+X9=0x4
+X10=0x2
+X11=0x8
+X12=0xe4fff670
+X13=0x92
+X14=0x5c
+X15=0x69
+X16=0x12119eb0
+X17=0x12108000
+X18=0x12119f50
+FP=0x0
+LR=0x7ffff0000
+SP=0xe4fff710
+PC=0x1200056c
+Zero: X19,X20,X21,X22,X23,X24,X25,X26,X27,X28
+
+--- disassemble at PC (0x1200056c) ---
+0x1200056c: sub sp, sp, #0xa0
+0x12000570: stp x28, x27, [sp, #0x40]
+0x12000574: stp x26, x25, [sp, #0x50]
+0x12000578: stp x24, x23, [sp, #0x60]
+0x1200057c: stp x22, x21, [sp, #0x70]
+0x12000580: stp x20, x19, [sp, #0x80]
+
+--- get_callstack — backtrace ---
+No call stack frames available.
+--- step_into 2 instructions ---
+Stepping 2 insn.1 event(s):
+{"event":"breakpoint_hit","pc":"0x12000574","tid":27350,"is_main_thread":true,"module":"libvault.so","offset":"0x574"}
+
+--- next_block — run to next basic block ---
+Resuming, break at next block.1 event(s):
+{"event":"execution_completed"}
+
+--- step_until_mnemonic bl — run to next 'bl' ---
+Resuming, break on 'bl'.
+--- step_out — run until the function returns ---
+
+--- remove_breakpoint @bp (0x1200056c) ---
+
+--- continue_execution -> finish (+ flush trace_code events) ---
+
+################  DONE — see tests/MCP/run-all.log  ################

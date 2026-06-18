@@ -226,6 +226,17 @@ class DvmFieldTools(private val emulator: Emulator<*>, private val vm: VM) : Dvm
                 ?: return McpTools.errorResult("Invalid 'target_hash' (decimal or 0x-hex).")
         val target: DvmObject<*> = base.getObject(targetHash)
                 ?: return McpTools.errorResult("No object found for target_hash 0x" + Integer.toHexString(targetHash) + ".")
+        // Host-backed instance (e.g. a ProxyDvmObject wrapping a real host object): read the actual
+        // host field reflectively. This is the working path under ProxyClassFactory.
+        val host = hostInstance(target)
+        if (host != null) {
+            val f = findField(host.javaClass, field)
+            if (f != null) {
+                f.isAccessible = true
+                return McpTools.textResult("instance 0x" + Integer.toHexString(targetHash) + "." + field +
+                        ":" + type + " = " + renderHost(f.get(host)))
+            }
+        }
         val jni = base.jni
                 ?: return McpTools.errorResult("No Jni bridge registered on the VM; cannot read instance fields.")
         // Signature form accepted by the Jni getter overloads: name:type
@@ -267,6 +278,44 @@ class DvmFieldTools(private val emulator: Emulator<*>, private val vm: VM) : Dvm
         } else {
             setStaticField(args, type, field, value)
         }
+    }
+
+    /** The host instance backing a DVM object (e.g. ProxyDvmObject), or null for plumbing objects. */
+    private fun hostInstance(obj: DvmObject<*>): Any? {
+        val v = try { obj.getValue() } catch (e: Exception) { return null }
+        return if (v == null || v is DvmObject<*>) null else v
+    }
+
+    private fun findField(start: Class<*>, name: String): java.lang.reflect.Field? {
+        var c: Class<*>? = start
+        while (c != null) {
+            try {
+                return c.getDeclaredField(name)
+            } catch (e: NoSuchFieldException) {
+                c = c.superclass
+            }
+        }
+        return null
+    }
+
+    private fun renderHost(v: Any?): String = when (v) {
+        null -> "null"
+        is String -> "\"$v\""
+        is kotlin.ByteArray -> Hex.encodeHexString(v) + " (" + v.size + " bytes)"
+        else -> v.toString()
+    }
+
+    /** Coerce a string value to a host field value per its JNI type descriptor. */
+    private fun coerceHost(type: String, value: String): Any? = when (type[0]) {
+        'Z' -> value == "true" || value == "1"
+        'B' -> DvmSupport.parseLong(value).toByte()
+        'S' -> DvmSupport.parseLong(value).toShort()
+        'C' -> if (value.length == 1) value[0] else DvmSupport.parseLong(value).toInt().toChar()
+        'I' -> DvmSupport.parseLong(value).toInt()
+        'J' -> DvmSupport.parseLong(value)
+        'F' -> value.toFloat()
+        'D' -> value.toDouble()
+        else -> value // L...; -> a String (best effort for String fields)
     }
 
     private fun objectArg(type: String, value: String): DvmObject<*> {
@@ -311,6 +360,17 @@ class DvmFieldTools(private val emulator: Emulator<*>, private val vm: VM) : Dvm
                 ?: return McpTools.errorResult("Invalid 'target_hash' (decimal or 0x-hex).")
         val target: DvmObject<*> = base.getObject(targetHash)
                 ?: return McpTools.errorResult("No object found for target_hash 0x" + Integer.toHexString(targetHash) + ".")
+        // Host-backed instance: write the actual host field reflectively (works under ProxyClassFactory).
+        val host = hostInstance(target)
+        if (host != null) {
+            val f = findField(host.javaClass, field)
+            if (f != null) {
+                f.isAccessible = true
+                f.set(host, coerceHost(type, value))
+                return McpTools.textResult("set instance 0x" + Integer.toHexString(targetHash) + "." + field +
+                        ":" + type + " = " + value + " (host)")
+            }
+        }
         val jni = base.jni
                 ?: return McpTools.errorResult("No Jni bridge registered on the VM; cannot write instance fields.")
         val signature = field + ":" + type

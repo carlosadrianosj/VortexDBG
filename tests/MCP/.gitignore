@@ -1,0 +1,8 @@
+out/com/
+out/base.apk
+out/mcpdemo-aligned.apk
+out/classes.dex
+out/libvault.so
+stage/
+debug.keystore
+harness.log

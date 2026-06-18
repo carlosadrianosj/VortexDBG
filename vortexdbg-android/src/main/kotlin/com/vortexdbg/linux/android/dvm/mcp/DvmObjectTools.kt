@@ -13,6 +13,7 @@ import com.vortexdbg.linux.android.dvm.array.DoubleArray as DvmDoubleArray
 import com.vortexdbg.linux.android.dvm.array.FloatArray as DvmFloatArray
 import com.vortexdbg.linux.android.dvm.array.IntArray as DvmIntArray
 import com.vortexdbg.linux.android.dvm.array.ShortArray as DvmShortArray
+import com.vortexdbg.linux.android.dvm.jni.ProxyDvmObject
 import com.vortexdbg.mcp.McpTools
 import org.apache.commons.codec.binary.Hex
 
@@ -208,17 +209,71 @@ class DvmObjectTools(private val emulator: Emulator<*>, private val vm: VM) : Dv
         }
         val argArray = args.getJSONArray("args")
         val cls: DvmClass = vm.resolveClass(className.trim())
-        val obj: DvmObject<*> = cls.allocObject()
-                ?: return McpTools.errorResult("allocObject() returned null for class " + className.trim() + ".")
+
+        // Preferred path under ProxyClassFactory: construct the host instance and wrap it
+        // (ProxyJni does not support allocObject; the host Class is cls.getValue()).
+        val hostObj = tryHostConstruct(cls, method.trim(), argArray)
+        if (hostObj != null) {
+            val dvm = ProxyDvmObject.createObject(vm, hostObj)
+                    ?: return McpTools.errorResult("ProxyDvmObject.createObject returned null for " + className.trim())
+            val hash = DvmSupport.registerGlobal(vm, dvm)
+            return handleText("Constructed " + className.trim() + " via " + method.trim() + " (host-side, wrapped).", dvm, hash)
+        }
+
+        // Fallback for non-Proxy VMs: allocObject + run <init> through the emulator.
+        val obj: DvmObject<*> = try {
+            cls.allocObject()
+        } catch (e: Exception) {
+            return McpTools.errorResult("Cannot instantiate " + className.trim() +
+                    ": host construction failed and allocObject() is unsupported (" + (e.message ?: e.javaClass.name) + ").")
+        }
         try {
             obj.callJniMethod(emulator, method.trim(), *DvmSupport.buildArgs(vm, method.trim(), argArray))
         } catch (e: Exception) {
             return McpTools.errorResult("allocObject succeeded but constructor " + method.trim() +
-                    " failed: " + (e.message ?: e.javaClass.name) +
-                    " (the class may need a real JVM-backed implementation to construct).")
+                    " failed: " + (e.message ?: e.javaClass.name) + ".")
         }
         val hash = DvmSupport.registerGlobal(vm, obj)
         return handleText("Constructed " + className.trim() + " via " + method.trim() + ".", obj, hash)
+    }
+
+    /** Construct the host instance reflectively (works for ProxyClassFactory classes). Null if not possible. */
+    private fun tryHostConstruct(cls: DvmClass, method: String, argArray: com.alibaba.fastjson.JSONArray?): Any? {
+        val hostClass = cls.getValue() as? Class<*> ?: return null
+        val open = method.indexOf('(')
+        val close = method.indexOf(')')
+        if (open < 0 || close < open) return null
+        val argTypes = DvmSupport.parseArgTypes(method.substring(open + 1, close))
+        val provided = argArray?.size ?: 0
+        if (provided != argTypes.size) return null
+        val hostArgs = arrayOfNulls<Any?>(argTypes.size)
+        for (i in argTypes.indices) {
+            hostArgs[i] = hostArg(argTypes[i], argArray!!.getString(i)) ?: return null
+        }
+        for (c in hostClass.constructors) {
+            if (c.parameterTypes.size == argTypes.size) {
+                return try {
+                    c.isAccessible = true
+                    c.newInstance(*hostArgs)
+                } catch (e: Exception) {
+                    null
+                }
+            }
+        }
+        return null
+    }
+
+    /** Convert a string arg to a HOST value per its JNI descriptor (for reflective construction). */
+    private fun hostArg(type: String, raw: String): Any? = when {
+        type == "Ljava/lang/String;" -> raw
+        type == "I" || type == "S" || type == "B" -> DvmSupport.parseLong(raw).toInt()
+        type == "J" -> DvmSupport.parseLong(raw)
+        type == "Z" -> raw == "true" || raw == "1"
+        type == "C" -> if (raw.length == 1) raw[0] else DvmSupport.parseLong(raw).toInt().toChar()
+        type == "F" -> raw.toFloat()
+        type == "D" -> raw.toDouble()
+        type == "[B" -> org.apache.commons.codec.binary.Hex.decodeHex(raw.toCharArray())
+        else -> raw
     }
 
     // ---------- tool 4: dvm_new_array_object ----------
