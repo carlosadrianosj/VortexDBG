@@ -1,13 +1,21 @@
 # Vortex-DBG MCP test suite
 
 A self-contained playground that exercises **every Vortex-DBG MCP tool** (both the native/ARM
-side and the Dalvik/Java side) against one small, deliberately "complete" Android app. It doubles
-as a tutorial: read [`run-all.sh`](run-all.sh) top to bottom and you have a worked example of how
-to drive each tool, and [`run-all.log`](run-all.log) is the captured output of a full run.
+side and the Dalvik/Java side) against **two complementary demo apps**. It doubles as a tutorial:
+read [`run-all.sh`](run-all.sh) top to bottom and you have a worked example of how to drive each
+tool, and [`run-all.log`](run-all.log) is the captured output of a full run.
 
-- **86 MCP tools** are covered: **44 native (ARM)** + **42 Dalvik/Java (DVM)**.
-- One driver script calls them in a sensible order, chaining object handles where needed.
-- Everything is plain `curl` against the MCP server, so you can copy any call into your own client.
+- **[`01app/`](01app)** (`com.example.mcpdemo`): a mixed Java+native app whose natives are bound by
+  `Java_` symbol name. Used to cover the full breadth of the **86 tools** (44 native + 42 DVM),
+  including the native breakpoint flow.
+- **[`02app/`](02app)** (`com.example.guard`): an "anti-tamper" app whose natives are bound via
+  **RegisterNatives** and read device-identity fields through JNI. It exists so the tools that
+  returned "empty but correct" against 01app show a **real, visible effect** — `dvm_spoof_env`
+  actually flips emulator detection, `dvm_mock_jni` changes the model string, and
+  `dvm_list_native_registrations` / `dvm_resolve_method` now list real bindings.
+- `run-all.sh` runs **both apps in two phases** (Phase 1 = 01app full sweep, Phase 2 = 02app
+  visible-effect demos). Everything is plain `curl` against the MCP server, so you can copy any
+  call into your own client.
 
 ---
 
@@ -36,9 +44,12 @@ in `run-all.sh`), which is the simplest way to see exactly what each tool receiv
 
 ---
 
-## 2. The demo app (`com.example.mcpdemo`)
+## 2. The demo apps
 
-A tiny app whose surface intentionally covers every shape an MCP tool needs to act on.
+### 01app — `com.example.mcpdemo` (breadth: covers all 86 tools)
+
+A tiny mixed Java+native app whose surface covers every shape an MCP tool needs to act on. Its
+natives are bound by `Java_` symbol name (so they're resolved lazily on first call).
 
 | Element | Kind | Exists so you can test |
 |---|---|---|
@@ -50,34 +61,50 @@ A tiny app whose surface intentionally covers every shape an MCP tool needs to a
 | `Device.salt()` / `Device.hex()` | **Java methods called back from native** | what the JNI hooks observe/mock |
 | `libvault.so` exports | `Java_..._seal`, `Java_..._transform` | `list_exports`, `find_symbol`, `disassemble_symbol`, `add_breakpoint_by_symbol` |
 
-Source: [`src/com/example/mcpdemo/`](src/com/example/mcpdemo) (Java) and [`jni/vault.c`](jni/vault.c) (native).
+Source: [`01app/src/com/example/mcpdemo/`](01app/src/com/example/mcpdemo) + [`01app/jni/vault.c`](01app/jni/vault.c).
 
-Why "mixed": `seal` runs native code **and** calls back into Java, so a single call crosses the
-JNI bridge in both directions — exactly the fusion Vortex-DBG reproduces off-device, and exactly
-what makes the hook/trace tools observable.
+### 02app — `com.example.guard` (depth: makes the "empty" tools show real effects)
+
+An anti-tamper style app. Its natives are bound via **RegisterNatives** in `JNI_OnLoad`, and they
+read device-identity fields through JNI. This is what makes the difference between "the tool ran"
+and "the tool *did* something":
+
+| Element | Kind | Makes this VISIBLE |
+|---|---|---|
+| `Guard.deviceModel()` / `isEmulator()` / `bootToken()` | **native, RegisterNatives-bound** | `dvm_list_native_registrations`, `dvm_resolve_method`, `dvm_describe_class` now list real bindings |
+| reads `Device.MODEL` / `FINGERPRINT` via JNI | **native -> Java field reads** | `dvm_spoof_env` flips `isEmulator()` true→false and `deviceModel()`→"Pixel 7"; `dvm_mock_jni`→"PWNED-DEVICE" |
+| `bootToken()` reads `System.currentTimeMillis()` | **native -> Java call** | `dvm_spoof_env {currentTimeMillis}` makes `bootToken()` deterministic |
+
+Source: [`02app/src/com/example/guard/`](02app/src/com/example/guard) + [`02app/jni/guard.c`](02app/jni/guard.c).
+(`Device` here is a host-backed stand-in for `android.os.Build`, since the host JVM has no `android.os.Build`.)
+
+Why "mixed": `seal` (01app) runs native code **and** calls back into Java, so a single call crosses
+the JNI bridge in both directions — the fusion Vortex-DBG reproduces off-device, and what makes the
+hook/trace tools observable.
 
 ---
 
 ## 3. Build and run
 
-### Build the app (APK + jar + native lib)
+### Build both apps (APK + jar + native lib each)
 
 ```bash
-tests/MCP/build.sh
+tests/MCP/01app/build.sh   # -> 01app/out/mcpdemo.{apk,jar} + libvault.so
+tests/MCP/02app/build.sh   # -> 02app/out/guard.{apk,jar}   + libguard.so
 ```
 
-Produces `tests/MCP/out/`: `mcpdemo.apk` (signed; bundles `classes.dex` + `lib/arm64-v8a/libvault.so`),
-`mcpdemo.jar` (the app's Java classes for Vortex's `VortexClassLoader`), and `libvault.so`.
-Requires the Android SDK build-tools 34, NDK 21 (arm64 clang) and a JDK. See the script header.
+Each bundles `classes.dex` + `lib/arm64-v8a/lib*.so` into a signed APK, plus a `.jar` of the app's
+Java classes for Vortex's `VortexClassLoader`. Requires Android SDK build-tools 34, NDK 21 (arm64
+clang) and a JDK. See each script header.
 
-### Run the whole suite (one command)
+### Run the whole suite (one command, both apps)
 
 ```bash
 tests/MCP/run-all.sh
 ```
 
-It compiles the harness if needed, boots it, starts the MCP server, calls every tool, and writes
-[`run-all.log`](run-all.log). Use this both to verify and to learn.
+It compiles the harnesses if needed, then runs **Phase 1** (01app full sweep of all 86 tools) and
+**Phase 2** (02app visible-effect demos), writing [`run-all.log`](run-all.log). Use it to verify and to learn.
 
 ### Run the harness by hand (to connect your own client)
 
@@ -88,14 +115,17 @@ CP=vortexdbg-api/target/classes:vortexdbg-android/target/classes:vortexdbg-andro
 for b in dynarmic unicorn2 kvm hypervisor; do CP="$CP:backend/$b/target/classes"; done
 CP="$CP:$(cat /tmp/mcp_deps.txt)"   # third-party deps (see run-all.sh for how this is produced)
 
-$JEB/bin/java -cp "$CP" com.vortexdbg.mcpdemo.McpDemoHarness
+$JEB/bin/java -cp "$CP" com.vortexdbg.mcpdemo.McpDemoHarness   # 01app
+# or:  $JEB/bin/java -cp "$CP" com.vortexdbg.mcpguard.GuardHarness   # 02app
 # then type:  mcp
 ```
 
-Harness source: [`harness/McpDemoHarness.java`](harness/McpDemoHarness.java). It creates the VM
-**with the APK** (`createDalvikVM(apk)`) so `dvm_dex_surface` can read the embedded `classes.dex`,
-loads `libvault.so`, registers the `DvmMcpTools` provider, and exposes two console triggers
-(`run seal <account> <secret>`, `run transform <text>`) for breakpoint demos.
+Harness sources: [`01app/harness/McpDemoHarness.java`](01app/harness/McpDemoHarness.java) and
+[`02app/harness/GuardHarness.java`](02app/harness/GuardHarness.java). Each creates the VM **with the
+APK** (`createDalvikVM(apk)`) so `dvm_dex_surface` reads the embedded `classes.dex`, loads its `.so`,
+registers the `DvmMcpTools` provider, and exposes console triggers (01app: `run seal`/`run transform`;
+02app: `run model`/`run emu`/`run token`). 02app additionally calls `JNI_OnLoad` so its RegisterNatives
+bindings are populated.
 
 ### Connect a real MCP client
 
@@ -305,12 +335,21 @@ Object handles are JNI hashes (decimal or `0x`-hex); object/array arguments may 
 ## 8. Files
 
 ```
-src/com/example/mcpdemo/{Vault,Device}.java   the demo app (mixed Java + native)
-jni/vault.c                                   the native lib source (seal + transform)
-AndroidManifest.xml                           package com.example.mcpdemo
-build.sh                                      builds out/mcpdemo.{apk,jar} + libvault.so
-harness/McpDemoHarness.java                   boots Vortex + the MCP server for this app
-run-all.sh                                    drives every MCP tool via curl (the tutorial)
-run-all.log                                   captured output of a full run
-out/                                          build artifacts (apk/jar; .gitignore'd intermediates)
+run-all.sh                                       drives both apps via curl (the tutorial)
+run-all.log                                      captured output of a full two-phase run
+README.md                                        this file
+
+01app/  (com.example.mcpdemo — breadth, all 86 tools)
+  src/com/example/mcpdemo/{Vault,Device}.java    mixed Java + native app
+  jni/vault.c                                    native lib (seal static + transform instance)
+  AndroidManifest.xml · build.sh                 builds out/mcpdemo.{apk,jar} + libvault.so
+  harness/McpDemoHarness.java                    boots Vortex + MCP server for 01app
+  out/                                           build artifacts (apk/jar committed)
+
+02app/  (com.example.guard — depth, visible spoof/RegisterNatives effects)
+  src/com/example/guard/{Guard,Device}.java      RegisterNatives + device-identity reads
+  jni/guard.c                                    native lib (JNI_OnLoad RegisterNatives)
+  AndroidManifest.xml · build.sh                 builds out/guard.{apk,jar} + libguard.so
+  harness/GuardHarness.java                      boots Vortex + MCP server for 02app
+  out/                                           build artifacts (apk/jar committed)
 ```

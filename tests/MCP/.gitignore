@@ -1,8 +1,10 @@
-out/com/
-out/base.apk
-out/mcpdemo-aligned.apk
-out/classes.dex
-out/libvault.so
-stage/
+# build intermediates (any app subfolder); the final .apk/.jar are committed
+**/out/com/
+**/out/base.apk
+**/out/*-aligned.apk
+**/out/*.apk.idsig
+**/out/classes.dex
+**/out/lib*.so
+**/stage/
 debug.keystore
 harness.log

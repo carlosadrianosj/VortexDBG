@@ -44,8 +44,8 @@ import java.util.zip.ZipFile;
 public class McpDemoHarness {
 
     public static void main(String[] args) throws Exception {
-        File appJar = new File("tests/MCP/out/mcpdemo.jar");
-        File apk = new File("tests/MCP/out/mcpdemo.apk");
+        File appJar = new File("tests/MCP/01app/out/mcpdemo.jar");
+        File apk = new File("tests/MCP/01app/out/mcpdemo.apk");
         // Extract to a fixed filename so the loaded module is named "libvault.so" (the native
         // by-name MCP tools resolve modules by file name, not by a temp name).
         File soDir = Files.createTempDirectory("mcpdemo").toFile();

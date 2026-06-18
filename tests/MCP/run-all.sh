@@ -30,12 +30,11 @@ if [ ! -f /tmp/mcp_deps.txt ]; then
 fi
 CP="$MODCP:$(cat /tmp/mcp_deps.txt)"
 
-# ---- compile the harness if needed ------------------------------------------
-if [ ! -f vortexdbg-android/target/test-classes/com/vortexdbg/mcpdemo/McpDemoHarness.class ]; then
-  echo ">>> compiling McpDemoHarness..."
-  "$JAVAC" -source 8 -target 8 -cp "$CP" -d vortexdbg-android/target/test-classes \
-    tests/MCP/harness/McpDemoHarness.java 2>/dev/null
-fi
+# ---- compile the harnesses if needed ----------------------------------------
+echo ">>> compiling harnesses (01app + 02app)..."
+"$JAVAC" -source 8 -target 8 -cp "$CP" -d vortexdbg-android/target/test-classes \
+  tests/MCP/01app/harness/McpDemoHarness.java \
+  tests/MCP/02app/harness/GuardHarness.java 2>/dev/null
 
 # ---- MCP client helpers -----------------------------------------------------
 # call <tool> <json-args> : POST a tools/call and print the text result.
@@ -49,12 +48,18 @@ grab() { HANDLE=$(echo "$1" | grep -oE '0x[0-9a-f]+' | head -1); }
 sec() { echo; echo "============================================================"; echo "## $1"; echo "============================================================"; }
 t()   { echo; echo "--- $1 ---"; }
 
-# ---- boot harness + MCP server ----------------------------------------------
-echo ">>> booting McpDemoHarness (this loads libvault.so + creates the VM)..."
-( printf 'mcp\n'; sleep 70; printf 'exit\n'; sleep 1 ) | "$JAVA" -cp "$CP" com.vortexdbg.mcpdemo.McpDemoHarness > tests/MCP/harness.log 2>&1 &
-HPID=$!
-sleep 10
-grep -q "MCP server started" tests/MCP/harness.log || { echo "!! MCP server did not start"; cat tests/MCP/harness.log; kill $HPID 2>/dev/null; exit 1; }
+# boot <mainclass> : start a harness, type `mcp`, wait for the server. stop : kill it.
+boot() {
+  echo ">>> booting $1 ..."
+  ( printf 'mcp\n'; sleep 90; printf 'exit\n'; sleep 1 ) | "$JAVA" -cp "$CP" "$1" > tests/MCP/harness.log 2>&1 &
+  HPID=$!
+  sleep 10
+  grep -q "MCP server started" tests/MCP/harness.log || { echo "!! MCP server did not start for $1"; cat tests/MCP/harness.log; kill $HPID 2>/dev/null; exit 1; }
+}
+stop() { kill $HPID 2>/dev/null; wait 2>/dev/null; sleep 1; }
+
+# ============================  PHASE 1: 01app  ===============================
+boot com.vortexdbg.mcpdemo.McpDemoHarness
 
 {
 echo "################  VORTEX-DBG MCP TEST SUITE  ################"
@@ -192,8 +197,51 @@ t "remove_breakpoint @bp ($BPADDR)";                               call remove_b
 t "continue_execution -> finish (+ flush trace_code events)";      call continue_execution '{}'; call poll_events '{"timeout_ms":"4000"}'
 
 echo
-echo "################  DONE — see $LOG  ################"
+echo "################  PHASE 1 (01app) DONE  ################"
 } 2>&1 | tee -a "$LOG"
+stop
 
-kill $HPID 2>/dev/null
-wait 2>/dev/null
+# ============================  PHASE 2: 02app  ===============================
+# 02app (com.example.guard) binds its natives via RegisterNatives and reads device-identity
+# fields through JNI, so the tools that returned "empty but correct" on 01app now show a
+# VISIBLE effect: RegisterNatives bindings appear, and dvm_spoof_env / dvm_mock_jni actually
+# change what the native methods return.
+boot com.vortexdbg.mcpguard.GuardHarness
+GM='{"class":"com/example/guard/Guard","method":"deviceModel()Ljava/lang/String;","args":[]}'
+GE='{"class":"com/example/guard/Guard","method":"isEmulator()Z","args":[]}'
+{
+echo "################  VORTEX-DBG MCP TEST SUITE — PHASE 2 (02app / Guard)  ################"
+echo "RegisterNatives + JNI reads of Device.MODEL/FINGERPRINT -> visible spoof/mock effects."
+
+sec "02app — RegisterNatives is now visible"
+t "dvm_list_native_registrations — real bindings (was empty on 01app)"; call dvm_list_native_registrations '{}'
+t "dvm_resolve_method deviceModel — now native-bound";             call dvm_resolve_method '{"name":"deviceModel"}'
+t "dvm_describe_class Guard — native-bound section populated";      call dvm_describe_class '{"class":"com/example/guard/Guard"}'
+
+sec "02app — dvm_spoof_env has a VISIBLE effect (defeat emulator detection)"
+t "BASELINE deviceModel()";                                        call dvm_call_static "$GM"
+t "BASELINE isEmulator() — detected as emulator";                  call dvm_call_static "$GE"
+t "dvm_spoof_env preset=pixel";                                    call dvm_spoof_env '{"preset":"pixel"}'
+t "deviceModel() AFTER spoof -> Pixel 7";                          call dvm_call_static "$GM"
+t "isEmulator() AFTER spoof -> false (detection defeated)";        call dvm_call_static "$GE"
+t "dvm_spoof_env disable";                                         call dvm_spoof_env '{"enable":false}'
+t "deviceModel() after disable -> back to baseline";               call dvm_call_static "$GM"
+
+sec "02app — dvm_mock_jni / dvm_trace_jni on the device reads"
+t "dvm_trace_jni enable";                                          call dvm_trace_jni '{"enable":true}'
+t "(call deviceModel -> native reads Device.MODEL via JNI)";       call dvm_call_static "$GM" >/dev/null
+t "dvm_jni_log — recorded getStaticObjectField(MODEL)";            call dvm_jni_log '{}'
+t "dvm_mock_jni MODEL -> PWNED-DEVICE";                            call dvm_mock_jni '{"signature":"MODEL","return":"PWNED-DEVICE"}'
+t "deviceModel() with MODEL mocked";                               call dvm_call_static "$GM"
+t "dvm_mock_jni MODEL remove; dvm_trace_jni disable";              call dvm_mock_jni '{"signature":"MODEL","remove":"true"}' >/dev/null; call dvm_trace_jni '{"enable":false}'
+
+sec "02app — dvm_spoof_env currentTimeMillis affects bootToken()"
+t "BASELINE bootToken() (System.currentTimeMillis()/1000)";        call dvm_call_static '{"class":"com/example/guard/Guard","method":"bootToken()J","args":[]}'
+t "dvm_spoof_env currentTimeMillis=1700000000000";                 call dvm_spoof_env '{"overrides":{"currentTimeMillis":"1700000000000"}}'
+t "bootToken() AFTER spoof -> 1700000000";                         call dvm_call_static '{"class":"com/example/guard/Guard","method":"bootToken()J","args":[]}'
+t "dvm_spoof_env disable";                                         call dvm_spoof_env '{"enable":false}' >/dev/null; echo done
+
+echo
+echo "################  PHASE 2 (02app) DONE — see $LOG  ################"
+} 2>&1 | tee -a "$LOG"
+stop

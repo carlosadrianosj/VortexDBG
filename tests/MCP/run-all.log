@@ -548,7 +548,7 @@ Total: 2 breakpoint(s)
 {"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
 {"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
 {"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
-{"event":"breakpoint_hit","pc":"0x1200056c","tid":31659,"is_main_thread":true,"module":"libvault.so","offset":"0x56c"}
+{"event":"breakpoint_hit","pc":"0x1200056c","tid":5304,"is_main_thread":true,"module":"libvault.so","offset":"0x56c"}
 
 --- read_args — function args at entry ---
 X0=0xfffe1640
@@ -594,11 +594,11 @@ Zero: X19,X20,X21,X22,X23,X24,X25,X26,X27,X28
 No call stack frames available.
 --- step_into 2 instructions ---
 Stepping 2 insn.1 event(s):
-{"event":"breakpoint_hit","pc":"0x12000574","tid":31659,"is_main_thread":true,"module":"libvault.so","offset":"0x574"}
+{"event":"breakpoint_hit","pc":"0x12000574","tid":5304,"is_main_thread":true,"module":"libvault.so","offset":"0x574"}
 
 --- step_over — step one instruction (over calls) ---
 Stepping over.1 event(s):
-{"event":"breakpoint_hit","pc":"0x12000578","tid":31659,"is_main_thread":true,"module":"libvault.so","offset":"0x578"}
+{"event":"breakpoint_hit","pc":"0x12000578","tid":5304,"is_main_thread":true,"module":"libvault.so","offset":"0x578"}
 
 --- next_block — run to next basic block ---
 Resuming, break at next block.1 event(s):
@@ -612,4 +612,121 @@ Resuming, break on 'bl'.
 
 --- continue_execution -> finish (+ flush trace_code events) ---
 
-################  DONE — see tests/MCP/run-all.log  ################
+################  PHASE 1 (01app) DONE  ################
+################  VORTEX-DBG MCP TEST SUITE — PHASE 2 (02app / Guard)  ################
+RegisterNatives + JNI reads of Device.MODEL/FINGERPRINT -> visible spoof/mock effects.
+
+============================================================
+## 02app — RegisterNatives is now visible
+============================================================
+
+--- dvm_list_native_registrations — real bindings (was empty on 01app) ---
+RegisterNatives bindings (lazy: only classes the .so has registered)
+com/example/guard/Guard (3):
+  bootToken()J -> 0x12000768
+  isEmulator()Z -> 0x12000668
+  deviceModel()Ljava/lang/String; -> 0x1200065c
+totals: 1 class(es), 3 binding(s)
+
+--- dvm_resolve_method deviceModel — now native-bound ---
+dvm_resolve_method name='deviceModel' native_only=true : scanned 4 class(es), 1 native-bound candidate(s).
+  com/example/guard/Guard -> deviceModel()Ljava/lang/String;  [native-bound]
+
+--- dvm_describe_class Guard — native-bound section populated ---
+class com.example.guard.Guard
+  internal name = com/example/guard/Guard
+  superclass = (none / unresolved)
+  interfaces = (none recorded)
+note: members below are only those the VM has touched so far (lazy model).
+static methods (0):
+  (none registered)
+instance methods (0):
+  (none registered)
+static fields (0):
+  (none registered)
+instance fields (0):
+  (none registered)
+native-bound (RegisterNatives) (3):
+  bootToken()J -> 0x12000768
+  isEmulator()Z -> 0x12000668
+  deviceModel()Ljava/lang/String; -> 0x1200065c
+
+============================================================
+## 02app — dvm_spoof_env has a VISIBLE effect (defeat emulator detection)
+============================================================
+
+--- BASELINE deviceModel() ---
+com/example/guard/Guard.deviceModel -> "sdk_gphone64_arm64"
+--- BASELINE isEmulator() — detected as emulator ---
+com/example/guard/Guard.isEmulator -> true
+--- dvm_spoof_env preset=pixel ---
+Spoofing enabled (preset=pixel). 6 key(s) now spoofed via the JNI hook:
+  Build.MODEL = Pixel 7
+  Build.MANUFACTURER = Google
+  Build.BRAND = google
+  Build.FINGERPRINT = google/panther/panther:13/TQ3A.230805.001/10316531:user/release-keys
+  getSerial = PIXEL000SERIAL01
+  ANDROID_ID = a1b2c3d4e5f60718
+Note: only affects native->Java callbacks during emulated calls. Call again with enable=false to restore the original jni.
+--- deviceModel() AFTER spoof -> Pixel 7 ---
+com/example/guard/Guard.deviceModel -> "Pixel 7"
+--- isEmulator() AFTER spoof -> false (detection defeated) ---
+com/example/guard/Guard.isEmulator -> false
+--- dvm_spoof_env disable ---
+Spoofing disabled; interceptor removed.
+--- deviceModel() after disable -> back to baseline ---
+com/example/guard/Guard.deviceModel -> "sdk_gphone64_arm64"
+============================================================
+## 02app — dvm_mock_jni / dvm_trace_jni on the device reads
+============================================================
+
+--- dvm_trace_jni enable ---
+JNI tracing enabled (interceptor installed via setJni, fallback = previous jni).
+  filter: (all)
+  max:    200
+  buffered entries: 0
+Use dvm_jni_log to read recorded calls. enable=false restores the original jni.
+--- (call deviceModel -> native reads Device.MODEL via JNI) ---
+
+--- dvm_jni_log — recorded getStaticObjectField(MODEL) ---
+JNI interceptor: installed, tracing ON, filter=(all)
+Active mocks: 0
+Active breakpoints: 0
+
+Trace entries (1):
+  #0 [getStaticObjectField] com/example/guard/Device->MODEL:Ljava/lang/String;
+      args: (field)
+      ret:  "sdk_gphone64_arm64"
+
+Break events (0):
+  (none)
+
+--- dvm_mock_jni MODEL -> PWNED-DEVICE ---
+Mock registered: signature contains 'MODEL' -> 'PWNED-DEVICE' (unlimited uses).
+Object returns => Java String; int/long => parsed number; boolean => true/1/yes. Interceptor installed; mock applies to overridden object/primitive calls during emulation.
+--- deviceModel() with MODEL mocked ---
+com/example/guard/Guard.deviceModel -> "PWNED-DEVICE"
+--- dvm_mock_jni MODEL remove; dvm_trace_jni disable ---
+JNI interception disabled; original jni restored. (Trace buffer kept; mocks/breaks remain registered but inert until reinstalled.)
+============================================================
+## 02app — dvm_spoof_env currentTimeMillis affects bootToken()
+============================================================
+
+--- BASELINE bootToken() (System.currentTimeMillis()/1000) ---
+com/example/guard/Guard.bootToken -> 1781808336
+--- dvm_spoof_env currentTimeMillis=1700000000000 ---
+Spoofing enabled. 7 key(s) now spoofed via the JNI hook:
+  Build.MODEL = Android SDK built for arm64
+  Build.MANUFACTURER = unknown
+  Build.BRAND = generic
+  Build.FINGERPRINT = generic/sdk_gphone_arm64/emulator:13/TE1A.220922.034/9101199:userdebug/test-keys
+  getSerial = GENERIC00SERIAL1
+  ANDROID_ID = 0123456789abcdef
+  currentTimeMillis = 1700000000000
+Note: only affects native->Java callbacks during emulated calls. Call again with enable=false to restore the original jni.
+--- bootToken() AFTER spoof -> 1700000000 ---
+com/example/guard/Guard.bootToken -> 1700000000
+--- dvm_spoof_env disable ---
+done
+
+################  PHASE 2 (02app) DONE — see tests/MCP/run-all.log  ################
