@@ -548,7 +548,7 @@ Total: 2 breakpoint(s)
 {"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
 {"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
 {"event":"execution_started","pc":"0x1200056c","module":"libvault.so","offset":"0x56c"}
-{"event":"breakpoint_hit","pc":"0x1200056c","tid":7155,"is_main_thread":true,"module":"libvault.so","offset":"0x56c"}
+{"event":"breakpoint_hit","pc":"0x1200056c","tid":1547,"is_main_thread":true,"module":"libvault.so","offset":"0x56c"}
 
 --- read_args: function args at entry ---
 X0=0xfffe1640
@@ -594,11 +594,11 @@ Zero: X19,X20,X21,X22,X23,X24,X25,X26,X27,X28
 No call stack frames available.
 --- step_into 2 instructions ---
 Stepping 2 insn.1 event(s):
-{"event":"breakpoint_hit","pc":"0x12000574","tid":7155,"is_main_thread":true,"module":"libvault.so","offset":"0x574"}
+{"event":"breakpoint_hit","pc":"0x12000574","tid":1547,"is_main_thread":true,"module":"libvault.so","offset":"0x574"}
 
 --- step_over: step one instruction (over calls) ---
 Stepping over.1 event(s):
-{"event":"breakpoint_hit","pc":"0x12000578","tid":7155,"is_main_thread":true,"module":"libvault.so","offset":"0x578"}
+{"event":"breakpoint_hit","pc":"0x12000578","tid":1547,"is_main_thread":true,"module":"libvault.so","offset":"0x578"}
 
 --- next_block: run to next basic block ---
 Resuming, break at next block.1 event(s):
@@ -713,7 +713,7 @@ JNI interception disabled; original jni restored. (Trace buffer kept; mocks/brea
 ============================================================
 
 --- BASELINE bootToken() (System.currentTimeMillis()/1000) ---
-com/example/guard/Guard.bootToken -> 1781813753
+com/example/guard/Guard.bootToken -> 1781875593
 --- dvm_spoof_env currentTimeMillis=1700000000000 ---
 Spoofing enabled. 7 key(s) now spoofed via the JNI hook:
   Build.MODEL = Android SDK built for arm64
@@ -841,7 +841,7 @@ Breakpoint added at faulty_after_throw (0x1200063c, libfaulty.so+0x63c)
 3 event(s):
 {"event":"execution_started","pc":"0x12000654","module":"libfaulty.so","offset":"0x654"}
 {"event":"execution_started","pc":"0x12000654","module":"libfaulty.so","offset":"0x654"}
-{"event":"breakpoint_hit","pc":"0x1200063c","tid":9765,"is_main_thread":true,"module":"libfaulty.so","offset":"0x63c"}
+{"event":"breakpoint_hit","pc":"0x1200063c","tid":3430,"is_main_thread":true,"module":"libfaulty.so","offset":"0x63c"}
 
 --- dvm_pending_exception -> IllegalArgumentException (REAL) ---
 pending exception:
@@ -875,7 +875,7 @@ Breakpoint added at 0x120005b4
 --- poll_events -> breakpoint_hit inside deep_level3 ---
 2 event(s):
 {"event":"execution_started","pc":"0x12000618","module":"libdeep.so","offset":"0x618"}
-{"event":"breakpoint_hit","pc":"0x120005b4","tid":9953,"is_main_thread":true,"module":"libdeep.so","offset":"0x5b4"}
+{"event":"breakpoint_hit","pc":"0x120005b4","tid":3659,"is_main_thread":true,"module":"libdeep.so","offset":"0x5b4"}
 
 --- get_callstack -> real multi-frame backtrace ---
 #0   0x120005d4  libdeep.so+0x5d4  (deep_level2+0xc)
@@ -883,7 +883,7 @@ Breakpoint added at 0x120005b4
 
 --- get_threads -> the running task (with its args) ---
 1 thread(s):
-  tid=9953: Runnable|Function64 address=0x12000618, arguments=[vortexdbg@0xfffe1640, 1960155356, 7]
+  tid=3659: Runnable|Function64 address=0x12000618, arguments=[vortexdbg@0xfffe1640, 1960155356, 7]
 
 --- remove_breakpoint; continue_execution ---
 done
