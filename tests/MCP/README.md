@@ -10,7 +10,7 @@ tool, and [`run-all.log`](run-all.log) is the captured output of a full run.
   including the native breakpoint flow.
 - **[`02app/`](02app)** (`com.example.guard`): an "anti-tamper" app whose natives are bound via
   **RegisterNatives** and read device-identity fields through JNI. It exists so the tools that
-  returned "empty but correct" against 01app show a **real, visible effect** — `dvm_spoof_env`
+  returned "empty but correct" against 01app show a **real, visible effect**: `dvm_spoof_env`
   actually flips emulator detection, `dvm_mock_jni` changes the model string, and
   `dvm_list_native_registrations` / `dvm_resolve_method` now list real bindings.
 - **[`03app/`](03app)** (`com.example.secure`): a real **C++** native target (`std::string` /
@@ -61,7 +61,7 @@ in `run-all.sh`), which is the simplest way to see exactly what each tool receiv
 
 ## 2. The demo apps
 
-### 01app — `com.example.mcpdemo` (breadth: covers all 86 tools)
+### 01app `com.example.mcpdemo` (breadth: covers all 86 tools)
 
 A tiny mixed Java+native app whose surface covers every shape an MCP tool needs to act on. Its
 natives are bound by `Java_` symbol name (so they're resolved lazily on first call).
@@ -78,7 +78,7 @@ natives are bound by `Java_` symbol name (so they're resolved lazily on first ca
 
 Source: [`01app/src/com/example/mcpdemo/`](01app/src/com/example/mcpdemo) + [`01app/jni/vault.c`](01app/jni/vault.c).
 
-### 02app — `com.example.guard` (depth: makes the "empty" tools show real effects)
+### 02app `com.example.guard` (depth: makes the "empty" tools show real effects)
 
 An anti-tamper style app. Its natives are bound via **RegisterNatives** in `JNI_OnLoad`, and they
 read device-identity fields through JNI. This is what makes the difference between "the tool ran"
@@ -93,7 +93,7 @@ and "the tool *did* something":
 Source: [`02app/src/com/example/guard/`](02app/src/com/example/guard) + [`02app/jni/guard.c`](02app/jni/guard.c).
 (`Device` here is a host-backed stand-in for `android.os.Build`, since the host JVM has no `android.os.Build`.)
 
-### 03app — `com.example.secure` (a real C++ target for `read_std_string`)
+### 03app `com.example.secure` (a real C++ target for `read_std_string`)
 
 `libsecure.so` is written in C++ and uses `std::string` / `std::vector` (libc++ linked statically,
 so the emulator needs no `libc++_shared.so`). `Secure.process(input)` runs a rolling-key stream
@@ -107,7 +107,7 @@ cipher and stashes the plaintext in a global libc++ `std::string`.
 
 Source: [`03app/src/com/example/secure/`](03app/src/com/example/secure) + [`03app/jni/secure.cpp`](03app/jni/secure.cpp).
 
-### 04app — `com.example.store` (real linked structs for the pointer/struct tools)
+### 04app `com.example.store` (real linked structs for the pointer/struct tools)
 
 `libstore.so` builds a chain of `Session` structs on the native heap
 (`{ uint32 id; uint32 flags; char name[16]; Session* next; }`, 32 bytes), `g_head -> alice -> bob -> carol`.
@@ -120,7 +120,7 @@ Source: [`03app/src/com/example/secure/`](03app/src/com/example/secure) + [`03ap
 
 Source: [`04app/src/com/example/store/`](04app/src/com/example/store) + [`04app/jni/store.cpp`](04app/jni/store.cpp).
 
-### 05app — `com.example.faulty` (a real pending JNI exception)
+### 05app `com.example.faulty` (a real pending JNI exception)
 
 `Faulty.risky(input)` returns "accepted" for `"ok"`; otherwise the native code calls `ThrowNew`
 (java.lang.IllegalArgumentException). The pending exception is cleared when the JNI call returns
@@ -129,7 +129,7 @@ Source: [`04app/src/com/example/store/`](04app/src/com/example/store) + [`04app/
 
 Source: [`05app/src/com/example/faulty/`](05app/src/com/example/faulty) + [`05app/jni/faulty.c`](05app/jni/faulty.c).
 
-### 06app — `com.example.deep` (real backtrace + running task)
+### 06app `com.example.deep` (real backtrace + running task)
 
 `Deep.compute(n)` runs a non-inlined chain `compute -> deep_level1 -> deep_level2 -> deep_level3`.
 A breakpoint inside `deep_level3` (past its prologue) gives `get_callstack` a real multi-frame
@@ -138,7 +138,7 @@ backtrace, and `get_threads` shows the running task (with its arguments) while p
 Source: [`06app/src/com/example/deep/`](06app/src/com/example/deep) + [`06app/jni/deep.c`](06app/jni/deep.c).
 
 Why "mixed": `seal` (01app) runs native code **and** calls back into Java, so a single call crosses
-the JNI bridge in both directions — the fusion Vortex-DBG reproduces off-device, and what makes the
+the JNI bridge in both directions, the fusion Vortex-DBG reproduces off-device, and what makes the
 hook/trace tools observable.
 
 ---
@@ -205,7 +205,7 @@ Then ask the AI to call the tools below.
 
 ---
 
-## 4. Tool reference — NATIVE (ARM) side (44)
+## 4. Tool reference NATIVE (ARM) side (44)
 
 Drives `libvault.so` on the CPU emulator. Most work any time; the breakpoint/step/trace tools work
 once execution is paused (see the walkthrough). Addresses are hex strings; `args` for calls are
@@ -281,7 +281,7 @@ typed strings: `"0x10"` (hex int), `"s:text"` (C string), `"b:48656c6c6f"` (hex 
 
 ---
 
-## 5. Tool reference — DALVIK / JAVA (DVM) side (42)
+## 5. Tool reference DALVIK / JAVA (DVM) side (42)
 
 Drives the host-JVM Dalvik VM. Register the provider with
 `debugger.addMcpToolProvider(new DvmMcpTools(emulator, vm))` (the harness does this).
@@ -407,7 +407,7 @@ Object handles are JNI hashes (decimal or `0x`-hex); object/array arguments may 
 * `dvm_new_object` / instance field access work by constructing/reading the **host** object under
   `ProxyClassFactory` (the normal app mode); `allocObject` is not supported by `ProxyJni`.
 * `dvm_break_on_jni` records a snapshot at the callback; it does not suspend the thread (the
-  emulate-on-call model has no separate thread to suspend) — use a native breakpoint to truly pause.
+  emulate-on-call model has no separate thread to suspend) use a native breakpoint to truly pause.
 
 ---
 
@@ -418,42 +418,42 @@ run-all.sh                                       drives both apps via curl (the 
 run-all.log                                      captured output of a full two-phase run
 README.md                                        this file
 
-01app/  (com.example.mcpdemo — breadth, all 86 tools)
+01app/  (com.example.mcpdemo breadth, all 86 tools)
   src/com/example/mcpdemo/{Vault,Device}.java    mixed Java + native app
   jni/vault.c                                    native lib (seal static + transform instance)
   AndroidManifest.xml · build.sh                 builds out/mcpdemo.{apk,jar} + libvault.so
   harness/McpDemoHarness.java                    boots Vortex + MCP server for 01app
   out/                                           build artifacts (apk/jar committed)
 
-02app/  (com.example.guard — depth, visible spoof/RegisterNatives effects)
+02app/  (com.example.guard depth, visible spoof/RegisterNatives effects)
   src/com/example/guard/{Guard,Device}.java      RegisterNatives + device-identity reads
   jni/guard.c                                    native lib (JNI_OnLoad RegisterNatives)
   AndroidManifest.xml · build.sh                 builds out/guard.{apk,jar} + libguard.so
   harness/GuardHarness.java                      boots Vortex + MCP server for 02app
   out/                                           build artifacts (apk/jar committed)
 
-03app/  (com.example.secure — real C++ target for read_std_string)
+03app/  (com.example.secure real C++ target for read_std_string)
   src/com/example/secure/Secure.java             native process(input)
   jni/secure.cpp                                 C++ lib (std::string/std::vector, real crypto)
   AndroidManifest.xml · build.sh                 builds out/secure.{apk,jar} + libsecure.so
   harness/SecureHarness.java                     boots Vortex + MCP server for 03app
   out/                                           build artifacts (apk/jar committed)
 
-04app/  (com.example.store — real linked structs for read_pointer/read_typed)
+04app/  (com.example.store real linked structs for read_pointer/read_typed)
   src/com/example/store/Store.java               native build() / rootScore()
   jni/store.cpp                                   C++ lib (Session linked list on the heap)
   AndroidManifest.xml · build.sh                 builds out/store.{apk,jar} + libstore.so
   harness/StoreHarness.java                      boots Vortex + MCP server for 04app
   out/                                           build artifacts (apk/jar committed)
 
-05app/  (com.example.faulty — real pending JNI exception)
+05app/  (com.example.faulty real pending JNI exception)
   src/com/example/faulty/Faulty.java             native risky(input)
   jni/faulty.c                                    native lib (ThrowNew + faulty_after_throw marker)
   AndroidManifest.xml · build.sh                 builds out/faulty.{apk,jar} + libfaulty.so
   harness/FaultyHarness.java                     boots Vortex + MCP server for 05app
   out/                                           build artifacts (apk/jar committed)
 
-06app/  (com.example.deep — real backtrace + running task)
+06app/  (com.example.deep real backtrace + running task)
   src/com/example/deep/Deep.java                 native compute(n)
   jni/deep.c                                      native lib (deep non-inlined call chain)
   AndroidManifest.xml · build.sh                 builds out/deep.{apk,jar} + libdeep.so

@@ -9,7 +9,7 @@ public class TikTokAuto {
         for (byte b : out) sb.append(String.format("%02x", b & 0xff));
         System.out.println("===== TikTok libttEncrypt (emulated ARM, real AES) =====");
         System.out.println("ttEncrypt(16x 0x00) = " + sb + "  (" + out.length + " bytes)");
-        System.out.println("RESULT: " + (out.length > 0 ? "OK — native crypto emulated off-device" : "FAIL"));
+        System.out.println("RESULT: " + (out.length > 0 ? "OK, native crypto emulated off-device" : "FAIL"));
         t.destroy();
     }
 }
