@@ -86,9 +86,7 @@ open class AndroidElfLoader(emulator: Emulator<AndroidFileIO>, syscallHandler: U
     override fun setLibraryResolver(libraryResolver: LibraryResolver) {
         super.setLibraryResolver(libraryResolver)
 
-        /*
-         * 注意打开顺序很重要
-         */
+        // Order matters: stdin/stdout/stderr must take fds 0, 1, 2 respectively.
         syscallHandler.open(emulator, IO.STDIN, IOConstants.O_RDONLY)
         syscallHandler.open(emulator, IO.STDOUT, IOConstants.O_WRONLY)
         syscallHandler.open(emulator, IO.STDERR, IOConstants.O_WRONLY)

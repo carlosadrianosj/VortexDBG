@@ -184,7 +184,7 @@ class AndroidServer(emulator: Emulator<*>, private val protocolVersion: Byte) :
     }
 
     private fun requestBreakPointAction(buffer: ByteBuffer) {
-        val action = Utils.unpack_dd(buffer) // 0表示删除断点，1表示设置断点
+        val action = Utils.unpack_dd(buffer) // 0 = remove breakpoint, 1 = set breakpoint
         if (action == 0L) {
             val b2 = Utils.unpack_dd(buffer)
             var address = Utils.unpack_dq(buffer)
@@ -450,7 +450,7 @@ class AndroidServer(emulator: Emulator<*>, private val protocolVersion: Byte) :
     }
 
     /**
-     * @param type 0x1表示attach成功，0x400表示要求继续执行
+     * @param type 0x1 = attach succeeded, 0x400 = resume execution requested
      */
     private fun notifyProcessEvent(buffer: ByteBuffer, type: Int) {
         val pid = Utils.unpack_dd(buffer)

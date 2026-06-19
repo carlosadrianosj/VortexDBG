@@ -13,7 +13,7 @@ interface Debugger : Breaker, DebugHook, BlockHook {
     fun addBreakPoint(module: Module?, offset: Long, callback: BreakPointCallback): BreakPoint
 
     /**
-     * @param address 奇数地址表示thumb断点
+     * @param address an odd address denotes a Thumb-mode breakpoint
      */
     fun addBreakPoint(address: Long): BreakPoint
     fun addBreakPoint(address: Long, callback: BreakPointCallback?): BreakPoint

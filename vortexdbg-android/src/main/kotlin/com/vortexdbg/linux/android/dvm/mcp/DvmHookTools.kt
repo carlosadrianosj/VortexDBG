@@ -27,13 +27,17 @@ import java.util.ArrayDeque
  *
  *  - `dvm_trace_jni`  : record every overridden native->Java call (kind/signature/args/result) into a
  *                       capped ring buffer, optionally filtered by signature substring, then delegate.
+ *                       Example prompt: "Start tracing every JNI call whose signature contains 'getDeviceId'."
  *  - `dvm_jni_log`    : dump (and optionally clear) the recorded trace + break events.
+ *                       Example prompt: "Show me the JNI calls captured so far, then clear the log."
  *  - `dvm_mock_jni`   : substitute a cooked return value for calls whose signature contains a needle
  *                       (StringObject for object returns, parsed primitive for int/long/bool), with an
  *                       optional TTL (N uses then auto-removed).
+ *                       Example prompt: "Make any JNI call to isRooted() return false."
  *  - `dvm_break_on_jni`: record a "break event" (signature + args snapshot) when a matching call fires.
  *                       True thread suspension is NOT feasible in the emulate-on-call model, so the only
  *                       supported actions are `snapshot` and `log` (both just capture; execution continues).
+ *                       Example prompt: "Capture the arguments every time getSecretKey is called."
  *
  * Like the spoof hook this only affects native->Java callbacks made during emulated calls; it does not
  * patch the host JVM. Only a handful of [Jni] methods are overridden; everything else is delegated to the

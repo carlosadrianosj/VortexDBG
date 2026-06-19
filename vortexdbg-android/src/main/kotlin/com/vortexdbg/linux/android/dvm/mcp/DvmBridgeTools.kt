@@ -17,6 +17,16 @@ import com.vortexdbg.mcp.McpTools
  * the opaque 32-bit JNI peers a `.so` sees (jobject / jmethodID / jfieldID / jclass) to the live
  * DVM objects, methods, fields and classes that Vortex holds, and reads JNI call arguments straight
  * out of the CPU registers at a breakpoint.
+ *
+ * Tools (with an example natural-language prompt for an AI):
+ *  - `dvm_resolve_native_handle`: turn a raw jobject/jmethodID/jfieldID peer into the live DVM entity.
+ *    Example prompt: "What does the native handle 0xdeadbeef refer to?"
+ *  - `dvm_handle_to_native`: inverse — show the native peer + ref scope/refCount for a DVM hash.
+ *    Example prompt: "What native pointer does the .so see for DVM handle 0x1234, and is it a global ref?"
+ *  - `dvm_args_at_breakpoint`: decode the JNI argument registers at the current stop into DVM objects.
+ *    Example prompt: "Decode the JNI arguments for this native method, signature (Ljava/lang/String;I)V."
+ *  - `dvm_class_of_native`: identify the class behind a jclass peer or a Java_ mangled export symbol.
+ *    Example prompt: "Which class owns the native symbol Java_com_x_Foo_bar and what natives are registered on it?"
  */
 class DvmBridgeTools(private val emulator: Emulator<*>, private val vm: VM) : DvmSubTools {
 

@@ -42,7 +42,7 @@ enum class Hasher : HashFunction {
                 i += 4
             }
 
-            // 尾部字节
+            // tail bytes
             var tail = 0
             when (len and 3) {
                 3 -> {
@@ -71,7 +71,7 @@ enum class Hasher : HashFunction {
                 }
             }
 
-            // 最终混合（fmix）
+            // final mix (fmix)
             h = h xor len
             h = h xor (h ushr 16)
             h *= 0x85ebca6b.toInt()

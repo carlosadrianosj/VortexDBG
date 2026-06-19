@@ -21,11 +21,7 @@ import com.vortexdbg.unwind.Unwinder
 import java.io.File
 import java.net.URL
 
-/**
- * android arm emulator
- * Created by zhkl0228 on 2017/5/2.
- */
-
+/** ARM64 (AArch64) Android emulator: wires up the loader, syscall handler, dyld and Dalvik VM. */
 open class AndroidARM64Emulator internal constructor(
     processName: String?,
     rootDir: File?,

@@ -5,7 +5,7 @@ import com.vortexdbg.Emulator
 interface TraceReadListener {
 
     /**
-     * @return 返回<code>true</code>打印内存信息
+     * @return `true` to let the tracer print the memory access information
      */
     fun onRead(emulator: Emulator<*>, address: Long, data: ByteArray, hex: String): Boolean
 

@@ -17,6 +17,14 @@ import com.vortexdbg.mcp.McpTools
  * VM has *touched*, not the full Java class definition. None of these tools mutate VM state; in
  * particular dvm_describe_method does NOT call getMethodID/getStaticMethodID (those register the member
  * as a side effect) — it only searches what is already registered and otherwise pure-parses the input.
+ *
+ * Tools (with an example natural-language prompt for an AI):
+ *  - `dvm_list_native_registrations`: dump every RegisterNatives binding (signature -> pointer), optionally per class.
+ *    Example prompt: "List all native methods registered so far for com.example.Foo."
+ *  - `dvm_describe_class`: report the touched members (methods/fields) and natives of a resolved class.
+ *    Example prompt: "Describe what the VM knows about class com/example/Foo."
+ *  - `dvm_describe_method`: decode a method descriptor and report its static/native-bound status.
+ *    Example prompt: "Decode the signature seal(Ljava/lang/String;)Ljava/lang/String; on Foo — is it native?"
  */
 class DvmReflectTools(private val emulator: Emulator<*>, private val vm: VM) : DvmSubTools {
 

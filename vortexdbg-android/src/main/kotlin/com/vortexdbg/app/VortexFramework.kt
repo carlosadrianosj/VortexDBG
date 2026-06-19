@@ -4,17 +4,17 @@ import java.io.File
 import java.util.Collections
 
 /**
- * Camada de framework Android para a execução das classes do app na JVM host (A1 / WF4).
+ * Android framework layer for running the app's classes on the host JVM (A1 / WF4).
  *
- * Disponibiliza as classes {@code android.*} para o código do app, usando o
- * <b>android-all</b> da Robolectric (AOSP real — não o stub {@code android.jar}).
- * Para a grande maioria das classes AOSP "sem shadow" (Base64, TextUtils, JSON,
- * coleções, crypto helpers, etc.) isso já basta — elas executam de verdade na host JVM.
+ * Exposes the android.* classes to app code using Robolectric's android-all (real AOSP,
+ * not the android.jar stub). For the vast majority of "shadow-less" AOSP classes (Base64,
+ * TextUtils, JSON, collections, crypto helpers, etc.) this is enough — they run for real
+ * on the host JVM.
  *
- * <p>Classes {@code android.*} que dependem de estado/serviços do runtime (Looper,
- * Context, lifecycle de Activity, Resources, Parcel) exigem a instrumentação + shadows
- * do Robolectric — ver {@code VortexRobolectricSandbox} / A-FINDINGS.md. Esta classe é o
- * ponto único onde a camada de framework é montada e, no futuro, trocada/estendida.
+ * android.* classes that depend on runtime state/services (Looper, Context, Activity
+ * lifecycle, Resources, Parcel) require Robolectric's instrumentation + shadows — see
+ * VortexRobolectricSandbox / A-FINDINGS.md. This class is the single place where the
+ * framework layer is assembled and, in the future, swapped/extended.
  */
 open class VortexFramework(androidAll: File?, vararg extraFrameworkJars: File?) {
 
@@ -34,15 +34,15 @@ open class VortexFramework(androidAll: File?, vararg extraFrameworkJars: File?) 
         this.frameworkJars = Collections.unmodifiableList(jars)
     }
 
-    /** Os jars que compõem a camada de framework. */
+    /** The jars that make up the framework layer. */
     open fun frameworkJars(): List<File> {
         return frameworkJars
     }
 
     /**
-     * Cria o classloader do app já com a camada de framework no classpath — as classes
-     * do app que tocam {@code android.*} resolvem contra o android-all. As fontes do app
-     * vêm primeiro (precedência sobre o framework).
+     * Creates the app classloader with the framework layer already on the classpath — app
+     * classes that touch android.* resolve against android-all. App sources come first, so
+     * they take precedence over the framework.
      */
     open fun newAppClassLoader(vararg appSources: File): VortexClassLoader {
         return newAppClassLoader(VortexFramework::class.java.classLoader, *appSources)
@@ -56,7 +56,7 @@ open class VortexFramework(androidAll: File?, vararg extraFrameworkJars: File?) 
     }
 
     companion object {
-        /** Conveniência: framework só com o android-all. */
+        /** Convenience: framework with android-all only. */
         @JvmStatic
         fun fromAndroidAll(androidAll: File?): VortexFramework {
             return VortexFramework(androidAll)

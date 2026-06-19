@@ -19,10 +19,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 /**
- * trace memory read
- * Created by zhkl0228 on 2017/5/2.
+ * Hook that logs memory accesses while tracing. The [read] flag selects whether
+ * read or write accesses are reported.
  */
-
 class TraceMemoryHook(private val read: Boolean) : ReadHook, WriteHook, TraceHook {
 
     private val dateFormat: DateFormat = SimpleDateFormat("[HH:mm:ss SSS]")

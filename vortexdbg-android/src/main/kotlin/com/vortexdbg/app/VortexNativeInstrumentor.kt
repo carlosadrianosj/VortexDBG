@@ -10,12 +10,12 @@ import org.objectweb.asm.commons.GeneratorAdapter
 import org.objectweb.asm.commons.Method
 
 /**
- * E (Vortex-DBG / A1) — instrumentação de bytecode dos métodos {@code native} das classes
- * do app: remove o modificador {@code native} e gera um corpo que roteia a chamada ao
- * {@link VortexNativeDispatch} (que executa a função nativa correspondente no UniDBG).
+ * Bytecode instrumentation (Vortex-DBG / A1) for the native methods of the app's classes:
+ * strips the native modifier and generates a body that routes the call to
+ * [VortexNativeDispatch] (which runs the corresponding native function in UniDBG).
  *
- * Suporta retorno void/boolean/byte/short/char/int/long/objeto/array. float/double ainda
- * não suportados (raros em JNI de cripto/assinatura).
+ * Supports void/boolean/byte/short/char/int/long/object/array returns. float/double are
+ * not yet supported (rare in crypto/signing JNI).
  */
 object VortexNativeInstrumentor {
 
@@ -51,7 +51,7 @@ object VortexNativeInstrumentor {
             val newAccess = access and Opcodes.ACC_NATIVE.inv()
             val mv = super.visitMethod(newAccess, name, descriptor, signature, exceptions)
             generate(mv, newAccess, name, descriptor)
-            return null // método nativo tratado (corpo gerado)
+            return null // native method handled (body generated, default visitor skipped)
         }
 
         private fun generate(mv: MethodVisitor, access: Int, name: String, descriptor: String) {
@@ -89,7 +89,7 @@ object VortexNativeInstrumentor {
                     ga.invokeStatic(DISPATCH, Method("dispatchLong", Type.LONG_TYPE, dispatchArgs()))
                 Type.FLOAT, Type.DOUBLE ->
                     throw UnsupportedOperationException("retorno float/double não suportado: $name")
-                else -> { // objeto/array
+                else -> { // object/array
                     ga.invokeStatic(DISPATCH, Method("dispatchObject", OBJECT, dispatchArgs()))
                     ga.checkCast(ret)
                 }

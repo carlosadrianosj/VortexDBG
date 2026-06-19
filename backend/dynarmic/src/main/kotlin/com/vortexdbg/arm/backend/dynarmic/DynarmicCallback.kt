@@ -5,7 +5,7 @@ interface DynarmicCallback {
     fun callSVC(pc: Long, swi: Int)
 
     /**
-     * 返回<code>false</code>表示未处理的指令
+     * Returns `false` when the instruction was not handled by the interpreter fallback.
      */
     fun handleInterpreterFallback(pc: Long, num_instructions: Int): Boolean
 

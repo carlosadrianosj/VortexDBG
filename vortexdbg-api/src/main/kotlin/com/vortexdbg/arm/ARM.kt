@@ -28,8 +28,8 @@ import java.util.Collections
 import java.util.Locale
 
 /**
- * arm utils
- * Created by zhkl0228 on 2017/5/11.
+ * ARM/AArch64 helpers: register dumping, instruction detail formatting, argument
+ * marshalling for the calling convention, and address/size alignment.
  */
 object ARM {
 
@@ -39,7 +39,7 @@ object ARM {
     }
 
     /**
-     * 是否为thumb32
+     * Returns true if the half-word is the first part of a 32-bit Thumb-2 instruction.
      */
     @JvmStatic
     fun isThumb32(ins: Short): Boolean {
@@ -679,7 +679,7 @@ object ARM {
             copy[15 - i] = b
         }
         val bytes = ByteArray(copy.size + 1)
-        System.arraycopy(copy, 0, bytes, 1, copy.size) // makePositive
+        System.arraycopy(copy, 0, bytes, 1, copy.size) // leading 0 byte forces an unsigned (non-negative) BigInteger
         return BigInteger(bytes)
     }
 

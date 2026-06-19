@@ -31,7 +31,12 @@ class ProxyDvmObject private constructor(vm: VM, value: Any?) :
         }
 
         /**
-         * mapping java object to dvm object
+         * Wraps a host JVM value as the DVM object the emulated code expects.
+         *
+         * Primitives arrays, strings and already-DVM values are mapped to their
+         * dedicated representations; anything else is exposed through a generic
+         * [ProxyDvmObject] whose DVM class mirrors the host class hierarchy.
+         * Returns null only when [value] is null.
          */
         @JvmStatic
         fun createObject(vm: VM, value: Any?): DvmObject<*>? {

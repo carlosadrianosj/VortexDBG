@@ -11,13 +11,11 @@ interface AndroidEmulator : ARMEmulator<AndroidFileIO> {
     fun createDalvikVM(): VM
 
     /**
-     * @param apkFile 可为null
+     * @param apkFile may be null
      */
     fun createDalvikVM(apkFile: File?): VM
 
-    /**
-     * jar as apk
-     */
+    /** Treats the calling class's code source (a jar) as the apk. */
     fun createDalvikVM(callingClass: Class<*>): VM
 
     @Suppress("unused")

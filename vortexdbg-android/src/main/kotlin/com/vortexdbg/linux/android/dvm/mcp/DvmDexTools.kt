@@ -16,6 +16,10 @@ import java.util.zip.ZipFile
  * with one (vm.unzip("classes.dex")), or from an explicit `path` (an .apk/.zip or a .dex file). Method
  * entries are emitted as "internalClass : name(args)ret" so the class + signature can be pasted
  * straight into dvm_call_static / dvm_resolve_method.
+ *
+ * Tool:
+ *  - `dvm_dex_surface`: list/search the static DEX surface (classes, methods or strings).
+ *    Example prompt: "List every DEX method whose name contains 'decrypt'."
  */
 class DvmDexTools(private val emulator: Emulator<*>, private val vm: VM) : DvmSubTools {
 

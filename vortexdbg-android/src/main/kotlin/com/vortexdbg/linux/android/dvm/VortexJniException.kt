@@ -3,17 +3,17 @@ package com.vortexdbg.linux.android.dvm
 import com.sun.jna.Pointer
 
 /**
- * Vortex-DBG (A1 / WF3) — exceção do host que carrega uma exceção JNI pendente
- * lançada pelo código nativo (ThrowNew/Throw) e não tratada via ExceptionClear.
+ * Vortex-DBG (A1 / WF3) — host exception carrying a pending JNI exception that
+ * native code raised (ThrowNew/Throw) and never cleared via ExceptionClear.
  *
- * É lançada por {@code DvmObject.callJniMethod} quando a propagação de exceção está
- * habilitada ({@link VM#setExceptionPropagation(boolean)}), traduzindo a semântica
- * JNI "exceção pendente" para a semântica de exceção da JVM host.
+ * Thrown from {@code DvmObject.callJniMethod} when exception propagation is enabled
+ * ({@link VM#setExceptionPropagation(boolean)}), translating the JNI "pending
+ * exception" semantics into the host JVM's exception semantics.
  */
 open class VortexJniException(@Transient private val pendingException: DvmObject<*>?) :
     RuntimeException(describe(pendingException)) {
 
-    /** O DvmObject da exceção nativa pendente. */
+    /** The DvmObject of the pending native exception. */
     open fun getPendingException(): DvmObject<*>? {
         return pendingException
     }
@@ -33,7 +33,7 @@ open class VortexJniException(@Transient private val pendingException: DvmObject
                     msg = v.toString()
                 }
             } catch (ignored: Exception) {
-                // valor não-legível; fica só o tipo
+                // Value not readable; fall back to the type alone.
             }
             return if (msg == null) type else "$type: $msg"
         }

@@ -27,7 +27,7 @@ internal object XxHash32 {
         return hash(input, 0)
     }
 
-    /** Hash a String with a custom seed (同 seed 才可跨进程比较). */
+    /** Hash a String with a custom seed; only equal seeds yield comparable hashes across processes. */
     @JvmStatic
     fun hash(input: String, seed: Int): Int {
         val bytes = input.toByteArray(StandardCharsets.UTF_8)

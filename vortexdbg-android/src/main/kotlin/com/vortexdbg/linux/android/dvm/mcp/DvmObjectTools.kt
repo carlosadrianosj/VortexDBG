@@ -22,11 +22,17 @@ import org.apache.commons.codec.binary.Hex
  *
  * Tools:
  *  - `dvm_make_object`: build a primitive-backed DVM object (string / byte[] / int[] / short[] / float[] / double[]).
+ *    Example prompt: "Create a byte[] from the hex 0a0b0c and give me its handle."
  *  - `dvm_call_instance`: invoke an instance JNI method on an existing object handle.
+ *    Example prompt: "Call getName() on the object at handle 0x31."
  *  - `dvm_new_object`: allocate an object of a class and run its <init> constructor.
+ *    Example prompt: "Construct a java/lang/String from 'hello' and return its handle."
  *  - `dvm_new_array_object`: build an Object[] (array.ArrayObject) from strings and/or @handle refs.
+ *    Example prompt: "Make an Object[] containing the strings 'a' and 'b'."
  *  - `dvm_pin_ref`: promote an existing handle to a global ref so it survives deleteLocalRefs().
+ *    Example prompt: "Pin the object at handle 0x44 so it doesn't get collected after the next call."
  *  - `dvm_release_ref`: drop a global/weak ref for a handle.
+ *    Example prompt: "Release the global ref for handle 0x44."
  *
  * Objects created by make/new/new_array are registered as GLOBAL refs (so they survive the local-ref
  * wipe after each JNI call) and their JNI hash handle is returned so it can be reused via `@handle`.

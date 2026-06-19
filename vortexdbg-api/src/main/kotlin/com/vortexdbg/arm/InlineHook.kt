@@ -16,13 +16,15 @@ import java.io.IOException
 import java.util.Arrays
 
 /**
- * Use debugger
+ * Patches a function's entry-point prologue in place with an SVC trap so a
+ * callback runs when the function is invoked.
  */
 @Suppress("unused")
 object InlineHook {
 
     /**
-     * 只能hook thumb指令: PUSH {R4-R7,LR}，即函数入口
+     * Hooks a Thumb function entry by overwriting its prologue with an SVC trap.
+     * Only supports entries whose first instruction is `push {r4, r5, r6, r7, lr}`.
      */
     @JvmStatic
     fun simpleThumbHook(emulator: Emulator<*>, address: Long, callback: HookCallback?) {
@@ -77,7 +79,9 @@ object InlineHook {
     }
 
     /**
-     * 只能hook arm指令：STMFD SP!, {R4-R9,LR}或STMFD SP!, {R4-R11,LR}，即函数入口
+     * Hooks an ARM function entry by overwriting its prologue with an SVC trap.
+     * Only supports entries whose first instruction is the standard register-save
+     * push (`push {r4-r8, sb, lr}` or `push {r4-r8, sb, sl, fp, lr}`).
      */
     @JvmStatic
     fun simpleArmHook(emulator: Emulator<*>, address: Long, callback: HookCallback?) {

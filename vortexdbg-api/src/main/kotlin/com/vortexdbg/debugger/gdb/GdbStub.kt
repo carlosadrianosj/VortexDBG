@@ -12,7 +12,9 @@ import java.util.ArrayList
 import java.util.HashMap
 
 /**
- * GdbStub class
+ * GDB Remote Serial Protocol stub. Lets a GDB client attach to the emulator over TCP
+ * and drive execution (registers, memory, breakpoints, stepping).
+ *
  * @author Humberto Silva Naves
  */
 class GdbStub(emulator: Emulator<*>) : AbstractDebugServer(emulator) {

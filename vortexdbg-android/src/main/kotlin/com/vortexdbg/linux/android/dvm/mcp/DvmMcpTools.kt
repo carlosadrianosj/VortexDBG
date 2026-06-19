@@ -19,9 +19,18 @@ import com.vortexdbg.mcp.McpTools
  * debugger.addMcpToolProvider(new DvmMcpTools(emulator, vm));
  * ```
  *
- * Core tools live here (dvm_list_classes, dvm_list_objects, dvm_read_string, dvm_get_object,
- * dvm_call_static); further groups are delegated to [DvmSubTools] sub-handlers (bridge, discovery,
- * state, spoof).
+ * Core tools live here; further groups are delegated to [DvmSubTools] sub-handlers (bridge,
+ * discovery, state, spoof, ...). Each core tool, with an example natural-language prompt for an AI:
+ *  - `dvm_list_classes`: list resolved Dalvik classes.
+ *    Example prompt: "Which Java classes has the app resolved so far?"
+ *  - `dvm_list_objects`: list live local + global JNI object refs with a value preview.
+ *    Example prompt: "Show me the live JNI object references the VM is holding."
+ *  - `dvm_read_string`: read the Java String value behind a StringObject handle.
+ *    Example prompt: "Read the string at handle 0x1a2b."
+ *  - `dvm_get_object`: report an object's class and value preview from its handle.
+ *    Example prompt: "What is the object at handle 305419896?"
+ *  - `dvm_call_static`: call a static Java method via JNI and return the result.
+ *    Example prompt: "Call com/example/Vault.seal(String,String) with these two arguments."
  */
 class DvmMcpTools(private val emulator: Emulator<*>, private val vm: VM) : McpToolProvider {
 

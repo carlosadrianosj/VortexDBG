@@ -5,9 +5,9 @@ import java.io.IOException
 import java.io.InputStream
 
 /**
- * E (Vortex-DBG / A1) — classloader que carrega as classes-alvo do app (child-first) e
- * instrumenta seus métodos {@code native} via {@link VortexNativeInstrumentor}, roteando-os
- * ao UniDBG. As demais classes delegam ao parent.
+ * Classloader (Vortex-DBG / A1) that loads the app's target classes child-first and
+ * instruments their native methods via [VortexNativeInstrumentor], routing them to UniDBG.
+ * All other classes are delegated to the parent.
  */
 open class VortexInstrumentingClassLoader(parent: ClassLoader?, private val targetPrefix: String) :
     ClassLoader(parent) {

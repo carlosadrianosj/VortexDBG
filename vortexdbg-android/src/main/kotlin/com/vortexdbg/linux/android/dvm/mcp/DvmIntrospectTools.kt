@@ -18,12 +18,19 @@ import com.vortexdbg.mcp.McpTools
  *
  * Tools:
  *  - `dvm_class_hierarchy`: print a class's superclass chain to the root plus its declared interfaces.
+ *    Example prompt: "Show the class hierarchy of java/lang/String."
  *  - `dvm_inspect_object`: describe one object by JNI hash (class, scope, refCount, weak, preview, array length).
+ *    Example prompt: "Inspect the object at handle 0x42."
  *  - `dvm_ref_table_stats`: sizes of the class map and the three ref maps, with a per-class histogram of live objects.
+ *    Example prompt: "How many live JNI references are there, broken down by class?"
  *  - `dvm_search_classes`: search resolved classes by name (substring or regex).
+ *    Example prompt: "Find all resolved classes whose name contains 'Crypto'."
  *  - `dvm_object_graph`: list live refs across the three maps, grouped by class or scope, with a limit.
+ *    Example prompt: "List the live object graph grouped by scope."
  *  - `dvm_find_objects_by_class`: list live object handles whose class matches (slash or dot form).
+ *    Example prompt: "Which live handles are instances of javax/crypto/spec/SecretKeySpec?"
  *  - `dvm_pending_exception`: show the currently pending thrown exception, if any.
+ *    Example prompt: "Is there a pending Java exception right now?"
  */
 class DvmIntrospectTools(private val emulator: Emulator<*>, private val vm: VM) : DvmSubTools {
 

@@ -6,22 +6,21 @@ import java.net.URL
 import java.net.URLClassLoader
 
 /**
- * Carregador das classes do APP rodando na JVM host (arquitetura A1).
+ * Loader for the APP's classes running on the host JVM (A1 architecture).
  *
- * Recebe os artefatos `.class`/`.jar` extraídos do APK (via JEB ou dex2jar) e os
- * carrega num classloader dedicado — permitindo que o Vortex-DBG execute a lógica
- * Java real do app na JVM host (substituindo o fluxo LSPosed/Zygote num device).
+ * Takes the .class/.jar artifacts extracted from the APK (via JEB or dex2jar) and loads
+ * them in a dedicated classloader — letting Vortex-DBG run the app's real Java logic on
+ * the host JVM (replacing the LSPosed/Zygote flow on a device).
  *
- * O parent padrão é o classloader do próprio Vortex, de modo que as classes do app
- * enxergam `java.*` (e, quando a camada de framework do WF4 estiver no classpath,
- * também `android.*`).
+ * The default parent is Vortex's own classloader, so app classes can see java.* (and,
+ * once the WF4 framework layer is on the classpath, android.* too).
  */
 open class VortexClassLoader(parent: ClassLoader?, vararg sources: File) :
     URLClassLoader(toUrls(sources), parent) {
 
     constructor(vararg sources: File) : this(VortexClassLoader::class.java.classLoader, *sources)
 
-    /** Carrega uma classe do app pelo nome binário (ex.: "org.cf.crypto.XORCrypt"). */
+    /** Loads an app class by binary name (e.g. "org.cf.crypto.XORCrypt"). */
     open fun loadApp(binaryName: String): Class<*> {
         try {
             return loadClass(binaryName)

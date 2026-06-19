@@ -4,22 +4,18 @@ import com.vortexdbg.Emulator
 import com.vortexdbg.file.NewFileIO
 
 /**
- * arm emulator
- * Created by zhkl0228 on 2017/5/2.
+ * Common contract for the 32-bit and 64-bit ARM emulators, exposing CPSR mode
+ * constants and the ELF relocation type codes used by the dynamic loader.
  */
 interface ARMEmulator<T : NewFileIO> : Emulator<T> {
 
     companion object {
-        // From http://infocenter.arm.com/help/topic/com.arm.doc.ihi0044f/IHI0044F_aaelf.pdf
+        // Relocation type codes per the ARM ELF ABI (IHI0044F).
 
-        /**
-         * 用户模式
-         */
+        /** CPSR mode bits for user mode (EL0/USR). */
         const val USR_MODE = 0b10000
 
-        /**
-         * 管理模式
-         */
+        /** CPSR mode bits for supervisor mode (SVC). */
         const val SVC_MODE = 0b10011
 
         const val R_ARM_ABS32 = 2

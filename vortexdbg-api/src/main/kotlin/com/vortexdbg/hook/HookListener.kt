@@ -5,7 +5,10 @@ import com.vortexdbg.memory.SvcMemory
 interface HookListener {
 
     /**
-     * 返回0表示没有hook，否则返回hook以后的调用地址
+     * Decide whether to redirect a symbol binding.
+     *
+     * @return 0 to leave the binding untouched, otherwise the address calls
+     *         to this symbol should be redirected to.
      */
     fun hook(svcMemory: SvcMemory, libraryName: String, symbolName: String, old: Long): Long
 

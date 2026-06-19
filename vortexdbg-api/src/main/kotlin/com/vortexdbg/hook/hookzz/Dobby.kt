@@ -15,7 +15,9 @@ import org.slf4j.LoggerFactory
 import java.util.Stack
 
 /**
- * 对64位支持比较好
+ * Dobby-backed [IHookZz] implementation. Prefer this on arm64; the
+ * 32-bit path is only partially supported (some trampoline symbols are
+ * absent and several operations throw [UnsupportedOperationException]).
  */
 class Dobby private constructor(emulator: Emulator<*>) : BaseHook(emulator, "libdobby"), IHookZz {
 

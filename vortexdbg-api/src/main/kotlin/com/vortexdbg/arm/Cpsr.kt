@@ -57,7 +57,7 @@ class Cpsr private constructor(private val backend: Backend, private val regId: 
     }
 
     /**
-     * 进位或借位
+     * True when the carry/borrow flag is set.
      */
     fun hasCarry(): Boolean {
         return hasBit(regValue, CARRY_BIT)

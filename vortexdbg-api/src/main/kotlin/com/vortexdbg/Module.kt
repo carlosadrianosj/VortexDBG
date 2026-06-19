@@ -119,9 +119,9 @@ abstract class Module(
     abstract fun getPath(): String
 
     /**
-     * 注册符号
-     * @param symbolName 符号名称
-     * @param address 符号的内存地址
+     * Registers a symbol so later lookups resolve [symbolName] to [address].
+     *
+     * @param address the symbol's resolved memory address
      */
     abstract fun registerSymbol(symbolName: String, address: Long)
 
@@ -140,8 +140,10 @@ abstract class Module(
     }
 
     /**
-     * 返回-1表示找不到对应文件的偏移
-     * @param offset 内存偏移
+     * Maps a virtual memory offset back to its offset within the backing file.
+     *
+     * @param offset the in-memory offset
+     * @return the file offset, or -1 if no file region maps to [offset]
      */
     abstract fun virtualMemoryAddressToFileOffset(offset: Long): Int
 
@@ -166,7 +168,7 @@ abstract class Module(
                 } else if (arg is Number) {
                     list.add(arg)
                 } else if (arg == null) {
-                    list.add(PointerNumber(null)) // null
+                    list.add(PointerNumber(null))
                 } else {
                     throw IllegalStateException("Unsupported arg: $arg")
                 }

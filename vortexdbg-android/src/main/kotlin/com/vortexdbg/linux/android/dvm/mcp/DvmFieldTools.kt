@@ -19,12 +19,16 @@ import org.apache.commons.codec.binary.Hex
  * Tools:
  *  - `dvm_read_array`: dump the typed contents of a DVM array object (ByteArray/IntArray/ShortArray/FloatArray/
  *    DoubleArray/Object[]) addressed by JNI hash, with truncation.
+ *    Example prompt: "Dump the byte[] at handle 0x77."
  *  - `dvm_read_field`: read a static field (by class + name + type) or an instance field (by target object hash).
  *    Field access is serviced by the registered native JNI bridge (the loaded .so's Get*Field handlers), so it only
  *    works for fields the native code actually backs.
+ *    Example prompt: "Read the static int field com/example/Foo.VERSION."
  *  - `dvm_set_field`: write a static or instance field through the same native JNI bridge (Set*Field handlers).
+ *    Example prompt: "Set the boolean field 'debug' on the object at handle 0x12 to true."
  *  - `dvm_to_string`: best-effort String rendering of an object; tries the registered native toString(), then
  *    falls back to a value preview / host toString.
+ *    Example prompt: "What does the object at handle 0x9a stringify to?"
  *
  * IMPORTANT: field read/write and native toString go through the emulated .so; they must run while the emulator is
  * stopped, and they only succeed for members the native Jni implementation accepts/backs. Pure host-side DVM objects

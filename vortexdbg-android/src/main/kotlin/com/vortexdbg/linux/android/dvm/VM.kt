@@ -17,7 +17,7 @@ interface VM {
     fun getJNIEnv(): Pointer
 
     /**
-     * @param interfaceClasses 如果不为空的话，第一个为superClass，其它的为interfaces
+     * @param interfaceClasses when non-empty, the first entry is the superclass and the rest are interfaces
      */
     fun resolveClass(className: String, vararg interfaceClasses: DvmClass): DvmClass
 
@@ -46,29 +46,29 @@ interface VM {
     fun callJNI_OnLoad(emulator: Emulator<*>, module: Module)
 
     /**
-     * 设置apkFile以后，可调用该值获取apk对应的packageName
+     * Returns the APK package name; available only after an apkFile has been set.
      */
     fun getPackageName(): String?
     fun getVersionName(): String?
     fun getVersionCode(): Long
 
     /**
-     * 设置apkFile以后，可调用该方法获取资源文件
-     * @return 可返回null
+     * Reads an asset file from the configured apkFile.
+     * @return null when unavailable
      */
     fun openAsset(fileName: String): ByteArray?
 
     /**
-     * 设置apkFile以后，可调用该方法获取压缩包内容
-     * @return 可返回null
+     * Reads an entry from the configured apkFile archive.
+     * @return null when unavailable
      */
     fun unzip(path: String): ByteArray?
 
     fun setAssetResolver(assetResolver: AssetResolver)
 
     /**
-     * 设置apkFile以后，可调用该方法获取AndroidManifest.xml
-     * @return 可返回null
+     * Reads AndroidManifest.xml from the configured apkFile.
+     * @return null when unavailable
      */
     fun getManifestXml(): String?
 
@@ -84,19 +84,19 @@ interface VM {
     fun throwException(throwable: DvmObject<*>?)
 
     /**
-     * Vortex-DBG (A1): propagação de exceção native-&gt;host.
-     * Quando habilitado, ao retornar de uma chamada JNI com exceção pendente
-     * (ThrowNew/Throw não tratada pelo próprio nativo via ExceptionClear), o Vortex
-     * lança a exceção no host como {@link VortexJniException}. Opt-in (default false)
-     * para preservar o comportamento do UniDBG upstream.
+     * Vortex-DBG (A1): native-&gt;host exception propagation.
+     * When enabled, returning from a JNI call that left a pending exception
+     * (a ThrowNew/Throw the native code did not handle via ExceptionClear) makes
+     * Vortex rethrow it on the host as a {@link VortexJniException}. Opt-in
+     * (default false) to preserve upstream UniDBG behaviour.
      */
     fun setExceptionPropagation(enabled: Boolean)
     fun isExceptionPropagation(): Boolean
 
-    /** Exceção JNI pendente (ou null) — espelha ExceptionOccurred/ExceptionCheck. */
+    /** The pending JNI exception, or null; mirrors ExceptionOccurred/ExceptionCheck. */
     fun getPendingException(): DvmObject<*>?
 
-    /** Limpa a exceção pendente (equivalente a ExceptionClear). */
+    /** Clears the pending exception (equivalent to ExceptionClear). */
     fun clearPendingException()
 
     fun setVerbose(verbose: Boolean)
@@ -124,9 +124,9 @@ interface VM {
         const val JNI_VERSION_1_6 = 0x00010006
         const val JNI_VERSION_1_8 = 0x00010008
 
-        const val JNIInvalidRefType = 0 // 无效引用
-        const val JNILocalRefType = 1 // 本地引用
-        const val JNIGlobalRefType = 2 // 全局引用
+        const val JNIInvalidRefType = 0 // invalid reference
+        const val JNILocalRefType = 1 // local reference
+        const val JNIGlobalRefType = 2 // global reference
         const val JNIWeakGlobalRefType = 3
     }
 }

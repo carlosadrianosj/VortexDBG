@@ -23,11 +23,7 @@ import java.net.URL
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-/**
- * android arm emulator
- * Created by zhkl0228 on 2017/5/2.
- */
-
+/** ARM (32-bit) Android emulator: wires up the loader, syscall handler, dyld and Dalvik VM. */
 open class AndroidARMEmulator internal constructor(
     processName: String?,
     rootDir: File?,

@@ -164,7 +164,7 @@ open class DvmObject<T> private constructor(private val vm: BaseVM?, private val
                 }
             }
             val ret = Module.emulateFunction(emulator, fnPtr.peer, *list.toTypedArray())
-            // Vortex-DBG (A1 / WF3): propaga exceção JNI pendente para o host (opt-in).
+            // Vortex-DBG (A1 / WF3): propagate a pending JNI exception to the host (opt-in).
             if (vm is BaseVM) {
                 val baseVM = vm
                 if (baseVM.exceptionPropagation && baseVM.throwable != null) {

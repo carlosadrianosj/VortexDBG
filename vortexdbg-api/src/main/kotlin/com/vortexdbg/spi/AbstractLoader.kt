@@ -114,12 +114,6 @@ abstract class AbstractLoader<T : NewFileIO>(
         return pointer.setSize(aligned.toLong())
     }
 
-//    private static final int MAP_SHARED =	0x01;		/* Share changes */
-//    private static final int MAP_PRIVATE =	0x02;		/* Changes are private */
-//    private static final int MAP_TYPE =	0x0f;		/* Mask for type of mapping */
-//    private static final int MAP_FIXED =	0x10;		/* Interpret addr exactly */
-//    private static final int MAP_ANONYMOUS =	0x20;		/* don't use a file */
-
     protected fun allocateMapAddress(mask: Long, length: Long): Long {
         var lastEntry: Map.Entry<Long, MemoryMap>? = null
         for (entry in memoryMap.entries) {

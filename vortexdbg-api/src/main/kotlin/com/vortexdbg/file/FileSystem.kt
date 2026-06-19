@@ -5,13 +5,13 @@ import java.io.File
 interface FileSystem<T : NewFileIO> {
 
     fun getRootDir(): File
-    fun createWorkDir(): File // 当设置了rootDir以后才可用，为rootDir/vortexdbg_work目录
+    fun createWorkDir(): File // Available only once rootDir is set; resolves to rootDir/vortexdbg_work
 
     fun open(pathname: String, oflags: Int): FileResult<T>?
     fun unlink(path: String)
 
     /**
-     * @return `true`表示创建成功
+     * @return `true` if the directory was created successfully
      */
     fun mkdir(path: String, mode: Int): Boolean
 

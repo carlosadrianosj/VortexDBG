@@ -13,16 +13,16 @@ import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 
 /**
- * G (Vortex-DBG / A1) — Debugger dual-layer.
+ * Dual-layer debugger for Vortex-DBG (A1).
  *
- * Unifica numa visão só as DUAS camadas:
- *   - NATIVO: reusa o debugger ARM do UniDBG ({@code emulator.attach()}) — breakpoints por
- *     símbolo/endereço, registradores e backtrace nativo (via {@code Unwinder}).
- *   - JAVA / fronteira JNI: envolve o {@link Jni} para observar cada cruzamento
- *     native→java (qualquer {@code call*Method}), permitindo "seguir" a execução quando
- *     ela atravessa a ponte e montar uma pilha unificada (frames nativos + método Java).
+ * Unifies BOTH layers under a single view:
+ *   - NATIVE: reuses UniDBG's ARM debugger ([Emulator.attach]) — breakpoints by
+ *     symbol/address, registers and native backtrace (via Unwinder).
+ *   - JAVA / JNI boundary: wraps the [Jni] to observe every native->java crossing
+ *     (any call*Method), so execution can be "followed" across the bridge and a unified
+ *     stack assembled (native frames + Java method).
  *
- * Modo não-interativo (callbacks) — base para um frontend interativo (REPL/IDE) depois.
+ * Non-interactive (callback-based) — foundation for an interactive frontend (REPL/IDE) later.
  */
 open class VortexDebugger(private val emulator: Emulator<*>) {
 
@@ -32,7 +32,7 @@ open class VortexDebugger(private val emulator: Emulator<*>) {
         return nativeDebugger
     }
 
-    // ---------- breakpoints nativos ----------
+    // ---------- native breakpoints ----------
 
     interface NativeBreakHandler {
         fun onBreak(ctx: NativeBreakContext)
@@ -42,7 +42,7 @@ open class VortexDebugger(private val emulator: Emulator<*>) {
         nativeDebugger.addBreakPoint(module, symbol, object : BreakPointCallback {
             override fun onHit(emu: Emulator<*>, address: Long): Boolean {
                 handler.onBreak(NativeBreakContext(address))
-                return true // tratado -> continua (não entra no debugger interativo)
+                return true // handled -> resume (do not enter the interactive debugger)
             }
         })
     }
@@ -56,15 +56,15 @@ open class VortexDebugger(private val emulator: Emulator<*>) {
         })
     }
 
-    // ---------- observação do seam JNI (native -> java) ----------
+    // ---------- JNI seam observation (native -> java) ----------
 
     interface JavaCrossHandler {
         fun onCross(signature: String, rawArgs: Array<Any?>)
     }
 
     /**
-     * Envolve um {@link Jni} base disparando {@code handler} a cada chamada native→java
-     * (todo método {@code call*Method}). Instale com {@code vm.setJni(debugger.instrument(jni, h))}.
+     * Wraps a base [Jni], firing [handler] on every native->java call (any call*Method).
+     * Install with vm.setJni(debugger.instrument(jni, h)).
      */
     open fun instrument(base: Jni, handler: JavaCrossHandler): Jni {
         return Proxy.newProxyInstance(
@@ -85,7 +85,7 @@ open class VortexDebugger(private val emulator: Emulator<*>) {
             }) as Jni
     }
 
-    // ---------- pilha / backtrace nativo ----------
+    // ---------- native stack / backtrace ----------
 
     open fun nativeStack(maxDepth: Int): List<String> {
         val out = ArrayList<String>()

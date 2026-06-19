@@ -5,14 +5,14 @@ import com.vortexdbg.linux.android.dvm.DvmClass
 import com.vortexdbg.linux.android.dvm.DvmObject
 
 /**
- * E (Vortex-DBG / A1) — a "outra metade" da fusão: roteamento Java(host) → native(emulado).
+ * The "other half" of the bridge (Vortex-DBG / A1): routing Java(host) -> native(emulated).
  *
- * Métodos {@code native} das classes do app, reescritos por {@link VortexNativeInstrumentor},
- * deixam de ser nativos e passam a chamar estes dispatchers, que executam a função nativa
- * correspondente DENTRO do UniDBG (a `.so` emulada) e devolvem o resultado ao host.
+ * native methods of the app's classes, rewritten by [VortexNativeInstrumentor], stop being
+ * native and instead call these dispatchers, which run the corresponding native function
+ * INSIDE UniDBG (the emulated .so) and return the result to the host.
  *
- * A sessão ativa é thread-local — instale com {@link #setSession(VortexSession)} antes de
- * invocar os métodos instrumentados.
+ * The active session is thread-local — install it with [setSession] before invoking the
+ * instrumented methods.
  */
 object VortexNativeDispatch {
 
@@ -45,7 +45,7 @@ object VortexNativeDispatch {
         return session().emulator()
     }
 
-    // ---- dispatchers por tipo de retorno (a assinatura JNI = method + descriptor) ----
+    // ---- dispatchers by return type (JNI signature = method + descriptor) ----
 
     @JvmStatic
     fun dispatchVoid(className: String, method: String, descriptor: String, args: Array<Any?>) {

@@ -3,15 +3,15 @@ package com.vortexdbg.app
 import java.io.File
 
 /**
- * CLI do Vortex-DBG (A1) — invoca um método de classe do app off-device.
+ * Vortex-DBG (A1) CLI — invokes a method on an app class off-device.
  *
- * Ex.:
+ * Example:
  *   java com.vortexdbg.app.VortexCli \
  *     --classes app-classes.jar --android-all android-all.jar \
  *     --class org.cf.crypto.XORCrypt --method encode \
  *     --types String,String --args "hello,k3y"
  *
- * (As classes do app vêm de JEB/dex2jar — extração manual, fora do escopo do Vortex.)
+ * (App classes come from JEB/dex2jar — manual extraction, outside Vortex's scope.)
  */
 object VortexCli {
 

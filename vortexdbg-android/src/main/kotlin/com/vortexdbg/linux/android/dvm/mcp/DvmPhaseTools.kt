@@ -13,6 +13,10 @@ import com.vortexdbg.mcp.McpTools
  * [record]. Replay re-dispatches the recorded (name,args) through [replay], which [DvmMcpTools]
  * wires to its own `call`. Handles are content-derived (vm.hash / identity), so a replay only
  * reproduces deterministically if the same objects get the same hashes (documented caveat).
+ *
+ * Tool:
+ *  - `dvm_call_phase`: start/stop recording a sequence of dvm_* calls, then list or replay it.
+ *    Example prompt: "Record the next few steps as a phase called 'unlock', then replay it later."
  */
 class DvmPhaseTools(private val emulator: Emulator<*>, private val vm: VM) : DvmSubTools {
 

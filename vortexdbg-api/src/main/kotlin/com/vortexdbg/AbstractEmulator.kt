@@ -48,10 +48,9 @@ import java.util.HashMap
 import java.util.Stack
 
 /**
- * abstract emulator
- * Created by zhkl0228 on 2017/5/2.
+ * Base [Emulator] implementation shared by the concrete backends; holds the
+ * common backend/memory/SVC plumbing and the emulate/run loop.
  */
-
 abstract class AbstractEmulator<T : NewFileIO>(
     is64Bit: Boolean,
     processName: String?,
@@ -329,7 +328,7 @@ abstract class AbstractEmulator<T : NewFileIO>(
     }
 
     /**
-     * @return `null`表示执行未完成，需要线程调度
+     * @return `null` if execution did not complete and the thread needs to be rescheduled
      */
     @Throws(PopContextException::class)
     fun emulate(begin: Long, until: Long): Number? {

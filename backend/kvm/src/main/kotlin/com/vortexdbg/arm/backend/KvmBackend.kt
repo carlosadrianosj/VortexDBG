@@ -57,8 +57,6 @@ abstract class KvmBackend protected constructor(emulator: Emulator<*>, protected
             throw IllegalArgumentException("mem_map size=0x" + java.lang.Long.toHexString(size))
         }
 
-//        System.out.println("mem_map address=0x" + Long.toHexString(address) + ", size=0x" + Long.toHexString(size));
-
         var slot = allocateSlot()
         val userspace_addr = kvm.set_user_memory_region(slot, address, size, 0L)
         if (log.isDebugEnabled) {
@@ -141,8 +139,6 @@ abstract class KvmBackend protected constructor(emulator: Emulator<*>, protected
         if ((size and (getPageSize() - 1).toLong()) != 0L) {
             throw IllegalArgumentException("mem_unmap size=0x" + java.lang.Long.toHexString(size))
         }
-
-//        System.out.println("mem_unmap address=0x" + Long.toHexString(address) + ", size=0x" + Long.toHexString(size));
 
         var i = address
         while (i < address + size) {

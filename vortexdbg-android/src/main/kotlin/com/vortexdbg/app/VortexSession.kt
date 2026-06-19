@@ -12,20 +12,19 @@ import java.io.Closeable
 import java.io.File
 
 /**
- * Fachada de orquestração do Vortex-DBG (A1) — consolida os spikes WF1..Capstone numa
- * API única e usável.
+ * Orchestration facade for Vortex-DBG (A1) — wires the moving parts into a single, usable API.
  *
- * Um {@code VortexSession} monta, num único processo hermético e off-device:
- *   - o emulador nativo (UniDBG, backend Unicorn2 por padrão);
- *   - a Dalvik VM com a ponte JNI (propagação de exceção ligada);
- *   - o {@link VortexClassLoader} com as classes REAIS do app (extraídas via JEB/dex2jar)
- *     + a camada de framework ({@link VortexFramework} / android-all);
- *   - o {@link ProxyClassFactory} apontado a esse classloader, para que o FindClass/
- *     CallMethod do código nativo resolva as classes reais do app;
- *   - as bibliotecas nativas (.so) do app.
+ * A [VortexSession] assembles, in one hermetic off-device process:
+ *   - the native emulator (UniDBG, Unicorn2 backend by default);
+ *   - the Dalvik VM with the JNI bridge (exception propagation enabled);
+ *   - the [VortexClassLoader] holding the app's REAL classes (extracted via JEB/dex2jar)
+ *     plus the framework layer ([VortexFramework] / android-all);
+ *   - a [ProxyClassFactory] pointed at that classloader, so FindClass/CallMethod from native
+ *     code resolves against the app's real classes;
+ *   - the app's native libraries (.so).
  *
- * Uso típico:
- * <pre>
+ * Typical use:
+ * ```
  *   try (VortexSession s = VortexSession.builder()
  *           .classes(new File("app-classes.jar"))
  *           .androidAll(new File("android-all.jar"))
@@ -34,7 +33,7 @@ import java.io.File
  *       Object r = s.invokeStatic("com.app.Crypto", "decrypt",
  *               new Class[]{String.class}, "deadbeef");
  *   }
- * </pre>
+ * ```
  */
 open class VortexSession private constructor(
     private val emulator: AndroidEmulator,
@@ -45,7 +44,7 @@ open class VortexSession private constructor(
 
     private val invoker: VortexInvoker = VortexInvoker(classLoader)
 
-    // ---- API pós-open ----
+    // ---- post-open API ----
 
     open fun emulator(): AndroidEmulator { return emulator }
     open fun vm(): VM { return vm }
@@ -53,18 +52,18 @@ open class VortexSession private constructor(
     open fun invoker(): VortexInvoker { return invoker }
     open fun nativeModules(): List<DalvikModule> { return nativeModules }
 
-    /** Carrega uma classe do app na JVM host. */
+    /** Loads an app class into the host JVM. */
     open fun loadAppClass(binaryName: String): Class<*> {
         return classLoader.loadApp(binaryName)
     }
 
-    /** Invoca um método estático de uma classe do app (estilo LSPosed, off-device). */
+    /** Invokes a static method on an app class (LSPosed-style, off-device). */
     @Throws(Exception::class)
     open fun invokeStatic(className: String, method: String, paramTypes: Array<Class<*>>, vararg args: Any?): Any? {
         return invoker.invokeStatic(className, method, paramTypes, *args)
     }
 
-    /** Resolve uma DvmClass (nome JNI com '/') para chamadas vindas do lado nativo. */
+    /** Resolves a DvmClass (JNI name with '/') for calls coming from the native side. */
     open fun resolveNativeClass(jniName: String): DvmClass {
         return vm.resolveClass(jniName)
     }
@@ -73,7 +72,7 @@ open class VortexSession private constructor(
         try {
             emulator.close()
         } catch (ignored: Exception) {
-            // best-effort
+            // best-effort: closing must not throw
         }
     }
 

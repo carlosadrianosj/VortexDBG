@@ -115,7 +115,8 @@ abstract class BaseTask : RunnableTask {
     }
 
     protected fun allocateStack(emulator: Emulator<*>): VortexdbgPointer {
-        //stackBlock地址基于MMAP_BASE，必须想办法让它基于STACK_BASE(KVM在使用sp寄存器时会校验，校验失败直接升天）。
+        // The thread stack must come from the STACK_BASE region, not MMAP_BASE: KVM validates SP on
+        // use and an address outside the expected stack range aborts the guest.
         if (stackSpaceAllocIndex == -1) {
             stackSpaceAllocIndex = emulator.getMemory().allocateThreadIndex()
         }

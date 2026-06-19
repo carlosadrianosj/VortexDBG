@@ -22,8 +22,9 @@ import java.util.Date
 open class Inspector {
 
     /**
-     * 过滤器
-     * @return 是否接受该数据
+     * Filter hook deciding whether the given data should be inspected.
+     *
+     * @return `true` to accept (inspect) the data
      */
     open fun accept(data: ByteArray, label: String): Boolean {
         return true
@@ -34,8 +35,9 @@ open class Inspector {
     }
 
     /**
-     * 侦测数据类型
-     * @return 返回null则表示没侦测到
+     * Detects the type of the given data.
+     *
+     * @return the detected type, or `null` if nothing was detected
      */
     protected open fun detectedType(data: ByteArray, send: Boolean): Int? {
         return null
@@ -335,7 +337,7 @@ open class Inspector {
         }
 
         /**
-         * 侦察发送的数据
+         * Inspects a buffer, labelling it as sent or received traffic.
          */
         @JvmStatic
         fun inspect(data: ByteArray, send: Boolean) {
@@ -343,7 +345,7 @@ open class Inspector {
         }
 
         /**
-         * 侦察发送的数据
+         * Inspects a buffer, prefixing the label with the given type in hex.
          */
         @JvmStatic
         fun inspect(type: Int, data: ByteArray, send: Boolean) {
@@ -352,7 +354,7 @@ open class Inspector {
         }
 
         /**
-         * 侦察发送的数据
+         * Inspects a buffer under the given label.
          */
         @JvmStatic
         fun inspect(data: ByteArray, label: String) {
@@ -370,7 +372,7 @@ open class Inspector {
         }
 
         /**
-         * 测试对象类型
+         * Prints the runtime type (and value) of the given object.
          */
         @JvmStatic
         fun objectType(`in`: Any?) {
@@ -383,7 +385,7 @@ open class Inspector {
         }
 
         /**
-         * 查询int值
+         * Prints an int value in hex under the given label.
          */
         @JvmStatic
         fun inspect(label: String, value: Int) {
@@ -391,7 +393,7 @@ open class Inspector {
         }
 
         /**
-         * 引发错误异常
+         * Throws an auxiliary [Error]; useful as a breakpoint/trap during debugging.
          */
         @JvmStatic
         fun throwError() {
@@ -399,7 +401,7 @@ open class Inspector {
         }
 
         /**
-         * 根据值引发错误异常
+         * Throws an auxiliary [Error] only when [testValue] matches [errorValue].
          */
         @JvmStatic
         fun throwError(errorValue: Int, testValue: Int) {
@@ -509,7 +511,7 @@ open class Inspector {
         }
 
         /**
-         * 侦察发送的数据
+         * Renders an inspection of a buffer as a string, labelled as sent or received traffic.
          */
         @JvmStatic
         fun inspectString(data: ByteArray, send: Boolean): String {
@@ -517,7 +519,7 @@ open class Inspector {
         }
 
         /**
-         * 侦察发送的数据
+         * Renders an inspection of a buffer, prefixing the label with the given type in hex.
          */
         @JvmStatic
         fun inspectString(type: Int, data: ByteArray, send: Boolean): String {
@@ -526,7 +528,7 @@ open class Inspector {
         }
 
         /**
-         * 侦察发送的数据
+         * Renders an inspection of a buffer under the given label.
          */
         @JvmStatic
         fun inspectString(data: ByteArray, label: String): String {

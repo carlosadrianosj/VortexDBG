@@ -6,7 +6,8 @@ class NestedRun private constructor(@JvmField val pc: Long) : LongJumpException(
 
     companion object {
         /**
-         * need custom fix call context.
+         * Requests that emulation resume at [pc] instead of returning from the hook;
+         * the caller is responsible for setting up the call context (arguments, LR).
          */
         @JvmStatic
         fun runToFunction(pc: Long): NestedRun {

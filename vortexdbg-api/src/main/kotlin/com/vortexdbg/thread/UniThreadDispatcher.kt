@@ -12,7 +12,8 @@ import java.util.Collections
 import java.util.concurrent.TimeUnit
 
 /**
- * 抢占式调度
+ * Cooperative scheduler over guest tasks: each task runs until it returns a result or yields via a
+ * [PopContextException], at which point its CPU context is saved and the next runnable task is picked.
  */
 open class UniThreadDispatcher(private val emulator: AbstractEmulator<*>) : ThreadDispatcher {
 

@@ -24,6 +24,11 @@ import com.vortexdbg.mcp.McpTools
  * identity calls (getSerial, currentTimeMillis, etc.). Everything not matched is delegated to the
  * original jni automatically by [JniFunction]. This rides on the JniFunction/setJni hook and therefore
  * only affects native -> Java callbacks made during emulated calls; it does not patch the host JVM.
+ *
+ * Tool:
+ *  - `dvm_spoof_env`: seed canned device-identity values (from a preset + overrides) so the .so reads a
+ *    fake Build/serial/ANDROID_ID/etc.; enable=false restores the real jni.
+ *    Example prompt: "Make the app think it's running on a Google Pixel, then override the serial to 'TEST123'."
  */
 class DvmSpoofTools(private val emulator: Emulator<*>, private val vm: VM) : DvmSubTools {
 

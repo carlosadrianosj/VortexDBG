@@ -23,17 +23,15 @@ interface Memory : IO, Loader, StackMemory {
     fun brk(address: Long): Int
 
     /**
-     * 分配内存
-     * @param length 大小
-     * @param runtime <code>true</code>表示使用mmap按页大小分配，相应的调用MemoryBlock.free方法则使用munmap释放，<code>false</code>表示使用libc.malloc分配，相应的调用MemoryBlock.free方法则使用libc.free释放
+     * Allocates a memory block of [length] bytes.
+     *
+     * @param runtime `true` allocates page-aligned via mmap (the returned block frees with munmap);
+     *   `false` allocates via the guest's libc malloc (the block frees with libc free)
      */
     fun malloc(length: Int, runtime: Boolean): MemoryBlock
     fun mmap(length: Int, prot: Int): VortexdbgPointer
     fun munmap(start: Long, length: Int): Int
 
-    /**
-     * set errno
-     */
     fun setErrno(errno: Int)
 
     fun getLastErrno(): Int
@@ -52,7 +50,9 @@ interface Memory : IO, Loader, StackMemory {
         const val STACK_SIZE_OF_MAIN_PAGE: Int = 256 // for main stack
         const val STACK_SIZE_OF_PAGE: Int = STACK_SIZE_OF_THREAD_PAGE + STACK_SIZE_OF_MAIN_PAGE
 
-        const val MMAP_BASE: Long = 0x12000000L //0x1fffe180e , limited by MMIO_TRAP_ADDRESS
+        // Kept well below MMIO_TRAP_ADDRESS (~0x1fffe180e) so mmap growth never collides with the
+        // MMIO trap region.
+        const val MMAP_BASE: Long = 0x12000000L
     }
 
 }

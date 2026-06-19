@@ -15,7 +15,8 @@ import org.slf4j.LoggerFactory
 import java.util.Stack
 
 /**
- * 对32位支持比较好
+ * HookZz-backed [IHookZz] implementation. Best suited to 32-bit (arm)
+ * targets; arm64 works but Dobby is generally the better choice there.
  */
 class HookZz private constructor(emulator: Emulator<*>) : BaseHook(emulator, "libhookzz"), IHookZz {
 

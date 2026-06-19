@@ -1,10 +1,9 @@
 package com.vortexdbg.worker
 
 /**
- * 工作单元接口，表示池中可复用的资源（如模拟器实例）。
- *
- * <p>实现类应在 {@link #destroy()} 中释放所持有的底层资源。
- * 借出和归还由 {@link WorkerPool} 和 {@link WorkerLoan} 管理，Worker 本身无需感知池的存在。</p>
+ * A reusable pooled resource, such as an emulator instance. Implementations release their underlying
+ * resources in [destroy]; borrowing and returning are handled by [WorkerPool] and [WorkerLoan], so a
+ * worker need not be aware of the pool.
  *
  * @see WorkerPool
  * @see WorkerLoan
@@ -12,8 +11,8 @@ package com.vortexdbg.worker
 interface Worker {
 
     /**
-     * 销毁此 Worker 持有的底层资源。
-     * 当 Worker 不再被池管理时（如池关闭），由池调用此方法进行清理。
+     * Releases the underlying resources held by this worker. Called by the pool when the worker is no
+     * longer managed (e.g. on pool shutdown or idle eviction).
      */
     fun destroy()
 

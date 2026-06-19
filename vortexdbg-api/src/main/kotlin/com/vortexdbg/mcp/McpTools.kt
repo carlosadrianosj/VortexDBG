@@ -42,6 +42,19 @@ import java.util.LinkedHashMap
 import java.util.Locale
 import java.util.concurrent.Callable
 
+/**
+ * Implements the Vortex-DBG MCP tool surface: the ~44 native debugging tools that an AI client
+ * (Claude, etc.) can call over the MCP transport in [McpServer].
+ *
+ * Each tool is declared twice: once as a JSON schema in [getToolSchemas] (advertised in tools/list)
+ * and once as a handler method dispatched by name in [dispatchTool]. The handler comments below carry
+ * the human-oriented detail (what the tool does, how it works, and an example natural-language prompt);
+ * the schema description strings stay short because they are token budget shown to the model.
+ *
+ * Threading: most tools mutate emulator state and therefore must run on the debugger thread while the
+ * emulator is paused (debug-idle). [callTool] enforces this — only "execution tools" (resume/step and
+ * a few status tools) may run while the emulator is live; everything else is rejected unless idle.
+ */
 class McpTools(private val emulator: Emulator<*>, private val server: McpServer) {
 
     private val customTools: MutableList<CustomTool> = ArrayList()
@@ -56,6 +69,11 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         customTools.add(CustomTool(name, description, arrayOf(*paramNames)))
     }
 
+    /**
+     * Build the tools/list payload: the built-in tool schemas, then any custom (DebugRunnable) tools,
+     * then schemas contributed by external [McpToolProvider]s. Description strings are intentionally
+     * terse (model token budget); the detailed behavior is documented on each handler below.
+     */
     fun getToolSchemas(): JSONArray {
         val tools = JSONArray()
         tools.add(toolSchema("check_connection", "Check emulator status: architecture, backend, mode, state, modules. Call first."))
@@ -200,6 +218,11 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return tools
     }
 
+    /**
+     * Entry point for tools/call. Execution tools (resume/step/poll/status) run inline because the
+     * emulator may be live; all other tools require the emulator to be paused and are marshalled onto
+     * the debugger thread so they observe and mutate a consistent, frozen CPU/memory state.
+     */
     fun callTool(name: String, args: JSONObject): JSONObject {
         if (isExecutionTool(name)) {
             return dispatchTool(name, args)
@@ -287,6 +310,13 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `check_connection`: one-shot snapshot of the emulator so the model can orient itself before
+     * doing anything else. Summarizes architecture, backend (and its capability tier), process name,
+     * debug mode, idle/running flags, breakpoint and pending-event counts, and the non-system modules.
+     *
+     * Example prompt: "Check the emulator status before we start debugging."
+     */
     private fun checkConnection(): JSONObject {
         val sb = StringBuilder()
         val family = emulator.getFamily()
@@ -315,6 +345,12 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return textResult(sb.toString())
     }
 
+    /**
+     * Tool `read_memory`: read `size` bytes from `address` and return a classic hex+ASCII dump.
+     * Reads straight from the backend, so it reflects current emulated memory.
+     *
+     * Example prompt: "Read 0x40 bytes at 0x7fff0000 and show me the hex dump."
+     */
     private fun readMemory(args: JSONObject): JSONObject {
         val address = parseAddress(args.getString("address"))
         val size = if (args.containsKey("size")) args.getIntValue("size") else 0x70
@@ -326,6 +362,13 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `write_memory`: decode a hex string and write it verbatim to `address`. Accepts several
+     * aliases for the bytes parameter (`hex_bytes`/`data`/`hex_data`/`bytes`) because different clients
+     * name it differently.
+     *
+     * Example prompt: "Write the bytes 90 90 90 90 at 0x40001234."
+     */
     private fun writeMemory(args: JSONObject): JSONObject {
         val address = parseAddress(args.getString("address"))
         var hexBytes = args.getString("hex_bytes")
@@ -347,6 +390,13 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `list_memory_map`: dump the process memory layout. Regions backed by a loaded module are
+     * coalesced into one base..end range per module to keep the output compact; truly anonymous regions
+     * are listed individually with their rwx permissions.
+     *
+     * Example prompt: "Show me the memory map so I can see where the heap and stack are."
+     */
     private fun listMemoryMap(): JSONObject {
         val maps = emulator.getMemory().getMemoryMap()
         val memory = emulator.getMemory()
@@ -381,6 +431,14 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return textResult(sb.toString())
     }
 
+    /**
+     * Tool `search_memory`: scan memory for a byte pattern or a text string. Hex patterns support `??`
+     * wildcards (compiled into a mask). The search scope can be the whole readable space, a single
+     * module, an explicit start/end range, or the special "stack"/"heap" scopes. Memory is read in
+     * overlapping 64KB chunks so matches that straddle a chunk boundary are not missed.
+     *
+     * Example prompt: "Search libfoo.so for the byte pattern 48 89 ?? 24."
+     */
     private fun searchMemory(args: JSONObject): JSONObject {
         val patternStr = args.getString("pattern")
         val type = if (args.containsKey("type")) args.getString("type") else "hex"
@@ -508,6 +566,12 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return textResult(sb.toString())
     }
 
+    /**
+     * Tool `get_registers`: dump all general-purpose registers plus FP/LR/SP/PC. Zero registers are
+     * collapsed onto a single "Zero:" line to keep the common case readable.
+     *
+     * Example prompt: "Dump all the registers."
+     */
     private fun getRegisters(): JSONObject {
         val backend = emulator.getBackend()
         val sb = StringBuilder()
@@ -548,6 +612,12 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return textResult(sb.toString())
     }
 
+    /**
+     * Tool `get_register`: read one register by name. Names are resolved per-arch (X/W on ARM64, R on
+     * ARM32, plus SP/PC/LR/FP); a W-prefixed name is masked to its low 32 bits.
+     *
+     * Example prompt: "What's the value of X0 right now?"
+     */
     private fun getRegister(args: JSONObject): JSONObject {
         val raw = args.getString("name")
         if (raw == null || raw.isEmpty()) {
@@ -572,6 +642,12 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `set_register`: write a hex value into a named register. Useful for forcing control flow or
+     * patching arguments/return values before resuming.
+     *
+     * Example prompt: "Set X0 to 1 so the function thinks the check passed."
+     */
     private fun setRegister(args: JSONObject): JSONObject {
         val raw = args.getString("name")
         if (raw == null || raw.isEmpty()) {
@@ -588,6 +664,13 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `disassemble`: disassemble `count` instructions at `address`. Thumb vs ARM is detected from
+     * CPSR on 32-bit. Direct branch targets are annotated inline with the nearest symbol (or
+     * module+offset) so the model can follow control flow without extra lookups.
+     *
+     * Example prompt: "Disassemble the first 20 instructions at 0x40005000."
+     */
     private fun disassemble(args: JSONObject): JSONObject {
         val address = parseAddress(args.getString("address"))
         val count = if (args.containsKey("count")) args.getIntValue("count") else 10
@@ -616,6 +699,12 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Best-effort symbolization of a branch instruction's immediate target for the disassembly
+     * annotation. Returns the demangled symbol (with +offset) when the target lands within
+     * [Unwinder.SYMBOL_SIZE] of a known symbol, else module+offset, else null for non-branches or
+     * unresolvable targets.
+     */
     private fun resolveInsnTargetSymbol(insn: Instruction, memory: Memory, demangler: GccDemangler): String? {
         val mnemonic = insn.mnemonic.lowercase()
         if (!isBranchMnemonic(mnemonic)) {
@@ -648,6 +737,12 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return module.name + "+0x" + java.lang.Long.toHexString(target - module.base)
     }
 
+    /**
+     * Tool `assemble`: assemble one instruction with Keystone and return the machine-code hex. Does NOT
+     * touch memory — use `patch` for that. `address` is only used for PC-relative encodings.
+     *
+     * Example prompt: "What's the encoding of 'mov x0, #1' on arm64?"
+     */
     private fun assemble(args: JSONObject): JSONObject {
         val assembly = args.getString("assembly")
         try {
@@ -661,6 +756,12 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `patch`: assemble the given instruction with Keystone and write it to `address` in one step.
+     * The on-the-fly Keystone mode follows the current ARM/Thumb state.
+     *
+     * Example prompt: "Patch the instruction at 0x40001000 to 'ret'."
+     */
     private fun patch(args: JSONObject): JSONObject {
         val address = parseAddress(args.getString("address"))
         val assembly = args.getString("assembly")
@@ -677,6 +778,13 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `add_breakpoint`: set a breakpoint at a raw address. `temporary=true` auto-removes it after
+     * the first hit. Prefer `add_breakpoint_by_symbol`/`add_breakpoint_by_offset` when you have a name
+     * or an IDA/Ghidra offset rather than a runtime address.
+     *
+     * Example prompt: "Set a breakpoint at 0x40005678."
+     */
     private fun addBreakpoint(args: JSONObject): JSONObject {
         val address = parseAddress(args.getString("address"))
         val temporary = args.containsKey("temporary") && args.getBooleanValue("temporary")
@@ -692,6 +800,12 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `add_breakpoint_by_symbol`: resolve `symbol_name` in `module_name` and break there. Avoids a
+     * separate find_symbol round-trip and reports the resolved absolute address and module+offset.
+     *
+     * Example prompt: "Break on JNI_OnLoad in libfoo.so."
+     */
     private fun addBreakpointBySymbol(args: JSONObject): JSONObject {
         val moduleName = args.getString("module_name")
         val symbolName = args.getString("symbol_name")
@@ -724,6 +838,13 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `add_breakpoint_by_offset`: break at `module base + offset`. This is the bridge from static
+     * analysis to the live process — paste the offset a disassembler shows and it becomes a runtime
+     * breakpoint regardless of ASLR/load address.
+     *
+     * Example prompt: "Set a breakpoint at offset 0x1234 in libnative.so (the address IDA showed)."
+     */
     private fun addBreakpointByOffset(args: JSONObject): JSONObject {
         val moduleName = args.getString("module_name")
         val offset = parseAddress(args.getString("offset"))
@@ -746,6 +867,12 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `list_breakpoints`: list every breakpoint with its address, module+offset, temporary flag,
+     * and a one-line disassembly of the instruction it sits on (Thumb-aware via the address LSB).
+     *
+     * Example prompt: "List all the breakpoints I currently have set."
+     */
     private fun listBreakpoints(): JSONObject {
         try {
             val breakPoints = emulator.attach().getBreakPoints()
@@ -787,6 +914,11 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `remove_breakpoint`: delete the breakpoint at `address`, reporting whether one was present.
+     *
+     * Example prompt: "Remove the breakpoint at 0x40005678."
+     */
     private fun removeBreakpoint(args: JSONObject): JSONObject {
         val address = parseAddress(args.getString("address"))
         try {
@@ -801,16 +933,35 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `continue_execution`: resume from the current PC by injecting the console "c" command.
+     * Returns immediately; the run is asynchronous, so follow up with `poll_events` to learn whether it
+     * stopped at a breakpoint or finished.
+     *
+     * Example prompt: "Continue execution and tell me where it stops next."
+     */
     private fun continueExecution(): JSONObject {
         server.injectCommand("c")
         return textResult("Resumed.")
     }
 
+    /**
+     * Tool `step_over`: execute the current instruction, stepping over (not into) any call. Async;
+     * poll_events afterwards.
+     *
+     * Example prompt: "Step over this instruction."
+     */
     private fun stepOver(): JSONObject {
         server.injectCommand("n")
         return textResult("Stepping over.")
     }
 
+    /**
+     * Tool `step_into`: single-step `count` instructions (into calls), then stop. Async; poll_events
+     * afterwards.
+     *
+     * Example prompt: "Step into 5 instructions."
+     */
     private fun stepInto(args: JSONObject): JSONObject {
         val count = if (args.containsKey("count")) args.getIntValue("count") else 1
         if (count <= 1) {
@@ -821,6 +972,14 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return textResult("Stepping $count insn.")
     }
 
+    /**
+     * Tool `step_out`: run until the current function returns. Implemented by reading LR, planting a
+     * temporary breakpoint there on the debugger thread, then resuming — so it relies on LR still
+     * holding the return address (true at function entry, not necessarily mid-function after LR is
+     * spilled). Async; poll_events afterwards.
+     *
+     * Example prompt: "Finish the current function and stop at the caller."
+     */
     private fun stepOut(): JSONObject {
         if (!server.isDebugIdle()) {
             return errorResult("Emulator is not in debug idle state.")
@@ -848,6 +1007,13 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `next_block`: resume and break at the start of the next basic block. Requires the BlockHook
+     * facility, which only Unicorn/Unicorn2 provide — rejected on Hypervisor/Dynarmic/KVM. Async;
+     * poll_events afterwards.
+     *
+     * Example prompt: "Run to the start of the next basic block."
+     */
     private fun nextBlock(): JSONObject {
         if (!server.isDebugIdle()) {
             return errorResult("Emulator is not in debug idle state.")
@@ -860,6 +1026,13 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return textResult("Resuming, break at next block.")
     }
 
+    /**
+     * Tool `step_until_mnemonic`: resume and break when an instruction with the given mnemonic (e.g.
+     * "bl", "ret") executes. Uses the per-instruction fast-debug hook, so it is Unicorn-only. Async;
+     * poll_events afterwards.
+     *
+     * Example prompt: "Run until the next 'bl' instruction."
+     */
     private fun stepUntilMnemonic(args: JSONObject): JSONObject {
         val mnemonic = args.getString("mnemonic")
         if (mnemonic == null || mnemonic.isEmpty()) {
@@ -877,6 +1050,13 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return textResult("Resuming, break on '$mnemonic'.")
     }
 
+    /**
+     * Tool `poll_events`: drain the asynchronous event queue (breakpoint_hit, execution_completed,
+     * trace_code/read/write). This is the companion to every execution and trace tool, which return
+     * immediately and report their results here. Blocks up to `timeout_ms` for the first event.
+     *
+     * Example prompt: "Poll for events to see if we hit the breakpoint."
+     */
     private fun pollEvents(args: JSONObject): JSONObject {
         val timeoutMs = if (args.containsKey("timeout_ms")) args.getLongValue("timeout_ms") else 10000
         val events = server.pollEvents(timeoutMs)
@@ -891,6 +1071,14 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return textResult(sb.toString())
     }
 
+    /**
+     * Tool `trace_read`: install a hook that fires on every memory read in [begin, end). Each hit is
+     * queued as a `trace_read` event (PC, address, size, hex, module/offset) for `poll_events`. Only one
+     * read trace is active at a time — installing a new one replaces the previous. If `break_on` is
+     * given, the emulator single-steps when that address is read so you can inspect state.
+     *
+     * Example prompt: "Trace reads of the key buffer at 0x40010000..0x40010040."
+     */
     private fun traceRead(args: JSONObject): JSONObject {
         val begin = parseAddress(args.getString("begin"))
         val end = parseAddress(args.getString("end"))
@@ -929,6 +1117,13 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `trace_write`: like `trace_read` but for writes in [begin, end). Each hit queues a
+     * `trace_write` event including the written value. Single active write trace; `break_on` single-steps
+     * on the matching address. Great for catching what clobbers a variable.
+     *
+     * Example prompt: "Trace writes to 0x40010000 so I can see who modifies it."
+     */
     private fun traceWrite(args: JSONObject): JSONObject {
         val begin = parseAddress(args.getString("begin"))
         val end = parseAddress(args.getString("end"))
@@ -970,6 +1165,12 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
     private var lastTraceWriteRegs: ShortArray? = null
     private var lastTraceInsn: Instruction? = null
 
+    /**
+     * Render the live values of a Capstone register set for a trace_code event, filtered to the
+     * meaningful GP registers per architecture. Flag registers (CPSR/NZCV) are decoded into N/Z/C/V
+     * rather than printed raw. Used for both the current instruction's reads and the previous
+     * instruction's writes to expose data flow.
+     */
     private fun formatRegValues(insn: Instruction, regs: ShortArray?): String? {
         if (regs == null || regs.size == 0) return null
         val backend = emulator.getBackend()
@@ -1020,6 +1221,15 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return if (sb.length > 0) sb.toString() else null
     }
 
+    /**
+     * Tool `trace_code`: trace every instruction executed in [begin, end). Each `trace_code` event
+     * carries the disassembly plus `regs_read` (values BEFORE the instruction). To expose data flow it
+     * also records the previous instruction's written registers and attaches them as `prev_write` on the
+     * NEXT event — i.e. you see an instruction's effect once the following instruction is reached. Single
+     * active code trace. This is the heaviest trace; keep ranges tight.
+     *
+     * Example prompt: "Trace-code through the decrypt routine at 0x40020000..0x40020100 and show the register flow."
+     */
     private fun traceCode(args: JSONObject): JSONObject {
         val begin = parseAddress(args.getString("begin"))
         val end = parseAddress(args.getString("end"))
@@ -1090,6 +1300,13 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `get_callstack`: unwind up to 50 frames and print each as #i, PC, module+offset, and the
+     * nearest symbol when within [Unwinder.SYMBOL_SIZE]. Accuracy depends on the unwinder and available
+     * frame info.
+     *
+     * Example prompt: "Show me the backtrace from here."
+     */
     private fun getCallstack(): JSONObject {
         try {
             val unwinder = emulator.getUnwinder()
@@ -1119,6 +1336,13 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `find_symbol`: two modes. Given `address`, report the nearest symbol (reverse lookup). Given
+     * `module_name`+`symbol_name`, resolve a symbol to its address. Only .dynsym/exports are visible
+     * here — stripped symbols won't resolve; for those use module_base + static-tool offset instead.
+     *
+     * Example prompt: "What symbol is at 0x40005012?" or "Find the address of malloc in libc.so."
+     */
     private fun findSymbol(args: JSONObject): JSONObject {
         val moduleName = args.getString("module_name")
         val symbolName = args.getString("symbol_name")
@@ -1160,6 +1384,12 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `read_string`: read a NUL-terminated UTF-8 C string at `address`, stopping at the first NUL
+     * or `max_length`. Marks the result as truncated when the limit is reached.
+     *
+     * Example prompt: "Read the C string at the address in X1."
+     */
     private fun readString(args: JSONObject): JSONObject {
         val address = parseAddress(args.getString("address"))
         val maxLength = if (args.containsKey("max_length")) args.getIntValue("max_length") else 256
@@ -1180,6 +1410,13 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `read_std_string`: decode a libc++ `std::string` object at `address`, handling both the
+     * small-string (SSO) inline layout and the heap layout automatically (the low bit of the first byte
+     * is the SSO flag). Returns the contents plus size and which layout was used.
+     *
+     * Example prompt: "Read the std::string argument at the pointer in X0."
+     */
     private fun readStdString(args: JSONObject): JSONObject {
         val address = parseAddress(args.getString("address"))
         try {
@@ -1201,6 +1438,8 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /** Append " (module+offset) <symbol>" to [sb] for [address] when it falls in a module and near a
+     *  known symbol. Shared by the pointer/typed readers to annotate dereferenced values. */
     private fun appendModuleAndSymbol(sb: StringBuilder, memory: Memory, demangler: GccDemangler, address: Long) {
         val module = memory.findModuleByAddress(address)
         if (module != null) {
@@ -1212,6 +1451,13 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `read_pointer`: dereference a pointer chain starting at `address`, up to `depth` levels,
+     * applying `offset` at each step (e.g. to walk an object's isa/vtable/field). Each level is
+     * annotated with module+symbol; the chain stops early on a NULL pointer.
+     *
+     * Example prompt: "Follow the pointer at X0 two levels deep to find the vtable."
+     */
     private fun readPointer(args: JSONObject): JSONObject {
         val address = parseAddress(args.getString("address"))
         val depth = if (args.containsKey("depth")) args.getIntValue("depth") else 1
@@ -1262,6 +1508,13 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return textResult(sb.toString())
     }
 
+    /**
+     * Tool `read_typed`: read `count` little-endian values of a primitive `type` (int/uint 8..64,
+     * float, double, pointer) at `address`. Pointer values are additionally annotated with
+     * module+symbol. Use this instead of `read_memory` when you know the data shape.
+     *
+     * Example prompt: "Read 4 uint32 values at 0x40010000."
+     */
     private fun readTyped(args: JSONObject): JSONObject {
         val address = parseAddress(args.getString("address"))
         val rawType = args.getString("type")
@@ -1318,6 +1571,14 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `call_function`: invoke a native function at a raw `address` with the given args and return
+     * its result (with an auto pointer/string preview). Only allowed when the emulator is NOT running,
+     * because it re-enters the emulator on the calling thread. Any active traces stay installed during
+     * the call. See class/instructions for the string-tagged arg format.
+     *
+     * Example prompt: "Call the function at 0x40006000 with arguments 0x10 and the string 'test'."
+     */
     private fun callFunction(args: JSONObject): JSONObject {
         if (emulator.isRunning()) {
             return errorResult("Cannot call function while emulator is running.")
@@ -1326,6 +1587,12 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return doCallFunction(address, args)
     }
 
+    /**
+     * Tool `call_symbol`: like `call_function` but resolves the target by module + exported symbol name
+     * (also trying a leading-underscore variant). Same not-running requirement and arg format.
+     *
+     * Example prompt: "Call ss_encrypt in libttEncrypt.so with the string 'hello'."
+     */
     private fun callSymbol(args: JSONObject): JSONObject {
         if (emulator.isRunning()) {
             return errorResult("Cannot call function while emulator is running.")
@@ -1353,6 +1620,11 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return doCallFunction(symbol.getAddress(), args)
     }
 
+    /**
+     * Shared implementation for `call_function`/`call_symbol`: parse the tagged arg array, emulate the
+     * call, and format the return value with module/symbol annotation and an optional printable-string
+     * preview of the returned pointer. On failure, includes the exception and its cause for debugging.
+     */
     private fun doCallFunction(address: Long, args: JSONObject): JSONObject {
         val argsArray = args.getJSONArray("args")
         val funcArgs: Array<Any?>
@@ -1415,6 +1687,11 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Decode one call argument from its string tag: "null", "s:<text>" (C string, auto-allocated by the
+     * emulator), "b:<hex>" (byte array, auto-allocated), or otherwise a hex integer. This is why the
+     * args schema requires string elements — it lets one array mix pointers, ints, and inline buffers.
+     */
     @Throws(DecoderException::class)
     private fun parseCallArg(argStr: String?): Any? {
         if (argStr == null || "null".equals(argStr, ignoreCase = true)) {
@@ -1429,6 +1706,12 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return parseAddress(argStr)
     }
 
+    /**
+     * Tool `list_modules`: list loaded modules (name, base, size), optionally narrowed by a
+     * case-insensitive name `filter`.
+     *
+     * Example prompt: "List the loaded modules matching 'ssl'."
+     */
     private fun listModules(args: JSONObject?): JSONObject {
         val filter = if (args != null) args.getString("filter") else null
         val modules = emulator.getMemory().getLoadedModules()
@@ -1446,6 +1729,12 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return textResult(sb.toString())
     }
 
+    /**
+     * Tool `get_module_info`: detailed view of one module — base, size, export count, and dependency
+     * (DT_NEEDED) names.
+     *
+     * Example prompt: "Give me details about libnative.so."
+     */
     private fun getModuleInfo(args: JSONObject): JSONObject {
         val moduleName = args.getString("module_name")
         val module = emulator.getMemory().findModule(moduleName)
@@ -1471,6 +1760,14 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return textResult(sb.toString())
     }
 
+    /**
+     * Tool `read_args`: interpret the calling-convention argument registers (X0-X7 on ARM64, R0-R3 on
+     * ARM32) as a function's incoming arguments. Each value is shown as hex (and small decimals), with
+     * module+symbol annotation and a printable-string preview when it points at one. Meaningful only at
+     * a function-entry breakpoint, before the prologue overwrites these registers.
+     *
+     * Example prompt: "Read the arguments to this function (we're stopped at its entry)."
+     */
     private fun readArgs(args: JSONObject): JSONObject {
         val is64 = emulator.is64Bit()
         val defaultCount = if (is64) 8 else 4
@@ -1508,6 +1805,12 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return textResult(sb.toString())
     }
 
+    /**
+     * Tool `write_string`: write a UTF-8 string plus a terminating NUL to `address`. Convenience wrapper
+     * over `write_memory` for the common "drop a C string into a buffer" case.
+     *
+     * Example prompt: "Write 'admin' as a C string at 0x40010000."
+     */
     private fun writeString(args: JSONObject): JSONObject {
         val address = parseAddress(args.getString("address"))
         val text = args.getString("text")
@@ -1524,6 +1827,13 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `disassemble_symbol`: resolve a function by module + symbol (trying a leading-underscore
+     * variant) and then disassemble `count` instructions from its entry. Sugar over find_symbol +
+     * disassemble.
+     *
+     * Example prompt: "Disassemble the first 30 instructions of JNI_OnLoad in libfoo.so."
+     */
     private fun disassembleSymbol(args: JSONObject): JSONObject {
         val moduleName = args.getString("module_name")
         val symbolName = args.getString("symbol_name")
@@ -1549,6 +1859,11 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return disassemble(sub)
     }
 
+    /**
+     * Dispatch a user-registered custom tool (a DebugRunnable). Translates the tool's named params into
+     * a positional "run <name> <args...>" console command that triggers the target execution. Because it
+     * runs the library, set any breakpoints/traces first, then poll_events for results.
+     */
     private fun executeCustomTool(tool: CustomTool, args: JSONObject): JSONObject {
         val cmd = StringBuilder("run ")
         cmd.append(tool.name)
@@ -1562,6 +1877,13 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return textResult("Emulation started: " + tool.name)
     }
 
+    /**
+     * Tool `list_exports`: list a module's exported symbols as +offset and (demangled) name, optionally
+     * filtered by a substring matched against both raw and demangled names. Unfiltered output is capped
+     * at [MAX_EXPORT_LINES] with a hint to use the filter, to avoid flooding the model's context.
+     *
+     * Example prompt: "List exports of libssl.so that contain 'encrypt'."
+     */
     private fun listExports(args: JSONObject): JSONObject {
         val moduleName = args.getString("module_name")
         val filter = args.getString("filter")
@@ -1612,6 +1934,11 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `get_threads`: list the emulated threads/tasks with their ids and string description.
+     *
+     * Example prompt: "How many threads are running and what are their ids?"
+     */
     private fun getThreads(): JSONObject {
         try {
             val tasks = emulator.getThreadDispatcher().getTaskList()
@@ -1629,6 +1956,15 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `allocate_memory`: allocate a RW block, optionally pre-filled with hex `data` (size can be
+     * inferred from it). Two strategies: libc malloc (`runtime=false`, only when stopped — efficient and
+     * tracked) or mmap (`runtime=true`, page-aligned, usable while running). The strategy is auto-chosen
+     * from the running state when not specified; malloc is rejected while running. Tracked so
+     * `free_memory`/`list_allocations` can manage it.
+     *
+     * Example prompt: "Allocate a 256-byte buffer pre-filled with the bytes of 'payload'."
+     */
     private fun allocateMemory(args: JSONObject): JSONObject {
         val hexData = args.getString("data")
         var initData: ByteArray? = null
@@ -1680,6 +2016,13 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `free_memory`: release a block previously returned by `allocate_memory`. Only tracked blocks
+     * can be freed; malloc-backed blocks additionally require the emulator to be stopped (to call libc
+     * free()).
+     *
+     * Example prompt: "Free the buffer I allocated at 0x40030000."
+     */
     private fun freeMemory(args: JSONObject): JSONObject {
         val address = parseAddress(args.getString("address"))
         val alloc = allocatedBlocks[address]
@@ -1701,6 +2044,12 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /**
+     * Tool `list_allocations`: list the blocks currently tracked from `allocate_memory`, with address,
+     * size and backing type (and the reminder that malloc blocks need a stopped emulator to free).
+     *
+     * Example prompt: "What buffers have I allocated so far?"
+     */
     private fun listAllocations(): JSONObject {
         if (allocatedBlocks.isEmpty()) {
             return textResult("No active allocations.")
@@ -1716,6 +2065,7 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         return textResult(sb.toString())
     }
 
+    /** Build a Keystone assembler matching the current architecture and (on 32-bit) ARM vs Thumb state. */
     private fun createKeystone(): Keystone {
         if (emulator.is64Bit()) {
             return Keystone(KeystoneArchitecture.Arm64, KeystoneMode.LittleEndian)
@@ -1725,6 +2075,8 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
         }
     }
 
+    /** Map a register name (X0-X30/W0-W30/SP/PC/LR/FP on ARM64; R0-R15/SP/PC/LR/FP/IP on ARM32) to its
+     *  Unicorn register constant. R13/R14/R15 and X29/X30 are normalized to SP/LR/PC and FP/LR. */
     private fun resolveRegister(name: String): Int {
         if (emulator.is64Bit()) {
             if (name.startsWith("X")) {
@@ -1951,6 +2303,8 @@ class McpTools(private val emulator: Emulator<*>, private val server: McpServer)
             return inputSchema
         }
 
+        // The "_name" key is a temporary carrier: toolSchema() lifts it out to become the property key
+        // in the JSON schema's "properties" map, then removes it so it never reaches the client.
         private fun param(name: String, type: String, description: String): JSONObject {
             val p = JSONObject(true)
             p.put("_name", name)

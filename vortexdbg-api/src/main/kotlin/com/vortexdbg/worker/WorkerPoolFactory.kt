@@ -3,65 +3,45 @@ package com.vortexdbg.worker
 import org.scijava.nativelib.NativeLibraryUtil
 
 /**
- * {@link WorkerPool} 的静态工厂类。
+ * Static factory for [WorkerPool]. Pools are lazily initialized: workers are created on demand and
+ * destroyed after the idle timeout (default 10 minutes, see [WorkerPool.setIdleTimeout]).
  *
- * <p>池采用懒初始化策略：Worker 按需创建，空闲超时后自动销毁。
- * 可通过 {@link WorkerPool#setIdleTimeout} 自定义空闲超时（默认 10 分钟）。</p>
- *
- * <pre>{@code
- * // 使用 CPU 核心数作为最大 Worker 数量
+ * ```
+ * // Max workers defaults to the CPU core count
  * WorkerPool pool = WorkerPoolFactory.create(MyWorker::new);
  *
- * // 指定最大 Worker 数量
+ * // Explicit max worker count
  * WorkerPool pool = WorkerPoolFactory.create(MyWorker::new, 4);
  *
- * // 使用 unicorn1 backend 时，在 Apple Silicon 上自动限制为单 worker
+ * // hypervisorBackend=true clamps to a single worker on Apple Silicon
  * WorkerPool pool = WorkerPoolFactory.create(MyWorker::new, 4, true);
  *
- * // 自定义空闲超时
- * WorkerPool pool = WorkerPoolFactory.create(MyWorker::new);
- * pool.setIdleTimeout(30); // 30 分钟
- *
- * // 预创建初始 Worker
+ * // Pre-create workers at startup
  * WorkerPool pool = WorkerPoolFactory.create(MyWorker::new, 8);
- * pool.setInitialSize(4); // 启动时预创建 4 个 Worker
- * }</pre>
+ * pool.setInitialSize(4);
+ * ```
  */
 class WorkerPoolFactory {
 
     companion object {
 
-        /**
-         * 创建一个 Worker 对象池，使用当前 CPU 核心数作为最大 Worker 数量。
-         *
-         * @param factory 用于创建 Worker 的工厂
-         * @return 新创建的 WorkerPool
-         */
+        /** Creates a pool whose max worker count is the current CPU core count. */
         @JvmStatic
         fun create(factory: WorkerFactory): WorkerPool {
             return create(factory, Runtime.getRuntime().availableProcessors())
         }
 
-        /**
-         * 创建一个 Worker 对象池，最多包含 {@code workerCount} 个 Worker。
-         *
-         * @param factory     用于创建 Worker 的工厂
-         * @param workerCount 最大 Worker 数量（必须 &gt; 0）
-         * @return 新创建的 WorkerPool
-         */
+        /** Creates a pool with at most [workerCount] workers (must be > 0). */
         @JvmStatic
         fun create(factory: WorkerFactory, workerCount: Int): WorkerPool {
             return create(factory, workerCount, NativeLibraryUtil.getArchitecture() == NativeLibraryUtil.Architecture.OSX_ARM64)
         }
 
         /**
-         * 创建一个 Worker 对象池，使用默认空闲超时（10 分钟）。
+         * Creates a pool with at most [workerCount] workers.
          *
-         * @param factory          用于创建 Worker 的工厂
-         * @param workerCount      最大 Worker 数量（必须 &gt; 0）
-         * @param hypervisorBackend  是否使用 hypervisor backend；为 {@code true} 时，
-         *                         在 Apple Silicon (M1/M2) 上自动将 workerCount 限制为 1
-         * @return 新创建的 WorkerPool
+         * @param hypervisorBackend when true, clamps [workerCount] to 1 on Apple Silicon, where the
+         *   hypervisor backend cannot run more than one VM per process
          */
         @JvmStatic
         fun create(factory: WorkerFactory, workerCount: Int, hypervisorBackend: Boolean): WorkerPool {

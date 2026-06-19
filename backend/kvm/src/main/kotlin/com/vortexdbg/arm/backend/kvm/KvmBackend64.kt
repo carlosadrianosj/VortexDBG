@@ -78,7 +78,7 @@ class KvmBackend64(emulator: Emulator<*>, kvm: Kvm) : KvmBackend(emulator, kvm) 
         val op = opInfo.operands
         val offset = (vaddr - _COMM_PAGE64_BASE_ADDRESS).toInt()
         when (offset) {
-            0x38, // uint64_t max memory size */
+            0x38, // uint64_t max memory size
             0x40,
             0x58 -> {
                 val operand = op[0]

@@ -13,8 +13,11 @@ import org.apache.commons.codec.binary.Hex
  * Provides three tools that build on top of [DvmSupport] (schemas, arg marshalling and static-call
  * dispatch) without duplicating any of that logic:
  *  - `dvm_resolve_method`: search resolved DVM classes for native-bound methods by bare name.
+ *    Example prompt: "Find every class that exposes a native method called 'seal'."
  *  - `dvm_oracle`: call a static method and assert its rendered result against an expected value.
+ *    Example prompt: "Does com/example/Foo.encode('abc') return 'cd9a...'? Check it."
  *  - `dvm_fuzz_method`: call a static method repeatedly varying one argument and tabulate outputs.
+ *    Example prompt: "Fuzz Foo.seal over these 50 inputs and tell me which output bytes change."
  */
 class DvmDiscoveryTools(private val emulator: Emulator<*>, private val vm: VM) : DvmSubTools {
 

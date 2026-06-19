@@ -21,7 +21,7 @@ class MarshmallowThread(
         super.setExitStatus(status)
 
         if (tidptr != null) {
-            // set tid
+            // CLONE_CHILD_CLEARTID: zero the tid on exit so a joiner's futex wakes up.
             tidptr!!.setInt(0L, 0)
         }
     }

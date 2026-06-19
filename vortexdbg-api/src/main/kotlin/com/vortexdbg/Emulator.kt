@@ -26,10 +26,9 @@ import java.io.File
 import java.net.URL
 
 /**
- * cpu emulator
- * Created by zhkl0228 on 2017/5/2.
+ * Top-level CPU emulator: owns the backend, memory, modules and the running
+ * process state, and is the main entry point for executing emulated code.
  */
-
 interface Emulator<T : NewFileIO> : Closeable, ArmDisassembler, Serializable {
 
     fun getPointerSize(): Int
@@ -75,7 +74,7 @@ interface Emulator<T : NewFileIO> : Closeable, ArmDisassembler, Serializable {
     fun emulateSignal(sig: Int): Boolean
 
     /**
-     * 是否正在运行
+     * @return `true` while the emulator core is actively executing
      */
     fun isRunning(): Boolean
 

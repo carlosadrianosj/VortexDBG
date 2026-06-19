@@ -15,9 +15,12 @@ import java.io.File
  *
  * Tools:
  *  - `dvm_snapshot`: capture the current class set and the three JNI ref maps into a named in-memory snapshot.
+ *    Example prompt: "Take a snapshot of the VM state and call it 'before'."
  *  - `dvm_diff`: compare two snapshots (or one snapshot against the current live state) and report added/removed
  *    objects, ref-count changes and class deltas.
+ *    Example prompt: "What objects appeared between snapshot 'before' and now?"
  *  - `dvm_export`: serialize a single object, a stored snapshot, or the whole object graph to a file on disk.
+ *    Example prompt: "Export the byte[] at handle 0x55 to /tmp/key.bin as raw bytes."
  *
  * Note: local refs are wiped by [BaseVM.deleteLocalRefs] after every JNI call, so the global/weak maps are the
  * meaningful surface for cross-call diffing; the local map only reflects state inside a single in-flight call.

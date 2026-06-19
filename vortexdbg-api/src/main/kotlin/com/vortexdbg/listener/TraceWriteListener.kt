@@ -5,7 +5,7 @@ import com.vortexdbg.Emulator
 interface TraceWriteListener {
 
     /**
-     * @return 返回<code>true</code>打印内存信息
+     * @return `true` to let the tracer print the memory access information
      */
     fun onWrite(emulator: Emulator<*>, address: Long, size: Int, value: Long): Boolean
 

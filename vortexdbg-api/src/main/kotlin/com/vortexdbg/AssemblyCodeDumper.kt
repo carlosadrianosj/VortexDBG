@@ -20,10 +20,10 @@ import java.util.Arrays
 import java.util.regex.Pattern
 
 /**
- * my code hook
- * Created by zhkl0228 on 2017/5/2.
+ * Code hook that disassembles and dumps each executed instruction within the
+ * `[begin, end]` trace range. When `begin > end` the range is treated as
+ * unbounded and every instruction is traced.
  */
-
 class AssemblyCodeDumper(
     private val emulator: Emulator<*>,
     begin: Long,

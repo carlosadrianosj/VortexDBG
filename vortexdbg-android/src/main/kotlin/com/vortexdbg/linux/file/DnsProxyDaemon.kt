@@ -70,12 +70,12 @@ internal class DnsProxyDaemon(private val sdk: Int) : LocalSocketIO.SocketHandle
                 buffer.put(bytes)
                 buffer.put(0.toByte()) // NULL-terminated string
 
-                buffer.putInt(0) // null to indicate we're done aliases
+                buffer.putInt(0) // null terminator: no more aliases
 
                 buffer.putInt(SocketIO.AF_INET.toInt()) // addrtype
-                buffer.putInt(4) // unknown length
+                buffer.putInt(4) // h_length: IPv4 address size
 
-                buffer.putInt(0) // null to indicate we're done addr_list
+                buffer.putInt(0) // null terminator: no more addresses
             }
         } catch (e: UnknownHostException) {
             buffer.put((DnsProxyOperationFailed.toString() + "\u0000").toByteArray())

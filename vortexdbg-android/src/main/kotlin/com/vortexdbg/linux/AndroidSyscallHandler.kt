@@ -385,11 +385,11 @@ abstract class AndroidSyscallHandler : UnixSyscallHandler<AndroidFileIO>(), Sysc
             log.debug("rt_sigqueue tgid={}, sig={}", tgid, sig)
         }
         val task = emulator.get<Task>(Task.TASK_KEY)
-        // 检查pid是有匹配进程存在
+        // verify a matching process exists for the target pid
         if (!(tgid == 0 || tgid == -1 || Math.abs(tgid) == emulator.getPid())) {
             return -UnixEmulator.ESRCH
         }
-        // 检查进程是否存在, 无需发送信号
+        // sig == 0 is an existence check only: validate the target without sending a signal
         if (sig == 0) {
             return 0
         }

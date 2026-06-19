@@ -15,7 +15,9 @@ interface IWhale : IHook, InlineHook {
     fun inlineHookFunction(symbol: Symbol, callback: ReplaceCallback, enablePostCall: Boolean)
 
     /**
-     * 当前对android无效，参考：https://github.com/asLody/whale/blob/master/whale/src/whale.cc，只支持苹果
+     * Hook an imported (PLT/GOT) symbol. Apple/Mach-O only; this has no effect
+     * on Android, mirroring the upstream whale implementation
+     * (see whale/src/whale.cc in github.com/asLody/whale).
      */
     @Suppress("unused")
     fun importHookFunction(symbol: String, callback: ReplaceCallback)

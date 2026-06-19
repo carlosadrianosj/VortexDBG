@@ -5,11 +5,7 @@ import com.vortexdbg.arm.InstructionVisitor
 
 import java.io.PrintStream
 
-/**
- * disassembler
- * Created by zhkl0228 on 2017/5/9.
- */
-
+/** Capstone-backed disassembler for ARM/ARM64 guest code. */
 interface ArmDisassembler {
 
     fun printAssemble(out: PrintStream, address: Long, size: Int, maxLengthLibraryName: Int, visitor: InstructionVisitor): Array<Instruction>

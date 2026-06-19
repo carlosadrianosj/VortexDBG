@@ -42,7 +42,8 @@ interface Loader {
     fun getMaxSizeOfLibrary(): Long
 
     /**
-     * 加载虚拟模块
+     * Registers a synthetic module backed by the given symbol table, without loading any file. Used
+     * to expose host-provided implementations to guest code under a module name.
      */
     @JvmSuppressWildcards
     fun loadVirtualModule(name: String, symbols: Map<String, VortexdbgPointer>): Module

@@ -9,26 +9,26 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * {@link WorkerPool} 的默认实现，使用独立线程管理 Worker 的创建、回收与空闲清理。
+ * Default [WorkerPool] backed by a dedicated management thread that handles creation, recycling and
+ * idle cleanup.
  *
- * <ul>
- *   <li>Worker 按需创建：只有当可用池为空且未达到上限时，才创建新的 Worker</li>
- *   <li>总 Worker 数量（借出 + 空闲）不超过 {@code maxWorkers}</li>
- *   <li>空闲超过 {@code idleTimeout} 的 Worker 由管理线程自动销毁</li>
- * </ul>
+ * Invariants:
+ *  - Workers are created lazily: a new one is only built when the idle pool is empty and the cap has
+ *    not been reached.
+ *  - Total workers (borrowed + idle) never exceed [maxWorkers].
+ *  - Workers idle longer than the configured idle timeout are destroyed by the management thread.
  *
- * <p>内部维护两个队列：
- * <ul>
- *   <li>{@code workers} — 可供借出的空闲 Worker 队列</li>
- *   <li>{@code releaseQueue} — 归还缓冲队列，由管理线程转入 workers</li>
- * </ul>
+ * Two queues are used: [workers] holds idle workers available to borrow, and [releaseQueue] buffers
+ * returns so callers never block; the management thread drains it back into [workers]. Decoupling
+ * release from the borrow path keeps borrow/release lock-free for the caller.
  */
 internal class DefaultWorkerPool(private val factory: WorkerFactory, private val maxWorkers: Int) : WorkerPool, Runnable {
 
     /**
-     * 包装空闲 Worker，记录入池时间以便判定超时。
-     * 使用 {@link System#currentTimeMillis()} 而非 nanoTime，
-     * 因为 nanoTime 在 macOS 系统休眠期间不推进，会导致空闲超时失效。
+     * Idle worker plus its enqueue timestamp, used to decide idle-timeout eviction.
+     *
+     * Uses wall-clock [System.currentTimeMillis] rather than nanoTime on purpose: nanoTime does not
+     * advance while macOS is asleep, which would defeat the idle timeout across a sleep/wake cycle.
      */
     private class IdleWorker(@JvmField val worker: Worker) {
         @JvmField
@@ -88,7 +88,8 @@ internal class DefaultWorkerPool(private val factory: WorkerFactory, private val
     }
 
     /**
-     * 管理线程主循环：按需创建 Worker、处理归还、清理空闲超时 Worker。
+     * Management-thread loop: creates workers on demand, drains returns into the idle pool, and
+     * evicts workers that have been idle past the timeout.
      */
     override fun run() {
         var lastCleanupMs = System.currentTimeMillis()
@@ -188,8 +189,8 @@ internal class DefaultWorkerPool(private val factory: WorkerFactory, private val
     }
 
     /**
-     * 归还 Worker 到 releaseQueue，由管理线程转入可用池。
-     * 池已关闭时直接销毁。
+     * Returns a worker via [releaseQueue] for the management thread to recycle. If the pool is
+     * already closed the worker is destroyed immediately instead.
      */
     override fun release(worker: Worker) {
         if (stopped) {
