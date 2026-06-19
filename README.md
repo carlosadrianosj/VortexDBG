@@ -1,4 +1,9 @@
 <p align="center">
+  <a href="README.md"><img src="https://img.shields.io/badge/lang-English-2ea44f" alt="English"></a>
+  <a href="README.zh.md"><img src="https://img.shields.io/badge/%E8%AF%AD%E8%A8%80-%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-blue" alt="简体中文"></a>
+</p>
+
+<p align="center">
   <img src="icon/vortex-logo.png" alt="Vortex-DBG" width="400"/>
 </p>
 
