@@ -107,10 +107,21 @@ open class DvmClass protected constructor(
                 }
             }
         }
+        // Numeric wrapper classes (Integer/Long/...) are subtypes of java/lang/Number, but are resolved
+        // without that superClass, so Number.intValue()/doubleValue()/... called on a wrapper would miss.
+        if (method == null && NUMERIC_WRAPPERS.contains(className)) {
+            method = vm.resolveClass("java/lang/Number").getMethod(hash)
+        }
         // Every Java class inherits java/lang/Object's methods (toString/hashCode/equals/...). Classes
         // resolved without an explicit superClass do not chain to Object, so fall back to it here.
         if (method == null && className != "java/lang/Object") {
             method = vm.resolveClass("java/lang/Object").getMethod(hash)
+        }
+        // Last resort: any method the app resolved via GetMethodID, regardless of the receiver class.
+        // Lets calls on mock objects (declared type differs from where the method lives) reach the jni
+        // interceptor instead of throwing; the interceptor returns a benign value by the method's return type.
+        if (method == null) {
+            method = vm.allMethods[hash]
         }
         return method
     }
@@ -123,7 +134,9 @@ open class DvmClass protected constructor(
         }
         if (vm.jni == null || vm.jni!!.acceptMethod(this, signature, false)) {
             if (!methodMap.containsKey(hash)) {
-                methodMap[hash] = DvmMethod(this, methodName, args, false)
+                val m = DvmMethod(this, methodName, args, false)
+                methodMap[hash] = m
+                vm.allMethods[hash] = m
             }
             return hash
         } else {
@@ -325,6 +338,10 @@ open class DvmClass protected constructor(
         private val log = LoggerFactory.getLogger(DvmClass::class.java)
 
         private const val ROOT_CLASS = "java/lang/Class"
+
+        private val NUMERIC_WRAPPERS = setOf(
+            "java/lang/Integer", "java/lang/Long", "java/lang/Short", "java/lang/Byte",
+            "java/lang/Double", "java/lang/Float")
 
         private fun mangleForJni(builder: StringBuilder, name: String) {
             val chars = name.toCharArray()

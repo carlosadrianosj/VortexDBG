@@ -108,6 +108,11 @@ abstract class BaseVM protected constructor(private val emulator: AndroidEmulato
         }
     }
 
+    /** vm-wide methodID -> DvmMethod, so a method resolves even when the receiver's class does not
+     *  carry it (mock objects whose declared type differs from where GetMethodID registered it). */
+    @JvmField
+    val allMethods: MutableMap<Int, DvmMethod> = HashMap()
+
     @JvmField
     val globalObjectMap: MutableMap<Int, ObjRef> = HashMap()
 
@@ -223,6 +228,13 @@ abstract class BaseVM protected constructor(private val emulator: AndroidEmulato
             ref = weakGlobalObjectMap[hash]
         }
         return (if (ref == null) null else ref.obj) as T
+    }
+
+    /** Null-safe object lookup: returns null for a missing/0 handle instead of the non-null-cast NPE
+     *  that getObject throws. Use where a jobject argument may legitimately be null. */
+    fun getObjectOrNull(hash: Int): DvmObject<*>? {
+        val ref = localObjectMap[hash] ?: globalObjectMap[hash] ?: weakGlobalObjectMap[hash]
+        return ref?.obj
     }
 
     override fun findClass(className: String): DvmClass? {
