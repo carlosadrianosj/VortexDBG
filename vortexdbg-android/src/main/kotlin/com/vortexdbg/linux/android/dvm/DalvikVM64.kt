@@ -681,7 +681,23 @@ class DalvikVM64(emulator: AndroidEmulator, apkFile: File?) : BaseVM(emulator, a
 
         val _CallCharMethodV: Pointer = svcMemory.registerSvc(object : Arm64Svc() {
             override fun handle(emulator: Emulator<*>): Long {
-                throw UnsupportedOperationException()
+                val context = emulator.getContext<RegisterContext>()
+                val obj = context.getPointerArg(1)!!
+                val jmethodID = context.getPointerArg(2)!!
+                val va_list = context.getPointerArg(3)
+                val dvmObject = getObject<DvmObject<*>>(obj.toIntPeer())
+                val dvmClass = if (dvmObject == null) null else dvmObject.getObjectType()
+                val dvmMethod = if (dvmClass == null) null else dvmClass.getMethod(jmethodID.toIntPeer())
+                if (dvmMethod == null) {
+                    throw BackendException()
+                } else {
+                    val vaList: VaList = VaList64(emulator, this@DalvikVM64, va_list!!, dvmMethod)
+                    val ret = dvmMethod.callCharMethodV(dvmObject, vaList)
+                    if (verbose || verboseMethodOperation) {
+                        System.out.printf("JNIEnv->CallCharMethodV(%s, %s(%s) => %c) was called from %s%n", dvmObject, dvmMethod.methodName, vaList.formatArgs(), ret, context.getLRPointer())
+                    }
+                    return (ret.code.toLong() and 0xffffL)
+                }
             }
         })
 
