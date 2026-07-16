@@ -6,6 +6,7 @@ import com.vortexdbg.linux.android.dvm.StringObject
 import com.vortexdbg.linux.android.dvm.VM
 import com.vortexdbg.linux.android.dvm.array.ArrayObject
 import com.vortexdbg.linux.android.dvm.array.ByteArray
+import com.vortexdbg.linux.android.dvm.array.CharArray
 import com.vortexdbg.linux.android.dvm.array.DoubleArray
 import com.vortexdbg.linux.android.dvm.array.FloatArray
 import com.vortexdbg.linux.android.dvm.array.IntArray
@@ -55,6 +56,9 @@ class ProxyDvmObject private constructor(vm: VM, value: Any?) :
             }
             if (value is kotlin.ShortArray) {
                 return ShortArray(vm, value)
+            }
+            if (value is kotlin.CharArray) {
+                return CharArray(vm, value)
             }
             if (value is kotlin.IntArray) {
                 return IntArray(vm, value)

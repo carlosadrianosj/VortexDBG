@@ -12,6 +12,7 @@ import com.vortexdbg.arm.context.RegisterContext
 import com.vortexdbg.linux.android.dvm.apk.Apk
 import com.vortexdbg.linux.android.dvm.array.ArrayObject
 import com.vortexdbg.linux.android.dvm.array.ByteArray
+import com.vortexdbg.linux.android.dvm.array.CharArray
 import com.vortexdbg.linux.android.dvm.array.DoubleArray
 import com.vortexdbg.linux.android.dvm.array.FloatArray
 import com.vortexdbg.linux.android.dvm.array.IntArray
@@ -2600,7 +2601,15 @@ class DalvikVM64(emulator: AndroidEmulator, apkFile: File?) : BaseVM(emulator, a
 
         val _NewCharArray: Pointer = svcMemory.registerSvc(object : Arm64Svc() {
             override fun handle(emulator: Emulator<*>): Long {
-                throw UnsupportedOperationException()
+                val context = emulator.getContext<RegisterContext>()
+                val size = context.getIntArg(1)
+                if (log.isDebugEnabled) {
+                    log.debug("NewCharArray size={}", size)
+                }
+                if (verbose || verboseFieldOperation) {
+                    System.out.printf("JNIEnv->NewCharArray(%d) was called from %s%n", size, context.getLRPointer())
+                }
+                return addLocalObject(CharArray(this@DalvikVM64, kotlin.CharArray(size))).toLong()
             }
         })
 
@@ -2685,7 +2694,17 @@ class DalvikVM64(emulator: AndroidEmulator, apkFile: File?) : BaseVM(emulator, a
 
         val _GetCharArrayElements: Pointer = svcMemory.registerSvc(object : Arm64Svc() {
             override fun handle(emulator: Emulator<*>): Long {
-                throw UnsupportedOperationException()
+                val context = emulator.getContext<RegisterContext>()
+                val obj = context.getPointerArg(1)!!
+                val isCopy = context.getPointerArg(2)
+                val array = getObject<CharArray>(obj.toIntPeer())
+                if (log.isDebugEnabled) {
+                    log.debug("GetCharArrayElements array={}, isCopy={}", array, isCopy)
+                }
+                if (verbose || verboseFieldOperation) {
+                    System.out.printf("JNIEnv->GetCharArrayElements(%s) => %s was called from %s%n", isCopy != null, array, context.getLRPointer())
+                }
+                return Objects.requireNonNull(array)._GetArrayCritical(emulator, isCopy).peer
             }
         })
 
@@ -2914,7 +2933,16 @@ class DalvikVM64(emulator: AndroidEmulator, apkFile: File?) : BaseVM(emulator, a
 
         val _ReleaseCharArrayElements: Pointer = svcMemory.registerSvc(object : Arm64Svc() {
             override fun handle(emulator: Emulator<*>): Long {
-                throw UnsupportedOperationException()
+                val context = emulator.getContext<RegisterContext>()
+                val obj = context.getPointerArg(1)!!
+                val pointer = context.getPointerArg(2)
+                val mode = context.getIntArg(3)
+                val array = getObject<CharArray>(obj.toIntPeer())
+                if (log.isDebugEnabled) {
+                    log.debug("ReleaseCharArrayElements array={}, pointer={}, mode={}", array, pointer, mode)
+                }
+                Objects.requireNonNull(array)._ReleaseArrayCritical(pointer!!, mode)
+                return 0
             }
         })
 
@@ -2994,7 +3022,22 @@ class DalvikVM64(emulator: AndroidEmulator, apkFile: File?) : BaseVM(emulator, a
 
         val _GetCharArrayRegion: Pointer = svcMemory.registerSvc(object : Arm64Svc() {
             override fun handle(emulator: Emulator<*>): Long {
-                throw UnsupportedOperationException()
+                val context = emulator.getContext<RegisterContext>()
+                val obj = context.getPointerArg(1)!!
+                val start = context.getIntArg(2)
+                val length = context.getIntArg(3)
+                val buf = context.getPointerArg(4)!!
+                val array = getObject<CharArray>(obj.toIntPeer())
+                if (verbose || verboseFieldOperation) {
+                    System.out.printf("JNIEnv->GetCharArrayRegion(%s, %d, %d, %s) was called from %s%n", array, start, length, buf, context.getLRPointer())
+                }
+                val data = Arrays.copyOfRange(Objects.requireNonNull(array).getValue(), start, start + length)
+                if (log.isDebugEnabled) {
+                    log.debug("GetCharArrayRegion array={}, start={}, length={}, buf={}", array, start, length, buf)
+                }
+                val shorts = kotlin.ShortArray(data.size) { data[it].code.toShort() }   // jchar = 2 bytes
+                buf.write(0L, shorts, 0, shorts.size)
+                return 0
             }
         })
 
@@ -3088,7 +3131,22 @@ class DalvikVM64(emulator: AndroidEmulator, apkFile: File?) : BaseVM(emulator, a
 
         val _SetCharArrayRegion: Pointer = svcMemory.registerSvc(object : Arm64Svc() {
             override fun handle(emulator: Emulator<*>): Long {
-                throw UnsupportedOperationException()
+                val context = emulator.getContext<RegisterContext>()
+                val obj = context.getPointerArg(1)!!
+                val start = context.getIntArg(2)
+                val length = context.getIntArg(3)
+                val buf = context.getPointerArg(4)!!
+                val array = getObject<CharArray>(obj.toIntPeer())
+                if (verbose || verboseFieldOperation) {
+                    System.out.printf("JNIEnv->SetCharArrayRegion(%s, %d, %d, %s) was called from %s%n", array, start, length, buf, context.getLRPointer())
+                }
+                val shorts = buf.getShortArray(0L, length)                                // jchar = 2 bytes
+                val data = kotlin.CharArray(shorts.size) { (shorts[it].toInt() and 0xFFFF).toChar() }
+                if (log.isDebugEnabled) {
+                    log.debug("SetCharArrayRegion array={}, start={}, length={}, buf={}", array, start, length, buf)
+                }
+                Objects.requireNonNull(array).setData(start, data)
+                return 0
             }
         })
 
