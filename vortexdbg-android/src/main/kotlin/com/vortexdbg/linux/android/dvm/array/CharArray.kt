@@ -47,7 +47,10 @@ class CharArray(vm: VM, value: kotlin.CharArray) : BaseArray<kotlin.CharArray>(v
     }
 
     private fun readChars(elems: Pointer): kotlin.CharArray {
-        val shorts = elems.getShortArray(0L, this.value.size)
+        // Use the overridden read(ShortArray) (emulated memory); Pointer.getShortArray is not backed
+        // by the guest pointer here (throws AbstractMethodError), unlike read(offset, ShortArray, ..).
+        val shorts = kotlin.ShortArray(this.value.size)
+        elems.read(0L, shorts, 0, shorts.size)
         return kotlin.CharArray(this.value.size) { (shorts[it].toInt() and 0xFFFF).toChar() }
     }
 }

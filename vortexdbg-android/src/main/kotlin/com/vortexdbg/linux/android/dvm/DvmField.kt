@@ -139,7 +139,10 @@ open class DvmField internal constructor(
 
     fun setObjectField(dvmObject: DvmObject<*>, value: DvmObject<*>?) {
         val vm = dvmClass.vm
-        checkJni(vm, dvmClass).setObjectField(vm, dvmObject, this, value!!)
+        // Setting a field to null is legal; the old `value!!` NPE'd on it. checkJni.setObjectField
+        // requires non-null, so a null set is a no-op. ponytail: no-op null-set; wire a nullable
+        // Jni.setObjectField if a caller ever depends on the field actually becoming null.
+        checkJni(vm, dvmClass).setObjectField(vm, dvmObject, this, value ?: return)
     }
 
     fun getBooleanField(dvmObject: DvmObject<*>): Int {

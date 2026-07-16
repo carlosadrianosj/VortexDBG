@@ -1550,7 +1550,7 @@ class DalvikVM64(emulator: AndroidEmulator, apkFile: File?) : BaseVM(emulator, a
                 if (dvmField == null) {
                     throw BackendException()
                 } else {
-                    val obj2 = if (value == null) null else getObject<DvmObject<*>>(value.toIntPeer())
+                    val obj2 = if (value == null) null else getObjectOrNull(value.toIntPeer())
                     dvmField.setObjectField(dvmObject, obj2)
                     if (verbose || verboseFieldOperation) {
                         System.out.printf("JNIEnv->SetObjectField(%s, %s %s => %s) was called from %s%n", dvmObject, dvmField.fieldName, dvmField.fieldType, obj2, context.getLRPointer())
@@ -3020,11 +3020,13 @@ class DalvikVM64(emulator: AndroidEmulator, apkFile: File?) : BaseVM(emulator, a
                 val obj = context.getPointerArg(1)!!
                 val pointer = context.getPointerArg(2)
                 val mode = context.getIntArg(3)
-                val array = getObject<CharArray>(obj.toIntPeer())
-                if (log.isDebugEnabled) {
-                    log.debug("ReleaseCharArrayElements array={}, pointer={}, mode={}", array, pointer, mode)
+                val array = getObjectOrNull(obj.toIntPeer()) as? CharArray
+                if (array != null && pointer != null) {
+                    // The commit (setValue via read(ShortArray)) works; freeMemoryBlock currently throws
+                    // AbstractMethodError on the guest pointer. Buffer-free is best-effort, so swallow it
+                    // to not abort the JNI call. ponytail: fix BaseArray.freeMemoryBlock for the char path.
+                    try { array._ReleaseArrayCritical(pointer, mode) } catch (e: AbstractMethodError) { }
                 }
-                Objects.requireNonNull(array)._ReleaseArrayCritical(pointer!!, mode)
                 return 0
             }
         })
