@@ -19,6 +19,8 @@ abstract class VarArg protected constructor(private val vm: BaseVM, protected va
      */
     fun <T : DvmObject<*>?> getObjectArg(index: Int): T {
         val hash = getIntArg(index)
+        @Suppress("UNCHECKED_CAST")
+        if (hash == 0) return null as T   // JNI null jobject: a legal null argument, not a lookup miss
         return vm.getObject(hash)
     }
 
