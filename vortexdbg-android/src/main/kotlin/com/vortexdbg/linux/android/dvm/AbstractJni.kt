@@ -101,6 +101,14 @@ abstract class AbstractJni : Jni {
         throw UnsupportedOperationException(signature)
     }
 
+    override fun getStaticDoubleField(vm: BaseVM, dvmClass: DvmClass, dvmField: DvmField): Double {
+        return getStaticDoubleField(vm, dvmClass, dvmField.getSignature())
+    }
+
+    override fun getStaticDoubleField(vm: BaseVM, dvmClass: DvmClass, signature: String): Double {
+        throw UnsupportedOperationException(signature)
+    }
+
     override fun getObjectField(vm: BaseVM, dvmObject: DvmObject<*>, dvmField: DvmField): DvmObject<*> {
         return getObjectField(vm, dvmObject, dvmField.getSignature())
     }
@@ -200,6 +208,14 @@ abstract class AbstractJni : Jni {
     }
 
     override fun callFloatMethodV(vm: BaseVM, dvmObject: DvmObject<*>, signature: String, vaList: VaList): Float {
+        throw UnsupportedOperationException(signature)
+    }
+
+    override fun callDoubleMethodV(vm: BaseVM, dvmObject: DvmObject<*>, dvmMethod: DvmMethod, vaList: VaList): Double {
+        return callDoubleMethodV(vm, dvmObject, dvmMethod.getSignature(), vaList)
+    }
+
+    override fun callDoubleMethodV(vm: BaseVM, dvmObject: DvmObject<*>, signature: String, vaList: VaList): Double {
         throw UnsupportedOperationException(signature)
     }
 
@@ -586,6 +602,14 @@ abstract class AbstractJni : Jni {
     }
 
     override fun getFloatField(vm: BaseVM, dvmObject: DvmObject<*>, signature: String): Float {
+        throw UnsupportedOperationException(signature)
+    }
+
+    override fun getDoubleField(vm: BaseVM, dvmObject: DvmObject<*>, dvmField: DvmField): Double {
+        return getDoubleField(vm, dvmObject, dvmField.getSignature())
+    }
+
+    override fun getDoubleField(vm: BaseVM, dvmObject: DvmObject<*>, signature: String): Double {
         throw UnsupportedOperationException(signature)
     }
 

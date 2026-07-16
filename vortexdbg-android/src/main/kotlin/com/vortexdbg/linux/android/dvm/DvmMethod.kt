@@ -231,6 +231,11 @@ open class DvmMethod internal constructor(
         return checkJni(vm, dvmClass).callFloatMethodV(vm, dvmObject, this, vaList)
     }
 
+    fun callDoubleMethodV(dvmObject: DvmObject<*>, vaList: VaList): Double {
+        val vm = dvmClass.vm
+        return checkJni(vm, dvmClass).callDoubleMethodV(vm, dvmObject, this, vaList)
+    }
+
     fun toReflectedMethod(): DvmObject<*> {
         val vm = dvmClass.vm
         return checkJni(vm, dvmClass).toReflectedMethod(vm, dvmClass, this)

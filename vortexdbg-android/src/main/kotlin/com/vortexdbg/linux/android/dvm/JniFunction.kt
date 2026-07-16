@@ -346,6 +346,18 @@ abstract class JniFunction protected constructor(private val fallbackJni: Jni?) 
         }
     }
 
+    override fun callDoubleMethodV(vm: BaseVM, dvmObject: DvmObject<*>, dvmMethod: DvmMethod, vaList: VaList): Double {
+        return callDoubleMethodV(vm, dvmObject, dvmMethod.getSignature(), vaList)
+    }
+
+    override fun callDoubleMethodV(vm: BaseVM, dvmObject: DvmObject<*>, signature: String, vaList: VaList): Double {
+        if (fallbackJni == null) {
+            throw UnsupportedOperationException(signature)
+        } else {
+            return fallbackJni.callDoubleMethodV(vm, dvmObject, signature, vaList)
+        }
+    }
+
     override fun callObjectMethodV(vm: BaseVM, dvmObject: DvmObject<*>, dvmMethod: DvmMethod, vaList: VaList): DvmObject<*> {
         return callObjectMethodV(vm, dvmObject, dvmMethod.getSignature(), vaList)
     }
@@ -391,6 +403,18 @@ abstract class JniFunction protected constructor(private val fallbackJni: Jni?) 
             throw UnsupportedOperationException(signature)
         } else {
             return fallbackJni.getStaticIntField(vm, dvmClass, signature)
+        }
+    }
+
+    override fun getStaticDoubleField(vm: BaseVM, dvmClass: DvmClass, dvmField: DvmField): Double {
+        return getStaticDoubleField(vm, dvmClass, dvmField.getSignature())
+    }
+
+    override fun getStaticDoubleField(vm: BaseVM, dvmClass: DvmClass, signature: String): Double {
+        if (fallbackJni == null) {
+            throw UnsupportedOperationException(signature)
+        } else {
+            return fallbackJni.getStaticDoubleField(vm, dvmClass, signature)
         }
     }
 
@@ -463,6 +487,18 @@ abstract class JniFunction protected constructor(private val fallbackJni: Jni?) 
             throw UnsupportedOperationException(signature)
         } else {
             return fallbackJni.getFloatField(vm, dvmObject, signature)
+        }
+    }
+
+    override fun getDoubleField(vm: BaseVM, dvmObject: DvmObject<*>, dvmField: DvmField): Double {
+        return getDoubleField(vm, dvmObject, dvmField.getSignature())
+    }
+
+    override fun getDoubleField(vm: BaseVM, dvmObject: DvmObject<*>, signature: String): Double {
+        if (fallbackJni == null) {
+            throw UnsupportedOperationException(signature)
+        } else {
+            return fallbackJni.getDoubleField(vm, dvmObject, signature)
         }
     }
 

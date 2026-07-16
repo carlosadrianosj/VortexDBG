@@ -132,6 +132,11 @@ open class DvmField internal constructor(
         return checkJni(vm, dvmClass).getFloatField(vm, dvmObject, this)
     }
 
+    fun getDoubleField(dvmObject: DvmObject<*>): Double {
+        val vm = dvmClass.vm
+        return checkJni(vm, dvmClass).getDoubleField(vm, dvmObject, this)
+    }
+
     fun setObjectField(dvmObject: DvmObject<*>, value: DvmObject<*>?) {
         val vm = dvmClass.vm
         checkJni(vm, dvmClass).setObjectField(vm, dvmObject, this, value!!)
@@ -200,6 +205,11 @@ open class DvmField internal constructor(
     fun getStaticLongField(): Long {
         val vm = dvmClass.vm
         return checkJni(vm, dvmClass).getStaticLongField(vm, dvmClass, this)
+    }
+
+    fun getStaticDoubleField(): Double {
+        val vm = dvmClass.vm
+        return checkJni(vm, dvmClass).getStaticDoubleField(vm, dvmClass, this)
     }
 
     @JvmField

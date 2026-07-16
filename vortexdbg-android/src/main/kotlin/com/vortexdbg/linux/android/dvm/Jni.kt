@@ -85,6 +85,9 @@ interface Jni {
     fun callFloatMethodV(vm: BaseVM, dvmObject: DvmObject<*>, dvmMethod: DvmMethod, vaList: VaList): Float
     fun callFloatMethodV(vm: BaseVM, dvmObject: DvmObject<*>, signature: String, vaList: VaList): Float
 
+    fun callDoubleMethodV(vm: BaseVM, dvmObject: DvmObject<*>, dvmMethod: DvmMethod, vaList: VaList): Double
+    fun callDoubleMethodV(vm: BaseVM, dvmObject: DvmObject<*>, signature: String, vaList: VaList): Double
+
     fun callObjectMethodV(vm: BaseVM, dvmObject: DvmObject<*>, dvmMethod: DvmMethod, vaList: VaList): DvmObject<*>
     fun callObjectMethodV(vm: BaseVM, dvmObject: DvmObject<*>, signature: String, vaList: VaList): DvmObject<*>
 
@@ -96,6 +99,9 @@ interface Jni {
 
     fun getStaticIntField(vm: BaseVM, dvmClass: DvmClass, dvmField: DvmField): Int
     fun getStaticIntField(vm: BaseVM, dvmClass: DvmClass, signature: String): Int
+
+    fun getStaticDoubleField(vm: BaseVM, dvmClass: DvmClass, dvmField: DvmField): Double
+    fun getStaticDoubleField(vm: BaseVM, dvmClass: DvmClass, signature: String): Double
 
     fun getStaticObjectField(vm: BaseVM, dvmClass: DvmClass, dvmField: DvmField): DvmObject<*>
     fun getStaticObjectField(vm: BaseVM, dvmClass: DvmClass, signature: String): DvmObject<*>
@@ -114,6 +120,9 @@ interface Jni {
 
     fun getFloatField(vm: BaseVM, dvmObject: DvmObject<*>, dvmField: DvmField): Float
     fun getFloatField(vm: BaseVM, dvmObject: DvmObject<*>, signature: String): Float
+
+    fun getDoubleField(vm: BaseVM, dvmObject: DvmObject<*>, dvmField: DvmField): Double
+    fun getDoubleField(vm: BaseVM, dvmObject: DvmObject<*>, signature: String): Double
 
     fun getObjectField(vm: BaseVM, dvmObject: DvmObject<*>, dvmField: DvmField): DvmObject<*>
     fun getObjectField(vm: BaseVM, dvmObject: DvmObject<*>, signature: String): DvmObject<*>

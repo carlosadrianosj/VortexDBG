@@ -947,7 +947,30 @@ class DalvikVM64(emulator: AndroidEmulator, apkFile: File?) : BaseVM(emulator, a
 
         val _CallDoubleMethodV: Pointer = svcMemory.registerSvc(object : Arm64Svc() {
             override fun handle(emulator: Emulator<*>): Long {
-                throw UnsupportedOperationException()
+                val context = emulator.getContext<RegisterContext>()
+                val obj = context.getPointerArg(1)!!
+                val jmethodID = context.getPointerArg(2)!!
+                val va_list = context.getPointerArg(3)
+                if (log.isDebugEnabled) {
+                    log.debug("CallDoubleMethodV object={}, jmethodID={}, va_list={}", obj, jmethodID, va_list)
+                }
+                val dvmObject = getObject<DvmObject<*>>(obj.toIntPeer())
+                val dvmClass = if (dvmObject == null) null else dvmObject.getObjectType()
+                val dvmMethod = if (dvmClass == null) null else dvmClass.getMethod(jmethodID.toIntPeer())
+                if (dvmMethod == null) {
+                    throw BackendException()
+                } else {
+                    val vaList: VaList = VaList64(emulator, this@DalvikVM64, va_list!!, dvmMethod)
+                    val ret = dvmMethod.callDoubleMethodV(dvmObject, vaList)
+                    if (verbose || verboseMethodOperation) {
+                        System.out.printf("JNIEnv->CallDoubleMethodV(%s, %s(%s) => %s) was called from %s%n", dvmObject, dvmMethod.methodName, vaList.formatArgs(), ret, context.getLRPointer())
+                    }
+                    val buffer = ByteBuffer.allocate(16)
+                    buffer.order(ByteOrder.LITTLE_ENDIAN)
+                    buffer.putDouble(ret)
+                    emulator.getBackend().reg_write_vector(Arm64Const.UC_ARM64_REG_Q0, buffer.array())
+                    return context.getLongArg(0)
+                }
             }
         })
 
@@ -1487,7 +1510,28 @@ class DalvikVM64(emulator: AndroidEmulator, apkFile: File?) : BaseVM(emulator, a
 
         val _GetDoubleField: Pointer = svcMemory.registerSvc(object : Arm64Svc() {
             override fun handle(emulator: Emulator<*>): Long {
-                throw UnsupportedOperationException()
+                val context = emulator.getContext<RegisterContext>()
+                val obj = context.getPointerArg(1)!!
+                val jfieldID = context.getPointerArg(2)!!
+                if (log.isDebugEnabled) {
+                    log.debug("GetDoubleField object={}, jfieldID={}", obj, jfieldID)
+                }
+                val dvmObject = getObject<DvmObject<*>>(obj.toIntPeer())
+                val dvmClass = if (dvmObject == null) null else dvmObject.getObjectType()
+                val dvmField = if (dvmClass == null) null else dvmClass.getField(jfieldID.toIntPeer())
+                if (dvmField == null) {
+                    throw BackendException()
+                } else {
+                    val ret = dvmField.getDoubleField(dvmObject)
+                    if (verbose || verboseFieldOperation) {
+                        System.out.printf("JNIEnv->GetDoubleField(%s, %s => %s) was called from %s%n", dvmObject, dvmField.fieldName, ret, context.getLRPointer())
+                    }
+                    val buffer = ByteBuffer.allocate(16)
+                    buffer.order(ByteOrder.LITTLE_ENDIAN)
+                    buffer.putDouble(ret)
+                    emulator.getBackend().reg_write_vector(Arm64Const.UC_ARM64_REG_Q0, buffer.array())
+                    return context.getLongArg(0)
+                }
             }
         })
 
@@ -2329,7 +2373,27 @@ class DalvikVM64(emulator: AndroidEmulator, apkFile: File?) : BaseVM(emulator, a
 
         val _GetStaticDoubleField: Pointer = svcMemory.registerSvc(object : Arm64Svc() {
             override fun handle(emulator: Emulator<*>): Long {
-                throw UnsupportedOperationException()
+                val context = emulator.getContext<RegisterContext>()
+                val clazz = context.getPointerArg(1)!!
+                val jfieldID = context.getPointerArg(2)!!
+                if (log.isDebugEnabled) {
+                    log.debug("GetStaticDoubleField clazz={}, jfieldID={}", clazz, jfieldID)
+                }
+                val dvmClass = classMap.get(clazz.toIntPeer())
+                val dvmField = if (dvmClass == null) null else dvmClass.getStaticField(jfieldID.toIntPeer())
+                if (dvmField == null) {
+                    throw BackendException()
+                } else {
+                    val ret = dvmField.getStaticDoubleField()
+                    if (verbose || verboseFieldOperation) {
+                        System.out.printf("JNIEnv->GetStaticDoubleField(%s, %s => %s) was called from %s%n", dvmClass, dvmField.fieldName, ret, context.getLRPointer())
+                    }
+                    val buffer = ByteBuffer.allocate(16)
+                    buffer.order(ByteOrder.LITTLE_ENDIAN)
+                    buffer.putDouble(ret)
+                    emulator.getBackend().reg_write_vector(Arm64Const.UC_ARM64_REG_Q0, buffer.array())
+                    return context.getLongArg(0)
+                }
             }
         })
 
