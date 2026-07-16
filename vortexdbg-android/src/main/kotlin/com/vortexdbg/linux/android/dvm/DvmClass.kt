@@ -107,6 +107,11 @@ open class DvmClass protected constructor(
                 }
             }
         }
+        // Every Java class inherits java/lang/Object's methods (toString/hashCode/equals/...). Classes
+        // resolved without an explicit superClass do not chain to Object, so fall back to it here.
+        if (method == null && className != "java/lang/Object") {
+            method = vm.resolveClass("java/lang/Object").getMethod(hash)
+        }
         return method
     }
 
