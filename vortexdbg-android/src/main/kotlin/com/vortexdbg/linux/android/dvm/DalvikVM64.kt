@@ -16,6 +16,7 @@ import com.vortexdbg.linux.android.dvm.array.CharArray
 import com.vortexdbg.linux.android.dvm.array.DoubleArray
 import com.vortexdbg.linux.android.dvm.array.FloatArray
 import com.vortexdbg.linux.android.dvm.array.IntArray
+import com.vortexdbg.linux.android.dvm.array.LongArray
 import com.vortexdbg.linux.android.dvm.array.PrimitiveArray
 import com.vortexdbg.linux.android.dvm.array.ShortArray
 import com.vortexdbg.memory.SvcMemory
@@ -2635,7 +2636,15 @@ class DalvikVM64(emulator: AndroidEmulator, apkFile: File?) : BaseVM(emulator, a
 
         val _NewLongArray: Pointer = svcMemory.registerSvc(object : Arm64Svc() {
             override fun handle(emulator: Emulator<*>): Long {
-                throw UnsupportedOperationException()
+                val context = emulator.getContext<RegisterContext>()
+                val size = context.getIntArg(1)
+                if (log.isDebugEnabled) {
+                    log.debug("NewLongArray size={}", size)
+                }
+                if (verbose || verboseFieldOperation) {
+                    System.out.printf("JNIEnv->NewLongArray(%d) was called from %s%n", size, context.getLRPointer())
+                }
+                return addLocalObject(LongArray(this@DalvikVM64, kotlin.LongArray(size))).toLong()
             }
         })
 
@@ -2887,7 +2896,17 @@ class DalvikVM64(emulator: AndroidEmulator, apkFile: File?) : BaseVM(emulator, a
 
         val _GetLongArrayElements: Pointer = svcMemory.registerSvc(object : Arm64Svc() {
             override fun handle(emulator: Emulator<*>): Long {
-                throw UnsupportedOperationException()
+                val context = emulator.getContext<RegisterContext>()
+                val obj = context.getPointerArg(1)!!
+                val isCopy = context.getPointerArg(2)
+                val array = getObject<LongArray>(obj.toIntPeer())
+                if (log.isDebugEnabled) {
+                    log.debug("GetLongArrayElements array={}, isCopy={}", array, isCopy)
+                }
+                if (verbose || verboseFieldOperation) {
+                    System.out.printf("JNIEnv->GetLongArrayElements(%s) => %s was called from %s%n", isCopy != null, array, context.getLRPointer())
+                }
+                return Objects.requireNonNull(array)._GetArrayCritical(emulator, isCopy).peer
             }
         })
 
@@ -2969,7 +2988,16 @@ class DalvikVM64(emulator: AndroidEmulator, apkFile: File?) : BaseVM(emulator, a
 
         val _ReleaseLongArrayElements: Pointer = svcMemory.registerSvc(object : Arm64Svc() {
             override fun handle(emulator: Emulator<*>): Long {
-                throw UnsupportedOperationException()
+                val context = emulator.getContext<RegisterContext>()
+                val obj = context.getPointerArg(1)!!
+                val pointer = context.getPointerArg(2)
+                val mode = context.getIntArg(3)
+                val array = getObject<LongArray>(obj.toIntPeer())
+                if (log.isDebugEnabled) {
+                    log.debug("ReleaseLongArrayElements array={}, pointer={}, mode={}", array, pointer, mode)
+                }
+                Objects.requireNonNull(array)._ReleaseArrayCritical(pointer!!, mode)
+                return 0
             }
         })
 
@@ -3069,7 +3097,21 @@ class DalvikVM64(emulator: AndroidEmulator, apkFile: File?) : BaseVM(emulator, a
 
         val _GetLongArrayRegion: Pointer = svcMemory.registerSvc(object : Arm64Svc() {
             override fun handle(emulator: Emulator<*>): Long {
-                throw UnsupportedOperationException()
+                val context = emulator.getContext<RegisterContext>()
+                val obj = context.getPointerArg(1)!!
+                val start = context.getIntArg(2)
+                val length = context.getIntArg(3)
+                val buf = context.getPointerArg(4)!!
+                val array = getObject<LongArray>(obj.toIntPeer())
+                if (verbose || verboseFieldOperation) {
+                    System.out.printf("JNIEnv->GetLongArrayRegion(%s, %d, %d, %s) was called from %s%n", array, start, length, buf, context.getLRPointer())
+                }
+                val data = Arrays.copyOfRange(Objects.requireNonNull(array).getValue(), start, start + length)
+                if (log.isDebugEnabled) {
+                    log.debug("GetLongArrayRegion array={}, start={}, length={}, buf={}", array, start, length, buf)
+                }
+                buf.write(0L, data, 0, data.size)
+                return 0
             }
         })
 
@@ -3178,7 +3220,21 @@ class DalvikVM64(emulator: AndroidEmulator, apkFile: File?) : BaseVM(emulator, a
 
         val _SetLongArrayRegion: Pointer = svcMemory.registerSvc(object : Arm64Svc() {
             override fun handle(emulator: Emulator<*>): Long {
-                throw UnsupportedOperationException()
+                val context = emulator.getContext<RegisterContext>()
+                val obj = context.getPointerArg(1)!!
+                val start = context.getIntArg(2)
+                val length = context.getIntArg(3)
+                val buf = context.getPointerArg(4)!!
+                val array = getObject<LongArray>(obj.toIntPeer())
+                if (verbose || verboseFieldOperation) {
+                    System.out.printf("JNIEnv->SetLongArrayRegion(%s, %d, %d, %s) was called from %s%n", array, start, length, buf, context.getLRPointer())
+                }
+                val data = buf.getLongArray(0L, length)
+                if (log.isDebugEnabled) {
+                    log.debug("SetLongArrayRegion array={}, start={}, length={}, buf={}", array, start, length, buf)
+                }
+                Objects.requireNonNull(array).setData(start, data)
+                return 0
             }
         })
 
